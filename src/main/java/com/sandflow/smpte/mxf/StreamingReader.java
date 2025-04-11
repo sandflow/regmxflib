@@ -242,7 +242,12 @@ public class StreamingReader {
     return null;
   }
 
-  byte[] getUnitBytes() {
+  long getUnitLength() {
+    // TODO Auto-generated method stub
+    return 0;
+  }
+
+  CountingInputStream getUnitPayload() {
     // TODO Auto-generated method stub
     return null;
   }

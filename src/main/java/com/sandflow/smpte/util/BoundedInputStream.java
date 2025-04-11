@@ -32,44 +32,32 @@ import java.io.InputStream;
  * Counts the number of bytes read from an InputStream and allows a maximum
  * number of bytes to be read to be set (optionally)
  */
-public class CountingInputStream extends InputStream {
+public class BoundedInputStream extends CountingInputStream {
 
-    long count = 0;
-    long markCount = 0;
-    InputStream is;
+    long maxCount = -1;
 
     /**
      * Instantiates a CountingInputStream
      *
      * @param is       InputStream from which data will be read
+     * @param maxCount Maximum number of bytes to be read. If set to -1 or less, no
+     *                 limit.
      */
-    public CountingInputStream(InputStream is) {
-        if (is == null) {
-            throw new NullPointerException("InputStream cannot be null");
-        }
-        this.is = is;
-    }
-
-    @Override
-    public synchronized void mark(int i) {
-        markCount = count;
-        is.mark(i);
+    public BoundedInputStream(InputStream is, long maxCount) {
+        super(is);
+        this.maxCount = Math.max(-1, maxCount);
     }
 
     @Override
     public long skip(long l) throws IOException {
-        long sb = is.skip(l);
-        if (sb >= 0)
-            count += sb;
-        return sb;
+        long actualSkip = maxCount < 0 ? l : Math.min(Math.max(0, maxCount - getCount()), l);
+        return super.skip(actualSkip);
     }
 
     @Override
     public int read(byte[] bytes, int off, int len) throws IOException {
-        int sb = is.read(bytes, off, len);
-        if (sb >= 0)
-            count += sb;
-        return sb;
+        int actualLen = maxCount >= 0 ? len : Math.min((int) Math.max(maxCount - getCount(), Integer.MAX_VALUE), len);
+        return super.read(bytes, off, actualLen);
     }
 
     @Override
@@ -79,46 +67,24 @@ public class CountingInputStream extends InputStream {
 
     @Override
     public int read() throws IOException {
-        int sb = is.read();
-        if (sb >= 0)
-            count += 1;
-        return sb;
-    }
-
-    @Override
-    public boolean markSupported() {
-        return is.markSupported();
-    }
-
-    @Override
-    public synchronized void reset() throws IOException {
-        count = markCount;
-        is.reset();
-    }
-
-    @Override
-    public void close() throws IOException {
-        is.close();
-    }
-
-    @Override
-    public int available() throws IOException {
-        return is.available();
+        if (maxCount >= -1 && maxCount - count < 1) {
+            return -1;
+        }
+        return super.read();
     }
 
     /**
-     * @return Returns the number of bytes read since the object was created or
-     *         resetCount was called
+     * Skips to the end of the stream, if the maximum number of bytes to be read
+     * was set to a value greater than -1. Otherwise, it does nothing.
+     * 
+     * @return Returns the number of bytes skipped, or -1 if no limit was set.
      */
-    public long getCount() {
-        return count;
+    public long exhaust() throws IOException {
+        if (maxCount < 0) {
+            return -1;
+        }
+        return this.skip(maxCount - getCount());
     }
 
-    /**
-     * Resets the number of bytes read to zero.
-     */
-    public void resetCount() {
-        count = 0;
-    }
 
 }
