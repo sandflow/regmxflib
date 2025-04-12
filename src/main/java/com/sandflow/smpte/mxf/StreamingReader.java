@@ -1,5 +1,6 @@
 package com.sandflow.smpte.mxf;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -10,9 +11,13 @@ import org.apache.commons.numbers.fraction.Fraction;
 import com.sandflow.smpte.klv.KLVInputStream;
 import com.sandflow.smpte.klv.LocalSet;
 import com.sandflow.smpte.klv.LocalTagRegister;
+import com.sandflow.smpte.klv.MemoryTriplet;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.Group;
 import com.sandflow.smpte.klv.exceptions.KLVException;
+import com.sandflow.smpte.mxf.PartitionPack.Kind;
+import com.sandflow.smpte.util.AUID;
+import com.sandflow.smpte.util.BoundedInputStream;
 import com.sandflow.smpte.util.CountingInputStream;
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UUID;
@@ -21,8 +26,6 @@ import com.sandflow.util.events.Event;
 import com.sandflow.util.events.EventHandler;
 
 public class StreamingReader {
-  private static final UL INDEX_TABLE_SEGMENT_UL = UL.fromURN("urn:smpte:ul:060e2b34.02530101.0d010201.01100100");
-
   private static final UL PREFACE_KEY = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.01012f00");
 
   public interface Track {
@@ -30,6 +33,13 @@ public class StreamingReader {
 
     FileDescriptor getDescriptor();
   }
+
+  KLVInputStream kis;
+  boolean isDone = false;
+
+  BoundedInputStream unitPayload;
+  Long unitLength;
+  AUID unitKey;
 
   /**
    * Defines all events raised by this class
@@ -102,9 +112,13 @@ public class StreamingReader {
     }
   }
 
-  StreamingReader(InputStream file, EventHandler evthandler) throws IOException, KLVException, MXFException {
-    CountingInputStream cis = new CountingInputStream(file);
-    KLVInputStream kis = new KLVInputStream(cis);
+  StreamingReader(InputStream is, EventHandler evthandler) throws IOException, KLVException, MXFException {
+    if (is == null) {
+      throw new NullPointerException("InputStream cannot be null");
+    }
+
+    CountingInputStream cis = new CountingInputStream(is);
+    kis = new KLVInputStream(cis);
 
     /* look for the header partition pack */
     PartitionPack pp = null;
@@ -145,10 +159,12 @@ public class StreamingReader {
     ArrayList<Group> gs = new ArrayList<>();
     HashMap<UUID, Set> setresolver = new HashMap<>();
 
-    for (Triplet t; cis.getCount() < pp.getHeaderByteCount()
-        && (t = kis.readTriplet()) != null;) {
+    while (cis.getCount() < pp.getHeaderByteCount()) {
+
+      Triplet t = kis.readTriplet();
 
       /* skip fill items */
+      /* TODO: replace with call to FillItem static method */
       if (FillItem.getKey().equalsIgnoreVersion(t.getKey())) {
         continue;
       }
@@ -181,8 +197,9 @@ public class StreamingReader {
      */
     if (cis.getCount() != pp.getHeaderByteCount()) {
       handleEvent(evthandler, new MXFEvent(
-        EventCodes.INCONSISTENT_HEADER_LENGTH,
-        String.format("Actual Header Metadata length (%s) does not match the Partition Pack information (%s)", cis.getCount(), pp.getHeaderByteCount())));
+          EventCodes.INCONSISTENT_HEADER_LENGTH,
+          String.format("Actual Header Metadata length (%s) does not match the Partition Pack information (%s)",
+              cis.getCount(), pp.getHeaderByteCount())));
     }
 
     /*
@@ -212,24 +229,71 @@ public class StreamingReader {
       kis.skip(pp.getIndexByteCount());
     }
 
-    /*
-     * read essence container data
-     */
-    if (pp.getBodySID() != 0) {
-      
-    }
-
-    kis.close();
-
   }
 
-  boolean nextUnit() {
-    /*
-     * assume KLV if an essence element 
-     */
+  boolean nextUnit() throws KLVException, EOFException, IOException {
 
+    if (this.isDone) {
+      return false;
+    }
 
-    return false;
+    /* exhause current unit */
+
+    if (this.unitPayload != null) {
+      this.unitPayload.exhaust();
+    }
+
+    /* loop until we find an essence element */
+    while (true) {
+      AUID auid;
+
+      try {
+        auid = kis.readAUID();
+      } catch (EOFException e) {
+        this.isDone = true;
+        return false;
+      }
+
+      long len = kis.readBERLength();
+
+      if (PartitionPack.isInstance(auid)) {
+
+        /* skip over partition header metadata and index tables */
+
+        /* partition pack is fixed length so that cast is ok */
+        byte[] value = new byte[(int) len];
+        kis.readFully(value);
+        Triplet t = new MemoryTriplet(auid, value);
+        PartitionPack pp = PartitionPack.fromTriplet(t);
+
+        /* we are done when we reach the footer partition */
+        if (pp.getKind() == Kind.FOOTER) {
+          this.isDone = true;
+          return false;
+        }
+
+        kis.skip(pp.getHeaderByteCount());
+        if (pp.getIndexSID() != 0) {
+          kis.skip(pp.getIndexByteCount());
+        }
+
+      } else if (FillItem.getKey().equalsIgnoreVersion(auid)) {
+      
+        /* skip over the fill item */
+
+        kis.skip(len);
+
+      } else {
+
+        /* we have reached an essence element */
+
+        this.unitPayload = new BoundedInputStream(kis, len);
+        this.unitLength = len;
+        break;
+      }
+    }
+
+    return true;
   }
 
   Fraction getUnitOffset() {
@@ -243,13 +307,11 @@ public class StreamingReader {
   }
 
   long getUnitLength() {
-    // TODO Auto-generated method stub
-    return 0;
+    return this.unitLength;
   }
 
-  CountingInputStream getUnitPayload() {
-    // TODO Auto-generated method stub
-    return null;
+  InputStream getUnitPayload() {
+    return this.unitPayload;
   }
 
   Track[] getTracks() {
@@ -257,9 +319,8 @@ public class StreamingReader {
     return null;
   }
 
-  void close() {
-    // TODO Auto-generated method stub
-
+  boolean isDone() {
+    return this.isDone;
   }
 
 }

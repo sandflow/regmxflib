@@ -179,7 +179,7 @@ public class KLVInputStream extends InputStream implements DataInput {
 
         return new MemoryTriplet(auid, value);
     }
-
+    
     @Override
     public final int read(byte[] bytes) throws IOException {
         return dis.read(bytes);

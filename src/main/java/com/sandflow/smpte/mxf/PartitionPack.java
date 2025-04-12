@@ -28,6 +28,7 @@ package com.sandflow.smpte.mxf;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.adapters.ULValueAdapter;
 import com.sandflow.smpte.klv.exceptions.KLVException;
+import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,6 +49,16 @@ public class PartitionPack {
      */
     public static UL getKey() {
         return KEY;
+    }
+
+    /**
+     * Indicates whether the key is a Partition Pack key
+     * 
+     * @param key
+     * @return true if the key is a Partition Pack key, false otherwise
+     */
+    public static boolean isInstance(AUID key) {
+        return KEY.equalsWithMask(key, 0xfef9 /* 11111110 11111001 */);
     }
 
     /**
