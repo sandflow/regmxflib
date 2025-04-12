@@ -21,11 +21,10 @@ public class ContentStorage {
     for (Triplet item : s.getItems()) {
       if (item.getKey().equals(ESSENCECONTAINERDATA_KEY)) {
         MXFInputStream mis = new MXFInputStream(item.getValueAsStream());
-        Collection<UUID> uuids = mis.readBatch(UUIDValueAdapter::fromValue);
-        cs.essenceContainerData = new EssenceContainerData[uuids.size()];
-        int i = 0;
-        for (UUID uuid : uuids) {
-          cs.essenceContainerData[i++] = EssenceContainerData.fromSet(resolver.get(uuid), resolver);
+        UUID uuids[] = mis.readBatch(UUIDValueAdapter::fromValue).toArray(UUID[]::new);
+        cs.essenceContainerData = new EssenceContainerData[uuids.length];
+        for (int i = 0; i < uuids.length; i++) {
+          cs.essenceContainerData[i] = EssenceContainerData.fromSet(resolver.get(uuids[i]), resolver);
         }
       }
     }
