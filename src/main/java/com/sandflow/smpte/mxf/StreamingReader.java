@@ -27,16 +27,16 @@ import com.sandflow.util.events.EventHandler;
 
 public class StreamingReader {
   private static final UL PREFACE_KEY = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.01012f00");
+  private static final UL FILEPACKAGE_KEY = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.01013700");
 
-  public interface Track {
-    String getName();
-
-    FileDescriptor getDescriptor();
+  public class Track {
+    FileDescriptor fileDescriptor;
   }
 
   KLVInputStream kis;
   boolean isDone = false;
 
+  Track unitTrack;
   BoundedInputStream unitPayload;
   Long unitLength;
   AUID unitKey;
@@ -202,23 +202,18 @@ public class StreamingReader {
               cis.getCount(), pp.getHeaderByteCount())));
     }
 
-    /*
-     * in MXF, the first header metadata set should be the
-     * Preface set according to ST 377-1 Section 9.5.1, preceded
-     * by Class 14 groups
-     */
+    Preface preface;
+    FilePackage filePackage;
     for (Group agroup : gs) {
       if (agroup.getKey().equalsWithMask(PREFACE_KEY, 0b1111101011111111 /* ignore version and Group coding */)) {
-        break;
-      }
-      if (!agroup.getKey().isClass14()) {
-        handleEvent(evthandler, new MXFEvent(
-            EventCodes.UNEXPECTED_STRUCTURE,
-            String.format(
-                "At least one non-class 14 Set %s was found between"
-                    + " the Primer Pack and the Preface Set.",
-                agroup.getKey())));
-        break;
+        Set s = Set.fromGroup(agroup);
+        preface = Preface.fromSet(s, setresolver);
+      } else if (agroup.getKey().equalsWithMask(FILEPACKAGE_KEY, 0b1111101011111111 /* ignore version and Group coding */)) {
+        Set s = Set.fromGroup(agroup);
+        filePackage = FilePackage.fromSet(s, setresolver);
+
+        unitTrack = new Track();
+        unitTrack.fileDescriptor = filePackage.descriptor;
       }
     }
 

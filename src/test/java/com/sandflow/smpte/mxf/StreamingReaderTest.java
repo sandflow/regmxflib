@@ -27,10 +27,13 @@ package com.sandflow.smpte.mxf;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
 
 import java.io.InputStream;
 
 import org.junit.jupiter.api.Test;
+
+import com.sandflow.smpte.util.UL;
 
 class StreamingReaderTest {
 
@@ -44,5 +47,7 @@ class StreamingReaderTest {
     sr.nextUnit();
 
     assertEquals(288000, sr.getUnitLength());
+
+    assertEquals(UL.fromURN("urn:smpte:ul:060e2b34.04010101.0d010301.02060200"), sr.getUnitTrack().fileDescriptor.containerFormat);
   }
 }
