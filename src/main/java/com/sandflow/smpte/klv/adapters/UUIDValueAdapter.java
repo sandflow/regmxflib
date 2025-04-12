@@ -30,7 +30,7 @@ import com.sandflow.smpte.util.UUID;
 /**
  * UUIDValueAdapter converts a UUID to and from a KLV Triplet Value
  */
-public class UUIDValueAdapter extends TripletValueAdapter {
+public class UUIDValueAdapter {
 
     /**
      * Converts a KLV Triplet Value to a UUID.

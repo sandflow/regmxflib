@@ -30,7 +30,7 @@ import com.sandflow.smpte.util.UMID;
 /**
  * UMIDValueAdapter converts a UMID to and from a KLV Triplet Value
  */
-public class UMIDValueAdapter extends TripletValueAdapter {
+public class UMIDValueAdapter {
 
     /**
      * Converts a KLV Triplet Value to a UMID.

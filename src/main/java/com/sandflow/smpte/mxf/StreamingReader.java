@@ -297,8 +297,7 @@ public class StreamingReader {
   }
 
   Track getUnitTrack() {
-    // TODO Auto-generated method stub
-    return null;
+    return this.unitTrack;
   }
 
   long getUnitLength() {
