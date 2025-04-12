@@ -25,6 +25,7 @@
  */
 package com.sandflow.smpte.mxf;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.InputStream;
@@ -41,5 +42,7 @@ class StreamingReaderTest {
     StreamingReader sr = new StreamingReader(is, null);
 
     sr.nextUnit();
+
+    assertEquals(288000, sr.getUnitLength());
   }
 }
