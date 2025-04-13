@@ -300,7 +300,7 @@ public class StreamingReader {
     return this.unitTrack;
   }
 
-  long getUnitLength() {
+  long getUnitPayloadLength() {
     return this.unitLength;
   }
 

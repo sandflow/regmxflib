@@ -1,0 +1,65 @@
+@startuml MXF Header Metadata
+
+class Preface
+
+class ContentStorage
+
+Preface --* ContentStorage
+
+ContentStorage --* "0..*" EssenceContainerData
+
+ContentStorage --* "0..*" Package
+
+class EssenceContainerData {
+  indexSID: UInt32
+  bodySID: UInt32
+}
+
+EssenceContainerData -[dashed]-> "1" FilePackage : LinkedPackageUID
+
+class Descriptor
+
+class FileDescriptor {
+  essenceContainer: UL
+}
+
+class MultipleDescriptor
+
+MultipleDescriptor "1" --* "2..*" FileDescriptor : descriptors
+
+Descriptor <|-- FileDescriptor 
+Descriptor <|-- MultipleDescriptor 
+
+FileDescriptor "1" --> "1" GenericTrack : LinkedTrackID
+
+class GenericTrack {
+  TrackID: UInt32
+  TrackNumber: UInt32
+}
+
+note left of GenericTrack::TrackNumber
+  Number used to link the Track to an Essence
+  Element in the Essence Container.
+end note
+
+class SourcePackage {
+}
+
+class Package {
+  PackageUID: PackageID
+}
+
+SourcePackage "1" --* "0..*" GenericTrack : tracks
+
+Package <|-- SourcePackage
+
+class FilePackage
+
+FilePackage "1" --* "1" Descriptor : descriptor
+
+SourcePackage <|-- FilePackage
+
+
+
+
+@enduml

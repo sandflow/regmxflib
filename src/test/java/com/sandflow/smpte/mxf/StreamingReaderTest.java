@@ -46,7 +46,7 @@ class StreamingReaderTest {
 
     sr.nextUnit();
 
-    assertEquals(288000, sr.getUnitLength());
+    assertEquals(288000, sr.getUnitPayloadLength());
 
     assertEquals(UL.fromURN("urn:smpte:ul:060e2b34.04010101.0d010301.02060200"), sr.getUnitTrack().fileDescriptor.containerFormat);
   }
