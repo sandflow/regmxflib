@@ -1,0 +1,198 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.sandflow</groupId>
+        <artifactId>regmxflib</artifactId>
+        <version>1.0.0-alpha.1</version>
+    </parent>
+
+    <artifactId>library</artifactId>
+
+    <packaging>jar</packaging>
+
+    <properties>
+        <com.sandflow.config.dir>${basedir}/src/main/config</com.sandflow.config.dir>
+        <com.sandflow.resources.dir>${basedir}/src/main/resources</com.sandflow.resources.dir>
+        <com.sandflow.test.resources.dir>${basedir}/src/test/resources</com.sandflow.test.resources.dir>
+    </properties>
+
+    <name>regmxflib</name>
+    <url>https://github.com/sandflow/regmxflib</url>
+    <description>Tools and libraries for MXF file creation and parsing.</description>
+
+    <licenses>
+        <license>
+            <name>BSD 2-clause "Simplified" License</name>
+            <url>http://choosealicense.com/licenses/bsd-2-clause/</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Pierre-Anthony Lemieux</name>
+            <email>pal@palemieux.com</email>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/sandflow/regmxflib.git</connection>
+        <developerConnection>scm:git:https://github.com/sandflow/regmxflib.git</developerConnection>
+        <url>https://github.com/sandflow/regmxflib.git</url>
+    </scm>
+
+    <organization>
+        <name>Sandflow Consulting LLC</name>
+        <url>http://www.sandflow.com</url>
+    </organization>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.12.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-numbers-fraction</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>4.0.5</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sandflow</groupId>
+            <artifactId>annotation-processor</artifactId>
+            <version>1.0.0-alpha.1</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+                <version>1.4</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>create</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M1</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <java.util.logging.config.file>log4j.properties</java.util.logging.config.file>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+             <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.11.0</version>
+        <configuration>
+  <compilerArgs>
+    <arg>-XprintRounds</arg>
+    <arg>-XprintProcessorInfo</arg>
+  </compilerArgs>
+  <annotationProcessors>
+  com.sandflow.smpte.mxf.annotationprocessor.ClassFactoryProcessor
+  </annotationProcessors>
+
+        </configuration>
+      </plugin>
+        </plugins>
+        <resources>
+            <resource>
+                <targetPath>config</targetPath>
+                <directory>${com.sandflow.config.dir}</directory>
+                <filtering>true</filtering>
+            </resource>
+            <resource>
+                <targetPath>resources</targetPath>
+                <directory>${com.sandflow.resources.dir}</directory>
+            </resource>
+        </resources>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <distributionManagement>
+                <snapshotRepository>
+                    <id>ossrh</id>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+                </snapshotRepository>
+                <repository>
+                    <id>ossrh</id>
+                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                </repository>
+            </distributionManagement>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.2.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>2.9.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.5</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.7</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>
