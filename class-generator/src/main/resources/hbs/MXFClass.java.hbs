@@ -34,4 +34,14 @@ import com.sandflow.smpte.mxf.annotationprocessor.MXFPropertyDefinition;
 )
 public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassName}} extends {{parentClassName}}{{/if}} {
 
+{{#each members}}
+  @MXFPropertyDefinition(
+    Identification="{{identification}}",
+    Type="{{type}}",
+    isOptional={{isOptional}},
+    LocalIdentification={{localIdentification}}
+  )
+  {{typeName}} {{symbol}};
+{{/each}}
+
 }
