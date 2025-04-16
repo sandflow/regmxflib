@@ -25,28 +25,42 @@
  */
 package com.sandflow.smpte.mxf;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import java.io.InputStream;
-
+import java.io.File;
+import java.io.FileReader;
+import java.io.FilenameFilter;
 import org.junit.jupiter.api.Test;
 
-import com.sandflow.smpte.util.UL;
+import com.sandflow.smpte.regxml.dict.MetaDictionary;
+import com.sandflow.smpte.regxml.dict.MetaDictionaryCollection;
 
-class StreamingReaderTest {
+class ClassGeneratorTest {
 
   @Test
-  void testNextUnit() throws Exception {
-    InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/audio.mxf");
-    assertNotNull(is);
+  void testGenerate() throws Exception {
 
-    StreamingReader sr = new StreamingReader(is, null);
+    File dir = new File(ClassLoader.getSystemResource("regxml-dicts").toURI());
 
-    sr.nextUnit();
+    File[] mdFiles = dir.listFiles(
+        new FilenameFilter() {
 
-    assertEquals(288000, sr.getUnitPayloadLength());
+          @Override
+          public boolean accept(File dir, String name) {
+            return name.endsWith(".xml");
+          }
+        });
 
-    assertEquals(UL.fromURN("urn:smpte:ul:060e2b34.04010101.0d010301.02060200"), sr.getUnitTrack().fileDescriptor.containerFormat);
+    var mds = new MetaDictionaryCollection();
+    for (var mdFile : mdFiles) {
+      var fr = new FileReader(mdFile);
+      mds.addDictionary(MetaDictionary.fromXML(fr));
+    }
+
+    File generatedClassDir = new File("target/test-generated");
+    if (!generatedClassDir.exists()) {
+      generatedClassDir.mkdirs();
+    }
+
+    ClassGenerator.generate(mds, generatedClassDir);
   }
+
 }

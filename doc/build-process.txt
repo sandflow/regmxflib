@@ -1,0 +1,4 @@
+Build regmxflib
+  - Build class generator
+    - Build common
+    - Build annotation-processor 

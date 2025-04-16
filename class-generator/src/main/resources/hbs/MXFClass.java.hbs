@@ -23,30 +23,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.sandflow.smpte.mxf;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+package com.sandflow.smpte.mxf.metadatasets;
 
-import java.io.InputStream;
+public class {{className}}{{#if parentClassName}} extends {{parentClassName}}{{/if}} {
 
-import org.junit.jupiter.api.Test;
-
-import com.sandflow.smpte.util.UL;
-
-class StreamingReaderTest {
-
-  @Test
-  void testNextUnit() throws Exception {
-    InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/audio.mxf");
-    assertNotNull(is);
-
-    StreamingReader sr = new StreamingReader(is, null);
-
-    sr.nextUnit();
-
-    assertEquals(288000, sr.getUnitPayloadLength());
-
-    assertEquals(UL.fromURN("urn:smpte:ul:060e2b34.04010101.0d010301.02060200"), sr.getUnitTrack().fileDescriptor.containerFormat);
-  }
 }

@@ -1,0 +1,30 @@
+<project>
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.sandflow</groupId>
+        <artifactId>regmxflib</artifactId>
+        <version>1.0.0-alpha.1</version>
+    </parent>
+
+  <artifactId>class-generator</artifactId>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.sandflow</groupId>
+      <artifactId>common</artifactId>
+      <version>1.0.0-alpha.1</version>
+    </dependency>
+            <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.12.1</version>
+            <scope>test</scope>
+        </dependency>
+          <dependency>
+    <groupId>com.github.jknack</groupId>
+    <artifactId>handlebars</artifactId>
+    <version>4.4.0</version>
+  </dependency>
+  </dependencies>
+</project>
