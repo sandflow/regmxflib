@@ -26,6 +26,12 @@
 
 package com.sandflow.smpte.mxf.metadatasets;
 
-public class {{className}}{{#if parentClassName}} extends {{parentClassName}}{{/if}} {
+import com.sandflow.smpte.mxf.annotationprocessor.MXFClassDefinition;
+import com.sandflow.smpte.mxf.annotationprocessor.MXFPropertyDefinition;
+
+@MXFClassDefinition(
+  Identification="{{identification}}"
+)
+public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassName}} extends {{parentClassName}}{{/if}} {
 
 }

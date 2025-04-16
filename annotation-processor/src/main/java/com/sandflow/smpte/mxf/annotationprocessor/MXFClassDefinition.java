@@ -9,5 +9,4 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface MXFClassDefinition {
   String Identification();
-  String Symbol();
 }

@@ -22,6 +22,9 @@ public class ClassGenerator {
 
     for(var md: mds.getDictionaries()) {
 
+      if (md.getSchemeURI().toString().equals("http://www.ebu.ch/metadata/schemas/ebucore/smpte/class13/group"))
+        continue;
+
       for(var def: md.getDefinitions()) {
 
         if (!(def instanceof ClassDefinition))
@@ -32,6 +35,10 @@ public class ClassGenerator {
         var data = new HashMap<String, String>();
 
         data.put("className", classDef.getSymbol());
+        data.put("identification", classDef.getIdentification().toString());
+        if (!classDef.isConcrete()) {
+          data.put("isAbstract", "1");
+        }
         
         AUID parentClassID = classDef.getParentClass();
         if (parentClassID != null) {
@@ -40,12 +47,11 @@ public class ClassGenerator {
           data.put("parentClassName", parentClass.getSymbol());
         }
 
+        /* collect members */
+
         var classFile = new File(generatedSourcesDir, classDef.getSymbol() + ".java");
-
         var os = new FileWriter(classFile);
-
         os.write(template.apply(data));
-
         os.close();
       }
     }
