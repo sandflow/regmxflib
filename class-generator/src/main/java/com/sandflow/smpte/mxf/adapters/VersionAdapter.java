@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Sandflow Consulting, LLC
+ * Copyright (c) 2014, Pierre-Anthony Lemieux (pal@sandflow.com)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,19 +24,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
-* @author Pierre-Anthony Lemieux
-*/
+package com.sandflow.smpte.mxf.adapters;
 
-package com.sandflow.smpte.mxf.metadatasets;
+import java.io.IOException;
 
-import com.sandflow.smpte.mxf.annotationprocessor.MXFClassDefinition;
-import com.sandflow.smpte.mxf.annotationprocessor.MXFPropertyDefinition;
+import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.classes.Version;
 
-public class {{name}} {
+public class VersionAdapter {
 
-{{#each members}}
-  {{memberTypeName}} {{memberName}};
-{{/each}}
+  public static Version fromStream(MXFInputStream is) throws IOException {
+    int major = is.readUnsignedByte();
+    int minor = is.readUnsignedByte();
+
+    return new Version(major, minor);
+  }
 
 }

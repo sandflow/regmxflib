@@ -3,14 +3,21 @@ package com.sandflow.smpte.mxf;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.net.http.HttpClient.Version;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
+import org.apache.commons.numbers.fraction.Fraction;
+
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
+import com.sandflow.smpte.mxf.adapters.VersionAdapter;
 import com.sandflow.smpte.regxml.dict.DefinitionResolver;
 import com.sandflow.smpte.regxml.dict.MetaDictionaryCollection;
 import com.sandflow.smpte.regxml.dict.definitions.CharacterTypeDefinition;
@@ -26,7 +33,6 @@ import com.sandflow.smpte.regxml.dict.definitions.IntegerTypeDefinition;
 import com.sandflow.smpte.regxml.dict.definitions.LensSerialFloatTypeDefinition;
 import com.sandflow.smpte.regxml.dict.definitions.NullDefinitionVisitor;
 import com.sandflow.smpte.regxml.dict.definitions.OpaqueTypeDefinition;
-import com.sandflow.smpte.regxml.dict.definitions.PropertyAliasDefinition;
 import com.sandflow.smpte.regxml.dict.definitions.PropertyDefinition;
 import com.sandflow.smpte.regxml.dict.definitions.RecordTypeDefinition;
 import com.sandflow.smpte.regxml.dict.definitions.RenameTypeDefinition;
@@ -38,18 +44,21 @@ import com.sandflow.smpte.regxml.dict.definitions.VariableArrayTypeDefinition;
 import com.sandflow.smpte.regxml.dict.definitions.WeakReferenceTypeDefinition;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
+import com.sandflow.smpte.util.UMID;
 
 public class ClassGenerator {
   public static final Handlebars handlebars = new Handlebars();
   public static final Template classTemplate;
   public static final Template enumerationTemplate;
   public static final Template variableArrayTemplate;
+  public static final Template recordTemplate;
 
   static {
     try {
       classTemplate = handlebars.compile("hbs/Class.java");
       enumerationTemplate = handlebars.compile("hbs/Enumeration.java");
       variableArrayTemplate = handlebars.compile("hbs/VariableArrayAdapter.java");
+      recordTemplate = handlebars.compile("hbs/Record.java");
     } catch (Exception e) {
       throw new RuntimeException("Failed to load template", e);
     }
@@ -77,6 +86,24 @@ public class ClassGenerator {
     private static final UL ApplicationProductID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.05200701.07000000");
     private static final AUID AUID_AUID = new AUID(UL.fromDotValue("06.0E.2B.34.01.04.01.01.01.03.01.00.00.00.00.00"));
     private static final AUID UUID_AUID = new AUID(UL.fromDotValue("06.0E.2B.34.01.04.01.01.01.03.03.00.00.00.00.00"));
+    private static final AUID DateStruct_AUID = new AUID(
+        UL.fromDotValue("06.0E.2B.34.01.04.01.01.03.01.05.00.00.00.00.00"));
+    private static final AUID PackageID_AUID = new AUID(
+        UL.fromDotValue("06.0E.2B.34.01.04.01.01.01.03.02.00.00.00.00.00"));
+    private static final AUID Rational_AUID = new AUID(
+        UL.fromDotValue("06.0E.2B.34.01.04.01.01.03.01.01.00.00.00.00.00"));
+    private static final AUID TimeStruct_AUID = new AUID(
+        UL.fromDotValue("06.0E.2B.34.01.04.01.01.03.01.06.00.00.00.00.00"));
+    private static final AUID TimeStamp_AUID = new AUID(
+        UL.fromDotValue("06.0E.2B.34.01.04.01.01.03.01.07.00.00.00.00.00"));
+    private static final AUID VersionType_AUID = new AUID(
+        UL.fromDotValue("06.0E.2B.34.01.04.01.01.03.01.03.00.00.00.00.00"));
+    private static final AUID ObjectClass_AUID = new AUID(
+        UL.fromDotValue("06.0E.2B.34.01.01.01.02.06.01.01.04.01.01.00.00"));
+    private static final AUID ByteOrder_AUID = new AUID(
+        UL.fromDotValue("06.0E.2B.34.01.01.01.01.03.01.02.01.02.00.00.00"));
+    private static final AUID InstanceID_AUID = new AUID(
+        UL.fromURN("urn:smpte:ul:060e2b34.01010101.01011502.00000000"));
 
     boolean isNullable;
 
@@ -219,7 +246,65 @@ public class ClassGenerator {
 
     @Override
     public void visit(RecordTypeDefinition def) throws VisitorException {
-      // TODO Auto-generated method stub
+      if (def.getIdentification().equals(AUID_AUID)) {
+
+        this.adapterName = "AUIDAdapter";
+        this.typeName = AUID.class.getName();
+
+      } else if (def.getIdentification().equals(DateStruct_AUID)) {
+
+        this.adapterName = "LocalDateAdapter";
+        this.typeName = LocalDate.class.getName();
+
+      } else if (def.getIdentification().equals(PackageID_AUID)) {
+        this.adapterName = "UMIDAdapter";
+        this.typeName = UMID.class.getName();
+
+      } else if (def.getIdentification().equals(Rational_AUID)) {
+
+        this.adapterName = "RationalAdapter";
+        this.typeName = Fraction.class.getName();
+
+      } else if (def.getIdentification().equals(TimeStruct_AUID)) {
+
+        this.adapterName = "LocalTimeAdapter";
+        this.typeName = LocalTime.class.getName();
+
+      } else if (def.getIdentification().equals(TimeStamp_AUID)) {
+
+        this.adapterName = "LocalDateTimeAdapter";
+        this.typeName = LocalDateTime.class.getName();
+
+      } else if (def.getIdentification().equals(VersionType_AUID)) {
+
+        this.adapterName = VersionAdapter.class.getName();
+        this.typeName = Version.class.getName();
+
+      } else {
+
+        var templateData = new HashMap<String, Object>();
+        templateData.put("name", def.getSymbol());
+
+        var membersData = new ArrayList<HashMap<String, String>>();
+        templateData.put("members", membersData);
+
+        for (var member : def.getMembers()) {
+          Definition memberTypeDef = resolver.getDefinition(member.getType());
+          if (memberTypeDef == null) {
+            throw new RuntimeException(
+                String.format("Bad type %s at member %s.", member.getType().toString(), member.getName()));
+          }
+          TypeMaker tm = getTypeInformation(memberTypeDef, false);
+          var valueData = new HashMap<String, String>();
+          valueData.put("memberName", member.getName());
+          valueData.put("memberTypeName", tm.getTypeName());
+          membersData.add(valueData);
+        }
+
+        generateSource(recordTemplate, def.getSymbol(), templateData);
+        this.adapterName = "RecordAdapter";
+
+      }
     }
 
     @Override
@@ -244,8 +329,10 @@ public class ClassGenerator {
 
     @Override
     public void visit(StrongReferenceTypeDefinition def) throws VisitorException {
-      this.typeName = isNullable ? "Integer" : "int";
-      this.adapterName = "Int32Adapter";
+      ClassDefinition cdef = (ClassDefinition) resolver.getDefinition(def.getReferencedType());
+
+      this.typeName = cdef.getSymbol();
+      this.adapterName = "ClassAdapter";
     }
 
     @Override
@@ -262,12 +349,13 @@ public class ClassGenerator {
       templateData.put("adapterName", adapterName);
 
       Definition itemDef = resolver.getDefinition(def.getElementType());
-      templateData.put("itemTypeName", itemDef.getSymbol());
+      TypeMaker tm = getTypeInformation(itemDef, false);
+      templateData.put("itemTypeName", tm.getTypeName());
 
       generateSource(variableArrayTemplate, adapterName, templateData);
 
       this.adapterName = adapterName;
-      this.typeName = itemDef.getSymbol() + "[]";
+      this.typeName = tm.getTypeName() + "[]";
     }
 
     @Override
