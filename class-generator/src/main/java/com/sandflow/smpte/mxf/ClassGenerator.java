@@ -18,6 +18,7 @@ import org.apache.commons.numbers.fraction.Fraction;
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
 import com.sandflow.smpte.mxf.adapters.BooleanAdapter;
+import com.sandflow.smpte.mxf.adapters.UUIDAdapter;
 import com.sandflow.smpte.mxf.adapters.VersionAdapter;
 import com.sandflow.smpte.regxml.dict.DefinitionResolver;
 import com.sandflow.smpte.regxml.dict.MetaDictionaryCollection;
@@ -46,6 +47,7 @@ import com.sandflow.smpte.regxml.dict.definitions.WeakReferenceTypeDefinition;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UMID;
+import com.sandflow.smpte.util.UUID;
 
 public class ClassGenerator {
   public static final Handlebars handlebars = new Handlebars();
@@ -68,7 +70,7 @@ public class ClassGenerator {
   class TypeMaker extends NullDefinitionVisitor {
     private static final UL INSTANCE_UID_ITEM_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010101.01011502.00000000");
     private static final UL AUID_UL = UL.fromDotValue("06.0E.2B.34.01.04.01.01.01.03.01.00.00.00.00.00");
-    private static final UL UUID_UL = UL.fromDotValue("06.0E.2B.34.01.04.01.01.01.03.03.00.00.00.00.00");
+    private static final UL UUID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01030300.00000000");
     private static final UL DateStruct_UL = UL.fromDotValue("06.0E.2B.34.01.04.01.01.03.01.05.00.00.00.00.00");
     private static final UL PackageID_UL = UL.fromDotValue("06.0E.2B.34.01.04.01.01.01.03.02.00.00.00.00.00");
     private static final UL Rational_UL = UL.fromDotValue("06.0E.2B.34.01.04.01.01.03.01.01.00.00.00.00.00");
@@ -229,6 +231,12 @@ public class ClassGenerator {
 
     @Override
     public void visit(FixedArrayTypeDefinition def) throws VisitorException {
+      if (UUID_UL.equalsIgnoreVersion(def.getIdentification())) {
+        this.typeName = UUID.class.getName();
+        this.adapterName = UUIDAdapter.class.getName();
+        return;
+      }
+      
       var templateData = new HashMap<String, Object>();
 
       String adapterName = def.getSymbol() + "Adapter";
