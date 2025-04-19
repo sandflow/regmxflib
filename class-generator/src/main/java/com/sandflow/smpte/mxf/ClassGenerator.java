@@ -362,6 +362,7 @@ public class ClassGenerator {
       Definition itemDef = resolver.getDefinition(def.getElementType());
       TypeMaker tm = getTypeInformation(itemDef, false);
       templateData.put("itemTypeName", tm.getTypeName());
+      templateData.put("itemAdapterName", tm.getAdapterName());
 
       generateSource(variableArrayTemplate, adapterName, templateData);
 

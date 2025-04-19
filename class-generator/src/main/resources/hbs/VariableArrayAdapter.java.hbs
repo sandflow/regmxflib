@@ -41,7 +41,7 @@ public class {{adapterName}} {
     var items = new {{itemTypeName}}[itemcount]; 
 
     for (int i = 0; i < items.length; i++) {
-      items[i] = {{itemTypeName}}.fromStream(is);
+      items[i] = {{itemAdapterName}}.fromStream(is);
     }
     
     return items;
