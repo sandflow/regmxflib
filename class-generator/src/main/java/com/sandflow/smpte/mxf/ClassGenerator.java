@@ -17,6 +17,7 @@ import org.apache.commons.numbers.fraction.Fraction;
 
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
+import com.sandflow.smpte.mxf.adapters.BooleanAdapter;
 import com.sandflow.smpte.mxf.adapters.VersionAdapter;
 import com.sandflow.smpte.regxml.dict.DefinitionResolver;
 import com.sandflow.smpte.regxml.dict.MetaDictionaryCollection;
@@ -196,11 +197,19 @@ public class ClassGenerator {
       this.adapterName = "ULAdapter";
     }
 
+    private final static UL BOOLEAN_TYPE = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01040100.00000000");
+
     @Override
     public void visit(EnumerationTypeDefinition def) throws VisitorException {
+      if (BOOLEAN_TYPE.equals(def.getIdentification())) {
+        this.adapterName = BooleanAdapter.class.getName();
+        this.typeName = this.isNullable ? "Boolean" : "boolean";
+        return;
+      }
+
       var templateData = new HashMap<String, Object>();
       templateData.put("symbol", def.getSymbol());
-      templateData.put("elementTypeName", "int");
+      templateData.put("valuesTypeName", "int");
 
       var valuesData = new ArrayList<HashMap<String, String>>();
       templateData.put("values", valuesData);
@@ -215,6 +224,7 @@ public class ClassGenerator {
       generateSource(enumerationTemplate, def.getSymbol(), templateData);
 
       this.adapterName = "EnumerationAdapter";
+      this.typeName = def.getSymbol();
     }
 
     @Override
