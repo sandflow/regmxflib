@@ -28,7 +28,7 @@
 * @author Pierre-Anthony Lemieux
 */
 
-package com.sandflow.smpte.mxf.metadatasets;
+package com.sandflow.smpte.mxf.classes;
 
 import com.sandflow.smpte.mxf.annotationprocessor.MXFClassDefinition;
 import com.sandflow.smpte.mxf.annotationprocessor.MXFPropertyDefinition;
@@ -41,7 +41,7 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
 {{#each members}}
   @MXFPropertyDefinition(
     Identification="{{identification}}",
-    Type="{{type}}",
+    AdapterClass="{{adapterName}}",
     isOptional={{isOptional}},
     LocalIdentification={{localIdentification}}
   )

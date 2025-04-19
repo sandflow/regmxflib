@@ -13,8 +13,7 @@ public class J2KDescriptor {
 
   @MXFPropertyDefinition(
     Identification = "urn:smpte:ul:060e2b34.01010102.06010104.02010000",
-    Symbol = "ComponentWidth",
-    Type = "Integer",
+    AdapaterClass = "ComponentWidth",
     isOptional = false,
     LocalIdentification = 12454
   )

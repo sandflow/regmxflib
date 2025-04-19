@@ -28,14 +28,16 @@
 * @author Pierre-Anthony Lemieux
 */
 
-package com.sandflow.smpte.mxf.metadatasets;
+package com.sandflow.smpte.mxf.classes;
 
-import com.sandflow.smpte.mxf.annotationprocessor.MXFClassDefinition;
-import com.sandflow.smpte.mxf.annotationprocessor.MXFPropertyDefinition;
+import com.sandflow.smpte.mxf.annotationprocessor.MXFFieldDefinition;
 
 public class {{name}} {
 
 {{#each members}}
+  @MXFFieldDefinition(
+    AdapterClass="{{memberAdapterName}}"
+  )
   {{memberTypeName}} {{memberName}};
 {{/each}}
 

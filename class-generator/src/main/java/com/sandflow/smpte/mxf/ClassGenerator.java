@@ -296,6 +296,7 @@ public class ClassGenerator {
           }
           TypeMaker tm = getTypeInformation(memberTypeDef, false);
           var valueData = new HashMap<String, String>();
+          valueData.put("memberAdapterName", tm.getAdapterName());
           valueData.put("memberName", member.getName());
           valueData.put("memberTypeName", tm.getTypeName());
           membersData.add(valueData);
@@ -440,6 +441,8 @@ public class ClassGenerator {
     return props;
   }
 
+  final static private  UL TYPE_DEFINITIONS = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.02000000");
+
   public static void generate(MetaDictionaryCollection mds, File generatedSourcesDir)
       throws IOException, URISyntaxException, VisitorException {
 
@@ -454,8 +457,12 @@ public class ClassGenerator {
 
         if (!(def instanceof ClassDefinition))
           continue;
-
+        
         ClassDefinition classDef = (ClassDefinition) def;
+
+        /* skip type definition classes */
+        if (TYPE_DEFINITIONS.equalsWithMask(def.getIdentification(), 0b1111111111111000))
+          continue;
 
         var data = new HashMap<String, Object>();
 
@@ -488,6 +495,7 @@ public class ClassGenerator {
           member.put("identification", propertyDef.getIdentification().toString());
           member.put("type", propertyDef.getType().toString());
           member.put("typeName", t.getTypeName());
+          member.put("adapterName", t.getAdapterName());
           member.put("symbol", propertyDef.getSymbol());
           member.put("localIdentification", Integer.toString(propertyDef.getLocalIdentification()));
           member.put("isOptional", propertyDef.isOptional() ? "true" : "false");
