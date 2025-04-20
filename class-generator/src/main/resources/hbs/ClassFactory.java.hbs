@@ -28,19 +28,21 @@
 * @author Pierre-Anthony Lemieux
 */
 
-package com.sandflow.smpte.mxf.types;
+package com.sandflow.smpte.mxf;
 
-public enum {{symbol}} {
+import java.util.HashMap;
 
-  {{#each values}}{{name}}({{value}}){{#unless @last}},{{/unless}}{{/each}};
+import com.sandflow.smpte.mxf.ClassFactory;
+import com.sandflow.smpte.util.AUID;
+import com.sandflow.smpte.mxf.classes.*;
 
-  private final {{valuesTypeName}} value;
+public class ClassFactory {
+  static HashMap<AUID, Class<?>> classMap = new HashMap<>();
 
-  {{symbol}}(int value) {
-      this.value = value;
+  static {
+    {{#.}}
+    classMap.put(AUID.fromURN("{{getIdentification}}"), {{getSymbol}}.class);
+    {{/.}}
   }
 
-  public {{valuesTypeName}} getValue() {
-      return value;
-  }
 }

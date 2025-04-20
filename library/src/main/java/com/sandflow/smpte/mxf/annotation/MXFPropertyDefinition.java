@@ -1,4 +1,4 @@
-package com.sandflow.smpte.mxf.annotationprocessor;
+package com.sandflow.smpte.mxf.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface MXFPropertyDefinition {
   String Identification();
-  String AdapaterClass();
+  String AdapterClass();
   boolean isOptional();
   int LocalIdentification();
 }

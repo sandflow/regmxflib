@@ -1,7 +1,9 @@
 package com.sandflow.smpte.mxf;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient.Version;
@@ -23,6 +25,7 @@ import com.sandflow.smpte.mxf.adapters.BooleanAdapter;
 import com.sandflow.smpte.mxf.adapters.UUIDAdapter;
 import com.sandflow.smpte.mxf.adapters.VersionAdapter;
 import com.sandflow.smpte.regxml.dict.DefinitionResolver;
+import com.sandflow.smpte.regxml.dict.MetaDictionary;
 import com.sandflow.smpte.regxml.dict.MetaDictionaryCollection;
 import com.sandflow.smpte.regxml.dict.definitions.CharacterTypeDefinition;
 import com.sandflow.smpte.regxml.dict.definitions.ClassDefinition;
@@ -46,10 +49,14 @@ import com.sandflow.smpte.regxml.dict.definitions.StringTypeDefinition;
 import com.sandflow.smpte.regxml.dict.definitions.StrongReferenceTypeDefinition;
 import com.sandflow.smpte.regxml.dict.definitions.VariableArrayTypeDefinition;
 import com.sandflow.smpte.regxml.dict.definitions.WeakReferenceTypeDefinition;
+import com.sandflow.smpte.regxml.dict.exceptions.IllegalDefinitionException;
+import com.sandflow.smpte.regxml.dict.exceptions.IllegalDictionaryException;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UMID;
 import com.sandflow.smpte.util.UUID;
+
+import jakarta.xml.bind.JAXBException;
 
 public class ClassGenerator {
   public static final Handlebars handlebars = new Handlebars();
@@ -57,6 +64,7 @@ public class ClassGenerator {
   public static final Template enumerationTemplate;
   public static final Template variableArrayTemplate;
   public static final Template recordTemplate;
+  public static final Template classFactoryTemplate;
 
   static {
     try {
@@ -64,6 +72,7 @@ public class ClassGenerator {
       enumerationTemplate = handlebars.compile("hbs/Enumeration.java");
       variableArrayTemplate = handlebars.compile("hbs/VariableArrayAdapter.java");
       recordTemplate = handlebars.compile("hbs/Record.java");
+      classFactoryTemplate = handlebars.compile("hbs/ClassFactory.java");
     } catch (Exception e) {
       throw new RuntimeException("Failed to load template", e);
     }
@@ -248,7 +257,7 @@ public class ClassGenerator {
       TypeMaker tm = getTypeInformation(resolver.getDefinition(def.getElementType()), false);
       templateData.put("itemTypeName", tm.getTypeName());
 
-      generateSource(variableArrayTemplate, "com.sandflow.smpte.mxf.types", adapterName, templateData);
+      generateSource(variableArrayTemplate, "com.sandflow.smpte.mxf.adapters", adapterName, templateData);
 
       this.adapterName = adapterName;
       this.typeName = tm.getTypeName() + "[]";
@@ -374,7 +383,7 @@ public class ClassGenerator {
       templateData.put("itemTypeName", tm.getTypeName());
       templateData.put("itemAdapterName", tm.getAdapterName());
 
-      generateSource(variableArrayTemplate, "com.sandflow.smpte.mxf.types", adapterName, templateData);
+      generateSource(variableArrayTemplate, "com.sandflow.smpte.mxf.adapters", adapterName, templateData);
 
       this.adapterName = adapterName;
       this.typeName = tm.getTypeName() + "[]";
@@ -462,12 +471,16 @@ public class ClassGenerator {
     return props;
   }
 
-  final static private  UL TYPE_DEFINITIONS = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.02000000");
+  final static private UL TYPE_DEFINITIONS = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.02000000");
+  private static final AUID IndexTableSegment_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.01100100");
+
 
   public static void generate(MetaDictionaryCollection mds, File generatedSourcesDir)
       throws IOException, URISyntaxException, VisitorException {
 
     ClassGenerator g = new ClassGenerator(mds, generatedSourcesDir);
+
+    var classList = new ArrayList<ClassDefinition>();
 
     for (var md : mds.getDictionaries()) {
 
@@ -478,12 +491,18 @@ public class ClassGenerator {
 
         if (!(def instanceof ClassDefinition))
           continue;
-        
+
         ClassDefinition classDef = (ClassDefinition) def;
 
         /* skip type definition classes */
         if (TYPE_DEFINITIONS.equalsWithMask(def.getIdentification(), 0b1111111111111000))
           continue;
+
+        if (IndexTableSegment_AUID.equals(def.getIdentification()))
+          continue;
+
+
+        classList.add(classDef);
 
         var data = new HashMap<String, Object>();
 
@@ -526,10 +545,14 @@ public class ClassGenerator {
 
         data.put("members", members);
 
-        g.generateSource(classTemplate, "com.sandflow.smpte.mxf.classes", classDef.getSymbol(), data);
+        g.generateSource(classTemplate, "com.sandflow.smpte.mxf.types", classDef.getSymbol(), data);
 
       }
     }
+
+    /* generate the class factory */
+
+    g.generateSource(classFactoryTemplate, "com.sandflow.smpte.mxf", "ClassFactory", classList);
   }
 
   private void generateSource(Template template, String packageName, String symbol, Object data) {
@@ -545,5 +568,32 @@ public class ClassGenerator {
     } catch (Exception e) {
       throw new RuntimeException("Failed to write class file", e);
     }
+  }
+
+  public static void main(String[] args) throws URISyntaxException, IllegalDictionaryException, JAXBException,
+      IOException, IllegalDefinitionException, VisitorException {
+    File dir = new File(args[0]);
+
+    File[] mdFiles = dir.listFiles(
+        new FilenameFilter() {
+
+          @Override
+          public boolean accept(File dir, String name) {
+            return name.endsWith(".xml");
+          }
+        });
+
+    var mds = new MetaDictionaryCollection();
+    for (var mdFile : mdFiles) {
+      var fr = new FileReader(mdFile);
+      mds.addDictionary(MetaDictionary.fromXML(fr));
+    }
+
+    File generatedClassDir = new File(args[1]);
+    if (!generatedClassDir.exists()) {
+      generatedClassDir.mkdirs();
+    }
+
+    ClassGenerator.generate(mds, generatedClassDir);
   }
 }

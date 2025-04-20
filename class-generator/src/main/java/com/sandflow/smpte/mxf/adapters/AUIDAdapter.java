@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Sandflow Consulting, LLC
+ * Copyright (c) 2014, Pierre-Anthony Lemieux (pal@sandflow.com)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,23 +24,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
-* @author Pierre-Anthony Lemieux
-*/
+package com.sandflow.smpte.mxf.adapters;
 
-package com.sandflow.smpte.mxf.types;
+import java.io.IOException;
 
-public enum {{symbol}} {
+import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.util.AUID;
 
-  {{#each values}}{{name}}({{value}}){{#unless @last}},{{/unless}}{{/each}};
+public class AUIDAdapter {
 
-  private final {{valuesTypeName}} value;
-
-  {{symbol}}(int value) {
-      this.value = value;
+  public static AUID fromStream(MXFInputStream is) throws IOException {
+    return is.readAUID();
   }
 
-  public {{valuesTypeName}} getValue() {
-      return value;
-  }
 }

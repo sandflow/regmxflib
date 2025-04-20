@@ -30,13 +30,16 @@
 
 package com.sandflow.smpte.mxf.adapters;
 
+import java.io.IOException;
+
+import com.sandflow.smpte.mxf.types.*;
 import com.sandflow.smpte.mxf.MXFInputStream;
 
 public class {{adapterName}} {
  
-   public static {{itemTypeName}}[] fromStream(MXFInputStream is) {
-    long itemcount = is.readInt() & 0xfffffffL;
-    long itemlength = is.readInt() & 0xfffffffL;
+   public static {{itemTypeName}}[] fromStream(MXFInputStream is)  throws IOException {
+    int itemcount = (int) (is.readInt() & 0xfffffffL);
+    int itemlength = (int) (is.readInt() & 0xfffffffL);
 
     var items = new {{itemTypeName}}[itemcount]; 
 

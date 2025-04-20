@@ -67,10 +67,15 @@
         </dependency>
         <dependency>
             <groupId>com.sandflow</groupId>
+            <artifactId>class-generator</artifactId>
+            <version>1.0.0-alpha.1</version>
+        </dependency>
+        <!-- <dependency>
+            <groupId>com.sandflow</groupId>
             <artifactId>annotation-processor</artifactId>
             <version>1.0.0-alpha.1</version>
             <scope>provided</scope>
-        </dependency>
+        </dependency> -->
     </dependencies>
 
     <build>
@@ -96,18 +101,46 @@
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
-             <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.11.0</version>
-        <configuration>
-  <annotationProcessors>
-  com.sandflow.smpte.mxf.annotationprocessor.ClassFactoryProcessor
-  </annotationProcessors>
-
-        </configuration>
-      </plugin>
+            <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.1.0</version>
+            <executions>
+                <execution>
+                <phase>generate-sources</phase>
+                <goals>
+                    <goal>java</goal>
+                </goals>
+                <configuration>
+                    <mainClass>com.sandflow.smpte.mxf.ClassGenerator</mainClass>
+                    <arguments>
+                    <argument>${project.basedir}/src/main/resources/regxml-dicts</argument>
+                    <argument>${project.build.directory}/generated-sources</argument>
+                    </arguments>
+                </configuration>
+                </execution>
+            </executions>
+            </plugin>
+            <plugin>
+  <groupId>org.codehaus.mojo</groupId>
+  <artifactId>build-helper-maven-plugin</artifactId>
+  <version>3.2.0</version>
+  <executions>
+    <execution>
+      <phase>generate-sources</phase>
+      <goals>
+        <goal>add-source</goal>
+      </goals>
+      <configuration>
+        <sources>
+          <source>${project.build.directory}/generated-sources</source>
+        </sources>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
         </plugins>
-        <resources>
+        <!-- <resources>
             <resource>
                 <targetPath>config</targetPath>
                 <directory>${com.sandflow.config.dir}</directory>
@@ -117,7 +150,7 @@
                 <targetPath>resources</targetPath>
                 <directory>${com.sandflow.resources.dir}</directory>
             </resource>
-        </resources>
+        </resources> -->
     </build>
 
     <profiles>

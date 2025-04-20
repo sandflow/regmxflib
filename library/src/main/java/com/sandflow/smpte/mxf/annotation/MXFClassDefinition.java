@@ -1,4 +1,4 @@
-package com.sandflow.smpte.mxf.annotationprocessor;
+package com.sandflow.smpte.mxf.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
