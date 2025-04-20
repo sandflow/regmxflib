@@ -265,12 +265,12 @@ public class ClassGenerator {
 
     @Override
     public void visit(IndirectTypeDefinition def) throws VisitorException {
-      // TODO Auto-generated method stub
+      throw new VisitorException("IndirectTypesDefinition");
     }
 
     @Override
     public void visit(OpaqueTypeDefinition def) throws VisitorException {
-      // TODO Auto-generated method stub
+      throw new VisitorException("OpaqueTypeDefinition");
     }
 
     @Override
@@ -347,14 +347,30 @@ public class ClassGenerator {
 
     @Override
     public void visit(SetTypeDefinition def) throws VisitorException {
-      this.typeName = isNullable ? "Integer" : "int";
-      this.adapterName = "Int32Adapter";
+      /*
+       * TODO: essentially the same as variable array, but need to check for
+       * uniqueness?
+       */
+      var templateData = new HashMap<String, Object>();
+
+      String adapterName = def.getSymbol() + "Adapter";
+      templateData.put("adapterName", adapterName);
+
+      Definition itemDef = resolver.getDefinition(def.getElementType());
+      TypeMaker tm = getTypeInformation(itemDef, false);
+      templateData.put("itemTypeName", tm.getTypeName());
+      templateData.put("itemAdapterName", tm.getAdapterName());
+
+      generateSource(variableArrayTemplate, "com.sandflow.smpte.mxf.adapters", adapterName, templateData);
+
+      this.adapterName = adapterName;
+      this.typeName = tm.getTypeName() + "[]";
     }
 
     @Override
     public void visit(StreamTypeDefinition def) throws VisitorException {
-      this.typeName = isNullable ? "Integer" : "int";
-      this.adapterName = "Int32Adapter";
+      throw new VisitorException("StreamTypeDefinition");
+
     }
 
     @Override
@@ -367,8 +383,17 @@ public class ClassGenerator {
 
     @Override
     public void visit(StringTypeDefinition def) throws VisitorException {
-      this.typeName = isNullable ? "Integer" : "int";
-      this.adapterName = "Int32Adapter";
+      this.typeName = "String";
+
+      if (def.getIdentification().equals(Character_UL)) {
+        this.adapterName = "UTF16Adapter";
+      } else if (def.getIdentification().equals(Char_UL)) {
+        this.adapterName = "USASCIIAdapter";
+      } else if (def.getIdentification().equals(UTF8Character_UL)) {
+        this.adapterName = "UTF8Adapter";
+      } else {
+        throw new VisitorException("Unknown character type " + def.getIdentification());
+      }
     }
 
     @Override
@@ -416,14 +441,26 @@ public class ClassGenerator {
 
     @Override
     public void visit(FloatTypeDefinition def) throws VisitorException {
-      this.typeName = isNullable ? "Integer" : "int";
-      this.adapterName = "Int32Adapter";
+      switch (def.getSize()) {
+        case HALF:
+          this.typeName = "float";
+          this.adapterName = "HalfFloatAdapter";
+          break;
+        case SINGLE:
+          this.typeName = "float";
+          this.adapterName = "FloatAdapter";
+          break;
+        case DOUBLE:
+          this.typeName = "double";
+          this.adapterName = "DoubleAdapter";
+          break;
+      }
     }
 
     @Override
     public void visit(LensSerialFloatTypeDefinition def) throws VisitorException {
-      this.typeName = isNullable ? "Integer" : "int";
-      this.adapterName = "Int32Adapter";
+      throw new VisitorException("LensSerialFloatTypeDefinition");
+
     }
 
   }
@@ -474,7 +511,6 @@ public class ClassGenerator {
   final static private UL TYPE_DEFINITIONS = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.02000000");
   private static final AUID IndexTableSegment_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.01100100");
 
-
   public static void generate(MetaDictionaryCollection mds, File generatedSourcesDir)
       throws IOException, URISyntaxException, VisitorException {
 
@@ -501,7 +537,6 @@ public class ClassGenerator {
         if (IndexTableSegment_AUID.equals(def.getIdentification()))
           continue;
 
-
         classList.add(classDef);
 
         var data = new HashMap<String, Object>();
@@ -519,31 +554,36 @@ public class ClassGenerator {
           data.put("parentClassName", parentClass.getSymbol());
         }
 
-        var members = new ArrayList<HashMap<String, String>>();
+        try {
 
-        for (var propertyAUID : mds.getMembersOf(classDef)) {
-          PropertyDefinition propertyDef = (PropertyDefinition) mds.getDefinition(propertyAUID);
-          if (propertyDef == null) {
-            throw new RuntimeException("Failed to find property definition for " + propertyAUID);
+          var members = new ArrayList<HashMap<String, String>>();
+
+          for (var propertyAUID : mds.getMembersOf(classDef)) {
+            PropertyDefinition propertyDef = (PropertyDefinition) mds.getDefinition(propertyAUID);
+            if (propertyDef == null) {
+              throw new RuntimeException("Failed to find property definition for " + propertyAUID);
+            }
+
+            Definition typeDef = g.resolver.getDefinition(propertyDef.getType());
+
+            TypeMaker t = g.getTypeInformation(typeDef, true);
+
+            var member = new HashMap<String, String>();
+            member.put("identification", propertyDef.getIdentification().toString());
+            member.put("type", propertyDef.getType().toString());
+            member.put("typeName", t.getTypeName());
+            member.put("adapterName", t.getAdapterName());
+            member.put("symbol", propertyDef.getSymbol());
+            member.put("localIdentification", Integer.toString(propertyDef.getLocalIdentification()));
+            member.put("isOptional", propertyDef.isOptional() ? "true" : "false");
+
+            members.add(member);
           }
+          data.put("members", members);
 
-          Definition typeDef = g.resolver.getDefinition(propertyDef.getType());
-
-          TypeMaker t = g.getTypeInformation(typeDef, true);
-
-          var member = new HashMap<String, String>();
-          member.put("identification", propertyDef.getIdentification().toString());
-          member.put("type", propertyDef.getType().toString());
-          member.put("typeName", t.getTypeName());
-          member.put("adapterName", t.getAdapterName());
-          member.put("symbol", propertyDef.getSymbol());
-          member.put("localIdentification", Integer.toString(propertyDef.getLocalIdentification()));
-          member.put("isOptional", propertyDef.isOptional() ? "true" : "false");
-
-          members.add(member);
+        } catch (Exception e) {
+          continue;
         }
-
-        data.put("members", members);
 
         g.generateSource(classTemplate, "com.sandflow.smpte.mxf.types", classDef.getSymbol(), data);
 
