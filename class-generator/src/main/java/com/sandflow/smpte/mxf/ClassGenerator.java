@@ -5,6 +5,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient.Version;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -223,7 +225,7 @@ public class ClassGenerator {
         valuesData.add(valueData);
       }
 
-      generateSource(enumerationTemplate, def.getSymbol(), templateData);
+      generateSource(enumerationTemplate, "com.sandflow.smpte.mxf.types", def.getSymbol(), templateData);
 
       this.adapterName = "EnumerationAdapter";
       this.typeName = def.getSymbol();
@@ -236,7 +238,7 @@ public class ClassGenerator {
         this.adapterName = UUIDAdapter.class.getName();
         return;
       }
-      
+
       var templateData = new HashMap<String, Object>();
 
       String adapterName = def.getSymbol() + "Adapter";
@@ -246,7 +248,7 @@ public class ClassGenerator {
       TypeMaker tm = getTypeInformation(resolver.getDefinition(def.getElementType()), false);
       templateData.put("itemTypeName", tm.getTypeName());
 
-      generateSource(variableArrayTemplate, adapterName, templateData);
+      generateSource(variableArrayTemplate, "com.sandflow.smpte.mxf.types", adapterName, templateData);
 
       this.adapterName = adapterName;
       this.typeName = tm.getTypeName() + "[]";
@@ -320,7 +322,7 @@ public class ClassGenerator {
           membersData.add(valueData);
         }
 
-        generateSource(recordTemplate, def.getSymbol(), templateData);
+        generateSource(recordTemplate, "com.sandflow.smpte.mxf.types", def.getSymbol(), templateData);
         this.adapterName = "RecordAdapter";
 
       }
@@ -372,7 +374,7 @@ public class ClassGenerator {
       templateData.put("itemTypeName", tm.getTypeName());
       templateData.put("itemAdapterName", tm.getAdapterName());
 
-      generateSource(variableArrayTemplate, adapterName, templateData);
+      generateSource(variableArrayTemplate, "com.sandflow.smpte.mxf.types", adapterName, templateData);
 
       this.adapterName = adapterName;
       this.typeName = tm.getTypeName() + "[]";
@@ -524,15 +526,19 @@ public class ClassGenerator {
 
         data.put("members", members);
 
-        g.generateSource(classTemplate, classDef.getSymbol(), data);
+        g.generateSource(classTemplate, "com.sandflow.smpte.mxf.classes", classDef.getSymbol(), data);
 
       }
     }
   }
 
-  private void generateSource(Template template, String symbol, Object data) {
+  private void generateSource(Template template, String packageName, String symbol, Object data) {
     try {
-      var classFile = new File(generatedSourcesDir, symbol + ".java");
+      var classDir = new File(generatedSourcesDir, packageName.replace(".", "/"));
+      if (!classDir.exists()) {
+        classDir.mkdirs();
+      }
+      var classFile = new File(classDir, symbol + ".java");
       var os = new FileWriter(classFile);
       os.write(template.apply(data));
       os.close();
