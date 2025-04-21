@@ -36,7 +36,6 @@ import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.http.HttpClient.Version;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -50,8 +49,11 @@ import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
 import com.sandflow.smpte.mxf.adapters.BooleanAdapter;
 import com.sandflow.smpte.mxf.adapters.ClassAdapter;
+import com.sandflow.smpte.mxf.adapters.UTF16StringAdapter;
+import com.sandflow.smpte.mxf.adapters.UTF8StringAdapter;
 import com.sandflow.smpte.mxf.adapters.UUIDAdapter;
 import com.sandflow.smpte.mxf.adapters.VersionAdapter;
+import com.sandflow.smpte.mxf.classes.Version;
 import com.sandflow.smpte.regxml.dict.DefinitionResolver;
 import com.sandflow.smpte.regxml.dict.MetaDictionary;
 import com.sandflow.smpte.regxml.dict.MetaDictionaryCollection;
@@ -91,6 +93,7 @@ public class ClassGenerator {
   public static final Template classTemplate;
   public static final Template enumerationTemplate;
   public static final Template variableArrayTemplate;
+  public static final Template fixedArrayTemplate;
   public static final Template recordTemplate;
   public static final Template classFactoryTemplate;
 
@@ -101,6 +104,7 @@ public class ClassGenerator {
       variableArrayTemplate = handlebars.compile("hbs/VariableArrayAdapter.java");
       recordTemplate = handlebars.compile("hbs/Record.java");
       classFactoryTemplate = handlebars.compile("hbs/ClassFactory.java");
+      fixedArrayTemplate = handlebars.compile("hbs/FixedArrayAdapter.java");
     } catch (Exception e) {
       throw new RuntimeException("Failed to load template", e);
     }
@@ -247,11 +251,11 @@ public class ClassGenerator {
       this.typeName = "String";
 
       if (def.getIdentification().equals(Character_UL)) {
-        this.adapterName = "UTF16Adapter";
+        this.adapterName = UTF16StringAdapter.class.getName();
       } else if (def.getIdentification().equals(Char_UL)) {
         this.adapterName = "USASCIIAdapter";
       } else if (def.getIdentification().equals(UTF8Character_UL)) {
-        this.adapterName = "UTF8Adapter";
+        this.adapterName = UTF8StringAdapter.class.getName();
       } else {
         throw new VisitorException("Unknown character type " + def.getIdentification());
       }
@@ -356,8 +360,9 @@ public class ClassGenerator {
 
       TypeMaker tm = getTypeInformation(resolver.getDefinition(def.getElementType()), false);
       templateData.put("itemTypeName", tm.getTypeName());
+      templateData.put("itemAdapterName", tm.getAdapterName());
 
-      generateSource(variableArrayTemplate, "com.sandflow.smpte.mxf.adapters", adapterName, templateData);
+      generateSource(fixedArrayTemplate, "com.sandflow.smpte.mxf.adapters", adapterName, templateData);
 
       this.adapterName = adapterName;
       this.typeName = tm.getTypeName() + "[]";

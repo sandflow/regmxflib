@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Sandflow Consulting, LLC
+ * Copyright (c) 2014, Pierre-Anthony Lemieux (pal@sandflow.com)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,21 +24,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
-* @author Pierre-Anthony Lemieux
-*/
+package com.sandflow.smpte.mxf.adapters;
 
-package com.sandflow.smpte.mxf.types;
+import java.io.IOException;
 
-import com.sandflow.smpte.mxf.annotation.MXFFieldDefinition;
+import org.apache.commons.numbers.fraction.Fraction;
 
-public class {{name}} {
+import com.sandflow.smpte.mxf.MXFInputContext;
+import com.sandflow.smpte.mxf.MXFInputStream;
 
-{{#each members}}
-  @MXFFieldDefinition(
-    AdapterClass="{{memberAdapterName}}"
-  )
-  {{memberTypeName}} {{memberName}};
-{{/each}}
+public class RationalAdapter {
+
+  public static Fraction fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+    int numerator = is.readInt();
+    int denominator = is.readInt();
+
+    return Fraction.of(numerator, denominator);
+  }
 
 }
