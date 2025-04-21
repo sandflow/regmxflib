@@ -7,6 +7,9 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface MXFFieldDefinition {
-  String AdapterClass();
+public @interface MXFPropertyDefinition {
+  String Identification();
+  Class<?> AdapterClass();
+  boolean isOptional();
+  int LocalIdentification();
 }

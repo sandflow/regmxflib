@@ -32,6 +32,7 @@ package com.sandflow.smpte.mxf.types;
 
 import com.sandflow.smpte.mxf.annotation.MXFClassDefinition;
 import com.sandflow.smpte.mxf.annotation.MXFPropertyDefinition;
+import com.sandflow.smpte.mxf.adapters.*;
 
 @MXFClassDefinition(
   Identification="{{identification}}"
@@ -41,7 +42,7 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
 {{#each members}}
   @MXFPropertyDefinition(
     Identification="{{identification}}",
-    AdapterClass="{{adapterName}}",
+    AdapterClass={{adapterName}}.class,
     isOptional={{isOptional}},
     LocalIdentification={{localIdentification}}
   )

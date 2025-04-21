@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Sandflow Consulting, LLC
+ * Copyright (c) 2014, Pierre-Anthony Lemieux (pal@sandflow.com)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,22 +24,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
-* @author Pierre-Anthony Lemieux
-*/
+package com.sandflow.smpte.mxf.adapters;
 
-package com.sandflow.smpte.mxf.types;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
-import com.sandflow.smpte.mxf.annotation.MXFFieldDefinition;
-import com.sandflow.smpte.mxf.adapters.*;
+import com.sandflow.smpte.mxf.MXFInputContext;
+import com.sandflow.smpte.mxf.MXFInputStream;
 
-public class {{name}} {
+public class ASCIIStringAdapter {
 
-{{#each members}}
-  @MXFFieldDefinition(
-    AdapterClass={{memberAdapterName}}.class
-  )
-  {{memberTypeName}} {{memberName}};
-{{/each}}
+  public static String fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+    var isr = new InputStreamReader(is, StandardCharsets.US_ASCII);
+    var sb = new StringBuilder();
+
+    var buf = new char[256];
+    int c;
+    while((c = isr.read(buf)) != -1)
+      sb.append(buf, 0, c);
+    return sb.toString();
+  }
 
 }

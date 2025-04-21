@@ -47,10 +47,25 @@ import org.apache.commons.numbers.fraction.Fraction;
 
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
+import com.sandflow.smpte.mxf.adapters.ASCIIStringAdapter;
+import com.sandflow.smpte.mxf.adapters.AUIDAdapter;
 import com.sandflow.smpte.mxf.adapters.BooleanAdapter;
 import com.sandflow.smpte.mxf.adapters.ClassAdapter;
+import com.sandflow.smpte.mxf.adapters.EnumerationAdapter;
+import com.sandflow.smpte.mxf.adapters.Int16Adapter;
+import com.sandflow.smpte.mxf.adapters.Int32Adapter;
+import com.sandflow.smpte.mxf.adapters.Int64Adapter;
+import com.sandflow.smpte.mxf.adapters.Int8Adapter;
+import com.sandflow.smpte.mxf.adapters.LocalDateAdapter;
+import com.sandflow.smpte.mxf.adapters.LocalDateTimeAdapter;
+import com.sandflow.smpte.mxf.adapters.LocalTimeAdapter;
 import com.sandflow.smpte.mxf.adapters.RationalAdapter;
 import com.sandflow.smpte.mxf.adapters.RecordAdapter;
+import com.sandflow.smpte.mxf.adapters.UInt16Adapter;
+import com.sandflow.smpte.mxf.adapters.UInt32Adapter;
+import com.sandflow.smpte.mxf.adapters.UInt64Adapter;
+import com.sandflow.smpte.mxf.adapters.UInt8Adapter;
+import com.sandflow.smpte.mxf.adapters.UMIDAdapter;
 import com.sandflow.smpte.mxf.adapters.UTF16StringAdapter;
 import com.sandflow.smpte.mxf.adapters.UTF8StringAdapter;
 import com.sandflow.smpte.mxf.adapters.UUIDAdapter;
@@ -87,6 +102,7 @@ import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UMID;
 import com.sandflow.smpte.util.UUID;
+import com.sandflow.smpte.util.xml.ULAdapter;
 
 import jakarta.xml.bind.JAXBException;
 
@@ -113,6 +129,7 @@ public class ClassGenerator {
   }
 
   static final String TYPE_PACKAGE_NAME = "com.sandflow.smpte.mxf.types";
+  static final String ADAPTER_PACKAGE_NAME = "com.sandflow.smpte.mxf.adapters";
 
   Definition findBaseDefinition(Definition definition) {
 
@@ -257,7 +274,7 @@ public class ClassGenerator {
       if (def.getIdentification().equals(Character_UL)) {
         this.adapterName = UTF16StringAdapter.class.getName();
       } else if (def.getIdentification().equals(Char_UL)) {
-        this.adapterName = "USASCIIAdapter";
+        this.adapterName = ASCIIStringAdapter.class.getName();
       } else if (def.getIdentification().equals(UTF8Character_UL)) {
         this.adapterName = UTF8StringAdapter.class.getName();
       } else {
@@ -271,19 +288,19 @@ public class ClassGenerator {
         switch (def.getSize()) {
           case ONE:
             this.typeName = this.isNullable ? "Byte" : "byte";
-            this.adapterName = "Int8Adapter";
+            this.adapterName = Int8Adapter.class.getName();
             break;
           case TWO:
             this.typeName = this.isNullable ? "Short" : "short";
-            this.adapterName = "Int16Adapter";
+            this.adapterName = Int16Adapter.class.getName();
             break;
           case FOUR:
             this.typeName = this.isNullable ? "Integer" : "int";
-            this.adapterName = "Int32Adapter";
+            this.adapterName = Int32Adapter.class.getName();
             break;
           case EIGHT:
             this.typeName = this.isNullable ? "Long" : "long";
-            this.adapterName = "Int64Adapter";
+            this.adapterName = Int64Adapter.class.getName();
             break;
           default:
             throw new VisitorException("Unknown integer type " + def.getIdentification());
@@ -292,19 +309,19 @@ public class ClassGenerator {
         switch (def.getSize()) {
           case ONE:
             this.typeName = this.isNullable ? "Short" : "short";
-            this.adapterName = "UInt8Adapter";
+            this.adapterName = UInt8Adapter.class.getName();
             break;
           case TWO:
             this.typeName = this.isNullable ? "Integer" : "int";
-            this.adapterName = "UInt16Adapter";
+            this.adapterName = UInt16Adapter.class.getName();
             break;
           case FOUR:
             this.typeName = this.isNullable ? "Long" : "long";
-            this.adapterName = "UInt32Adapter";
+            this.adapterName = UInt32Adapter.class.getName();
             break;
           case EIGHT:
             this.typeName = this.isNullable ? "Long" : "long";
-            this.adapterName = "UInt64Adapter";
+            this.adapterName = UInt64Adapter.class.getName();
             break;
           default:
             throw new VisitorException("Unknown integer type " + def.getIdentification());
@@ -315,7 +332,7 @@ public class ClassGenerator {
     @Override
     public void visit(ExtendibleEnumerationTypeDefinition def) throws VisitorException {
       this.typeName = "com.sandflow.smpte.util.UL";
-      this.adapterName = "ULAdapter";
+      this.adapterName = ULAdapter.class.getName();
     }
 
     private final static UL BOOLEAN_TYPE = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01040100.00000000");
@@ -344,7 +361,7 @@ public class ClassGenerator {
 
       generateSource(enumerationTemplate, TYPE_PACKAGE_NAME, def.getSymbol(), templateData);
 
-      this.adapterName = "EnumerationAdapter";
+      this.adapterName = EnumerationAdapter.class.getName();
       this.typeName = TYPE_PACKAGE_NAME + "." + def.getSymbol();
     }
 
@@ -359,7 +376,7 @@ public class ClassGenerator {
       var templateData = new HashMap<String, Object>();
 
       String adapterName = def.getSymbol() + "Adapter";
-      templateData.put("adapterName", adapterName);
+      templateData.put("adapterName", def.getSymbol() + "Adapter");
       templateData.put("itemCount", def.getElementCount());
 
       TypeMaker tm = getTypeInformation(resolver.getDefinition(def.getElementType()), false);
@@ -368,7 +385,7 @@ public class ClassGenerator {
 
       generateSource(fixedArrayTemplate, "com.sandflow.smpte.mxf.adapters", adapterName, templateData);
 
-      this.adapterName = adapterName;
+      this.adapterName = ADAPTER_PACKAGE_NAME + "." + adapterName;
       this.typeName = tm.getTypeName() + "[]";
     }
 
@@ -386,16 +403,16 @@ public class ClassGenerator {
     public void visit(RecordTypeDefinition def) throws VisitorException {
       if (def.getIdentification().equals(AUID_AUID)) {
 
-        this.adapterName = "AUIDAdapter";
+        this.adapterName = AUIDAdapter.class.getName();
         this.typeName = AUID.class.getName();
 
       } else if (def.getIdentification().equals(DateStruct_AUID)) {
 
-        this.adapterName = "LocalDateAdapter";
+        this.adapterName = LocalDateAdapter.class.getName();
         this.typeName = LocalDate.class.getName();
 
       } else if (def.getIdentification().equals(PackageID_AUID)) {
-        this.adapterName = "UMIDAdapter";
+        this.adapterName = UMIDAdapter.class.getName();
         this.typeName = UMID.class.getName();
 
       } else if (def.getIdentification().equals(Rational_AUID)) {
@@ -405,12 +422,12 @@ public class ClassGenerator {
 
       } else if (def.getIdentification().equals(TimeStruct_AUID)) {
 
-        this.adapterName = "LocalTimeAdapter";
+        this.adapterName = LocalTimeAdapter.class.getName();
         this.typeName = LocalTime.class.getName();
 
       } else if (def.getIdentification().equals(TimeStamp_AUID)) {
 
-        this.adapterName = "LocalDateTimeAdapter";
+        this.adapterName = LocalDateTimeAdapter.class.getName();
         this.typeName = LocalDateTime.class.getName();
 
       } else if (def.getIdentification().equals(VersionType_AUID)) {
@@ -501,11 +518,11 @@ public class ClassGenerator {
       Definition chrdef = findBaseDefinition(resolver.getDefinition(def.getElementType()));
 
       if (chrdef.getIdentification().equals(Character_UL)) {
-        this.adapterName = "UTF16Adapter";
+        this.adapterName = UTF16StringAdapter.class.getName();
       } else if (chrdef.getIdentification().equals(Char_UL)) {
-        this.adapterName = "USASCIIAdapter";
+        this.adapterName = ASCIIStringAdapter.class.getName();
       } else if (chrdef.getIdentification().equals(UTF8Character_UL)) {
-        this.adapterName = "UTF8Adapter";
+        this.adapterName = UTF8StringAdapter.class.getName();
       } else {
         throw new VisitorException("Unknown character type " + def.getIdentification());
       }
@@ -523,9 +540,9 @@ public class ClassGenerator {
       templateData.put("itemTypeName", tm.getTypeName());
       templateData.put("itemAdapterName", tm.getAdapterName());
 
-      generateSource(variableArrayTemplate, "com.sandflow.smpte.mxf.adapters", adapterName, templateData);
+      generateSource(variableArrayTemplate, ADAPTER_PACKAGE_NAME, adapterName, templateData);
 
-      this.adapterName = adapterName;
+      this.adapterName = ADAPTER_PACKAGE_NAME + "." + adapterName;
       this.typeName = tm.getTypeName() + "[]";
     }
 

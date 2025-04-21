@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Sandflow Consulting, LLC
+ * Copyright (c) 2014, Pierre-Anthony Lemieux (pal@sandflow.com)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,22 +24,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
-* @author Pierre-Anthony Lemieux
-*/
+package com.sandflow.smpte.mxf.adapters;
 
-package com.sandflow.smpte.mxf.types;
+import java.io.IOException;
+import java.time.LocalDate;
 
-import com.sandflow.smpte.mxf.annotation.MXFFieldDefinition;
-import com.sandflow.smpte.mxf.adapters.*;
+import com.sandflow.smpte.mxf.MXFInputContext;
+import com.sandflow.smpte.mxf.MXFInputStream;
 
-public class {{name}} {
+public class LocalDateAdapter {
 
-{{#each members}}
-  @MXFFieldDefinition(
-    AdapterClass={{memberAdapterName}}.class
-  )
-  {{memberTypeName}} {{memberName}};
-{{/each}}
+  public static LocalDate fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+    int year = is.readUnsignedShort();
+    int month = is.readUnsignedByte();
+    int day = is.readUnsignedByte();
+
+    return LocalDate.of(year, month, day);
+  }
 
 }
