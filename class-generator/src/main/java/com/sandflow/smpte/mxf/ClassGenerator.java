@@ -49,6 +49,8 @@ import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
 import com.sandflow.smpte.mxf.adapters.BooleanAdapter;
 import com.sandflow.smpte.mxf.adapters.ClassAdapter;
+import com.sandflow.smpte.mxf.adapters.RationalAdapter;
+import com.sandflow.smpte.mxf.adapters.RecordAdapter;
 import com.sandflow.smpte.mxf.adapters.UTF16StringAdapter;
 import com.sandflow.smpte.mxf.adapters.UTF8StringAdapter;
 import com.sandflow.smpte.mxf.adapters.UUIDAdapter;
@@ -109,6 +111,8 @@ public class ClassGenerator {
       throw new RuntimeException("Failed to load template", e);
     }
   }
+
+  static final String TYPE_PACKAGE_NAME = "com.sandflow.smpte.mxf.types";
 
   Definition findBaseDefinition(Definition definition) {
 
@@ -240,9 +244,9 @@ public class ClassGenerator {
       data.put("members", members);
 
       classList.add(def);
-      generateSource(classTemplate, "com.sandflow.smpte.mxf.types", def.getSymbol(), data);
+      generateSource(classTemplate, TYPE_PACKAGE_NAME, def.getSymbol(), data);
 
-      this.typeName = def.getSymbol();
+      this.typeName = TYPE_PACKAGE_NAME + "." + def.getSymbol();
       this.adapterName = ClassAdapter.class.getName();
     }
 
@@ -338,10 +342,10 @@ public class ClassGenerator {
         valuesData.add(valueData);
       }
 
-      generateSource(enumerationTemplate, "com.sandflow.smpte.mxf.types", def.getSymbol(), templateData);
+      generateSource(enumerationTemplate, TYPE_PACKAGE_NAME, def.getSymbol(), templateData);
 
       this.adapterName = "EnumerationAdapter";
-      this.typeName = def.getSymbol();
+      this.typeName = TYPE_PACKAGE_NAME + "." + def.getSymbol();
     }
 
     @Override
@@ -396,7 +400,7 @@ public class ClassGenerator {
 
       } else if (def.getIdentification().equals(Rational_AUID)) {
 
-        this.adapterName = "RationalAdapter";
+        this.adapterName = RationalAdapter.class.getName();
         this.typeName = Fraction.class.getName();
 
       } else if (def.getIdentification().equals(TimeStruct_AUID)) {
@@ -436,10 +440,10 @@ public class ClassGenerator {
           membersData.add(valueData);
         }
 
-        generateSource(recordTemplate, "com.sandflow.smpte.mxf.types", def.getSymbol(), templateData);
+        generateSource(recordTemplate, TYPE_PACKAGE_NAME, def.getSymbol(), templateData);
 
-        this.typeName = def.getSymbol();
-        this.adapterName = "RecordAdapter";
+        this.typeName = TYPE_PACKAGE_NAME + "." + def.getSymbol();
+        this.adapterName = RecordAdapter.class.getName();
 
       }
     }
@@ -636,7 +640,7 @@ public class ClassGenerator {
       for (var def : md.getDefinitions()) {
         try {
           if (def instanceof ClassDefinition)
-            g.getTypeInformation(def, false);
+            g.getTypeInformation(def, true);
         } finally {
           continue;
         }
