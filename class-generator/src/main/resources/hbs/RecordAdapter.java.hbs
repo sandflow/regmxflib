@@ -28,15 +28,23 @@
 * @author Pierre-Anthony Lemieux
 */
 
-package com.sandflow.smpte.mxf.types;
+package com.sandflow.smpte.mxf.adapters;
 
-import com.sandflow.smpte.mxf.annotation.MXFFieldDefinition;
-import com.sandflow.smpte.mxf.adapters.*;
+import java.io.IOException;
 
-public class {{name}} {
+import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFInputContext;
+
+public class {{adapterName}} {
+ 
+  public static {{fqdnName}} fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
+    {{fqdnName}} r = new {{fqdnName}}();
 
 {{#each members}}
-  public {{memberTypeName}} {{memberName}};
+    r.{{memberName}} = {{memberAdapterName}}.fromStream(is, ctx);
 {{/each}}
 
+    return r;
+  }
+ 
 }

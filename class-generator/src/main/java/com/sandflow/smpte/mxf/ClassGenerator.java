@@ -113,6 +113,7 @@ public class ClassGenerator {
   public static final Template variableArrayTemplate;
   public static final Template fixedArrayTemplate;
   public static final Template recordTemplate;
+  public static final Template recordAdapterTemplate;
   public static final Template classFactoryTemplate;
 
   static {
@@ -123,6 +124,7 @@ public class ClassGenerator {
       recordTemplate = handlebars.compile("hbs/Record.java");
       classFactoryTemplate = handlebars.compile("hbs/ClassFactoryInitializer.java");
       fixedArrayTemplate = handlebars.compile("hbs/FixedArrayAdapter.java");
+      recordAdapterTemplate = handlebars.compile("hbs/RecordAdapter.java");
     } catch (Exception e) {
       throw new RuntimeException("Failed to load template", e);
     }
@@ -383,7 +385,7 @@ public class ClassGenerator {
       templateData.put("itemTypeName", tm.getTypeName());
       templateData.put("itemAdapterName", tm.getAdapterName());
 
-      generateSource(fixedArrayTemplate, "com.sandflow.smpte.mxf.adapters", adapterName, templateData);
+      generateSource(fixedArrayTemplate, ADAPTER_PACKAGE_NAME, adapterName, templateData);
 
       this.adapterName = ADAPTER_PACKAGE_NAME + "." + adapterName;
       this.typeName = tm.getTypeName() + "[]";
@@ -459,8 +461,15 @@ public class ClassGenerator {
 
         generateSource(recordTemplate, TYPE_PACKAGE_NAME, def.getSymbol(), templateData);
 
+        String adapterName = def.getSymbol() + "Adapter";
+        templateData.put("adapterName", adapterName);
+
         this.typeName = TYPE_PACKAGE_NAME + "." + def.getSymbol();
-        this.adapterName = RecordAdapter.class.getName();
+        this.adapterName = ADAPTER_PACKAGE_NAME + "." + adapterName;
+
+        templateData.put("fqdnName", this.typeName);
+        
+        generateSource(recordAdapterTemplate, ADAPTER_PACKAGE_NAME, adapterName, templateData);
 
       }
     }
