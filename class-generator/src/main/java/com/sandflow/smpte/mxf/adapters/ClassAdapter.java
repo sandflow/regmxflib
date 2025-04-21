@@ -34,6 +34,11 @@ import com.sandflow.smpte.mxf.MXFInputStream;
 public class ClassAdapter {
 
   public static <T> T fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+    var uuid = is.readUUID();
+    var s = ctx.getSet(uuid);
+    if (s == null)
+      return null;
+    
     return (T) null;
   }
 

@@ -30,19 +30,15 @@
 
 package com.sandflow.smpte.mxf;
 
-import java.util.HashMap;
-
-import com.sandflow.smpte.mxf.ClassFactory;
 import com.sandflow.smpte.util.AUID;
+
 {{#.}}import com.sandflow.smpte.mxf.types.{{getSymbol}};
 {{/.}}
 
-public class ClassFactory {
-  static HashMap<AUID, Class<?>> classMap = new HashMap<>();
-
+public class ClassFactoryInitializer {
   static {
     {{#.}}
-    classMap.put(AUID.fromURN("{{getIdentification}}"), {{getSymbol}}.class);
+    ClassFactory.classMap.put(AUID.fromURN("{{getIdentification}}"), {{getSymbol}}.class);
     {{/.}}
   }
 

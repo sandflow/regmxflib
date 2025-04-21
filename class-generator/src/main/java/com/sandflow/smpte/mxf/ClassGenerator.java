@@ -105,7 +105,7 @@ public class ClassGenerator {
       enumerationTemplate = handlebars.compile("hbs/Enumeration.java");
       variableArrayTemplate = handlebars.compile("hbs/VariableArrayAdapter.java");
       recordTemplate = handlebars.compile("hbs/Record.java");
-      classFactoryTemplate = handlebars.compile("hbs/ClassFactory.java");
+      classFactoryTemplate = handlebars.compile("hbs/ClassFactoryInitializer.java");
       fixedArrayTemplate = handlebars.compile("hbs/FixedArrayAdapter.java");
     } catch (Exception e) {
       throw new RuntimeException("Failed to load template", e);
@@ -649,7 +649,7 @@ public class ClassGenerator {
 
     /* generate the class factory */
 
-    g.generateSource(classFactoryTemplate, "com.sandflow.smpte.mxf", "ClassFactory", g.classList);
+    g.generateSource(classFactoryTemplate, "com.sandflow.smpte.mxf", "ClassFactoryInitializer", g.classList);
   }
 
   private void generateSource(Template template, String packageName, String symbol, Object data) {
