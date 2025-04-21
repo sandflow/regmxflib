@@ -30,13 +30,11 @@
 
 package com.sandflow.smpte.mxf.types;
 
-import com.sandflow.smpte.mxf.annotation.MXFClassDefinition;
 import com.sandflow.smpte.mxf.annotation.MXFPropertyDefinition;
+{{#if members}}
 import com.sandflow.smpte.mxf.adapters.*;
+{{/if}}
 
-@MXFClassDefinition(
-  Identification="{{identification}}"
-)
 public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassName}} extends {{parentClassName}}{{/if}} {
 
 {{#each members}}
