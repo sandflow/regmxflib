@@ -30,7 +30,9 @@ import java.io.IOException;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.Set;
 
+/* TODO: this should be split into StrongReference and ClassLoader */
 public class ClassAdapter {
 
   public static <T> T fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
@@ -39,6 +41,10 @@ public class ClassAdapter {
     if (s == null)
       return null;
     
+    return fromSet(s, ctx);
+  }
+
+  public static <T> T fromSet(Set s, MXFInputContext ctx) throws IOException {
     return (T) null;
   }
 
