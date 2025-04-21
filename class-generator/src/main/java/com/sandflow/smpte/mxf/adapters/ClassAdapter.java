@@ -30,15 +30,11 @@ import java.io.IOException;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
-import com.sandflow.smpte.mxf.classes.Version;
 
-public class VersionAdapter {
+public class ClassAdapter {
 
-  public static Version fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
-    int major = is.readUnsignedByte();
-    int minor = is.readUnsignedByte();
-
-    return new Version(major, minor);
+  public static <T> T fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+    return (T) null;
   }
 
 }

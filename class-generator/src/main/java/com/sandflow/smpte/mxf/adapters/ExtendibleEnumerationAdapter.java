@@ -32,12 +32,13 @@ package com.sandflow.smpte.mxf.adapters;
 
 import java.io.IOException;
 
+import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
 import com.sandflow.smpte.util.UL;
 
 public class ExtendibleEnumerationAdapter {
 
-  public static UL fromStream(MXFInputStream is) throws IOException {
+  public static UL fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return is.readUL();
   }
 }

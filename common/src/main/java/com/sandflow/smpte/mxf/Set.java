@@ -27,9 +27,11 @@ package com.sandflow.smpte.mxf;
 
 import com.sandflow.smpte.klv.Group;
 import com.sandflow.smpte.klv.Triplet;
+import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UUID;
 import java.util.Collection;
+import java.util.HashMap;
 
 /**
  * Represents a MXF Set (see SMPTE ST 377-1)
@@ -60,10 +62,19 @@ public class Set implements Group{
 
     private final UUID instanceID;
     private final Group group;
+    private final HashMap<AUID, Triplet> tripletByID = new HashMap<>();
 
     private Set(Group group, UUID instanceID) {
         this.group = group;
         this.instanceID = instanceID;
+        
+        for(var t : group.getItems()) {
+            this.tripletByID.put(t.getKey(), t);
+        }
+    }
+
+    public Triplet getItem(AUID auid) {
+        return this.tripletByID.get(auid);
     }
     
     @Override

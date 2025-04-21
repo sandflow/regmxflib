@@ -1,3 +1,33 @@
+/*
+ * Copyright (c) Sandflow Consulting, LLC
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ *   list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+* @author Pierre-Anthony Lemieux
+*/
+
 package com.sandflow.smpte.mxf;
 
 import java.io.File;
@@ -7,12 +37,9 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient.Version;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,6 +49,7 @@ import org.apache.commons.numbers.fraction.Fraction;
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
 import com.sandflow.smpte.mxf.adapters.BooleanAdapter;
+import com.sandflow.smpte.mxf.adapters.ClassAdapter;
 import com.sandflow.smpte.mxf.adapters.UUIDAdapter;
 import com.sandflow.smpte.mxf.adapters.VersionAdapter;
 import com.sandflow.smpte.regxml.dict.DefinitionResolver;
@@ -77,6 +105,15 @@ public class ClassGenerator {
       throw new RuntimeException("Failed to load template", e);
     }
   }
+
+  Definition findBaseDefinition(Definition definition) {
+
+    while (definition instanceof RenameTypeDefinition) {
+        definition = resolver.getDefinition(((RenameTypeDefinition) definition).getRenamedType());
+    }
+
+    return definition;
+}
 
   class TypeMaker extends NullDefinitionVisitor {
     private static final UL INSTANCE_UID_ITEM_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010101.01011502.00000000");
@@ -138,8 +175,71 @@ public class ClassGenerator {
 
     @Override
     public void visit(ClassDefinition def) throws VisitorException {
+
+      /* skip type definition classes */
+      if (TYPE_DEFINITIONS.equalsWithMask(def.getIdentification(), 0b1111111111111000))
+        throw new VisitorException("Skipping definition classes");
+
+      /* skip index segments */
+      if (IndexTableSegment_AUID.equals(def.getIdentification()))
+        throw new VisitorException("Skipping index segments");
+
+      var data = new HashMap<String, Object>();
+
+      data.put("className", def.getSymbol());
+      data.put("identification", def.getIdentification().toString());
+      if (!def.isConcrete()) {
+        data.put("isAbstract", "1");
+      }
+
+      AUID parentClassID = def.getParentClass();
+      if (parentClassID != null) {
+        var parentClass = (ClassDefinition) resolver.getDefinition(def.getParentClass());
+
+        data.put("parentClassName", parentClass.getSymbol());
+      }
+
+      var members = new ArrayList<HashMap<String, String>>();
+
+      for (var propertyAUID : resolver.getMembersOf(def)) {
+        PropertyDefinition propertyDef = (PropertyDefinition) resolver.getDefinition(propertyAUID);
+        if (propertyDef == null) {
+          throw new RuntimeException("Failed to find property definition for " + propertyAUID);
+        }
+
+        /* ignore definitions */
+        if (ObjectClass_AUID.equals(propertyAUID))
+          continue;
+
+        Definition typeDef = resolver.getDefinition(propertyDef.getType());
+
+        try {
+
+          TypeMaker t = getTypeInformation(typeDef, true);
+
+          var member = new HashMap<String, String>();
+          member.put("identification", propertyDef.getIdentification().toString());
+          member.put("type", propertyDef.getType().toString());
+          member.put("typeName", t.getTypeName());
+          member.put("adapterName", t.getAdapterName());
+          member.put("symbol", propertyDef.getSymbol());
+          member.put("localIdentification", Integer.toString(propertyDef.getLocalIdentification()));
+          member.put("isOptional", propertyDef.isOptional() ? "true" : "false");
+
+          members.add(member);
+
+        } catch (Exception e) {
+          System.out.println("Skipping %s because of %s".formatted(propertyDef.getSymbol(), e.getMessage()));
+          continue;
+        }
+      }
+      data.put("members", members);
+
+      classList.add(def);
+      generateSource(classTemplate, "com.sandflow.smpte.mxf.types", def.getSymbol(), data);
+
       this.typeName = def.getSymbol();
-      this.adapterName = "ClassAdapter";
+      this.adapterName = ClassAdapter.class.getName();
     }
 
     @Override
@@ -332,6 +432,8 @@ public class ClassGenerator {
         }
 
         generateSource(recordTemplate, "com.sandflow.smpte.mxf.types", def.getSymbol(), templateData);
+
+        this.typeName = def.getSymbol();
         this.adapterName = "RecordAdapter";
 
       }
@@ -377,19 +479,23 @@ public class ClassGenerator {
     public void visit(StrongReferenceTypeDefinition def) throws VisitorException {
       ClassDefinition cdef = (ClassDefinition) resolver.getDefinition(def.getReferencedType());
 
-      this.typeName = cdef.getSymbol();
-      this.adapterName = "ClassAdapter";
+      TypeMaker tm = getTypeInformation(cdef, true);
+
+      this.typeName = tm.getTypeName();
+      this.adapterName = tm.getAdapterName();
     }
 
     @Override
     public void visit(StringTypeDefinition def) throws VisitorException {
       this.typeName = "String";
 
-      if (def.getIdentification().equals(Character_UL)) {
+      Definition chrdef = findBaseDefinition(resolver.getDefinition(def.getElementType()));
+
+      if (chrdef.getIdentification().equals(Character_UL)) {
         this.adapterName = "UTF16Adapter";
-      } else if (def.getIdentification().equals(Char_UL)) {
+      } else if (chrdef.getIdentification().equals(Char_UL)) {
         this.adapterName = "USASCIIAdapter";
-      } else if (def.getIdentification().equals(UTF8Character_UL)) {
+      } else if (chrdef.getIdentification().equals(UTF8Character_UL)) {
         this.adapterName = "UTF8Adapter";
       } else {
         throw new VisitorException("Unknown character type " + def.getIdentification());
@@ -468,6 +574,7 @@ public class ClassGenerator {
   DefinitionResolver resolver;
   final private HashMap<AUID, TypeMaker> typeCache = new HashMap<AUID, TypeMaker>();
   final private HashMap<AUID, TypeMaker> nullableTypeCache = new HashMap<AUID, TypeMaker>();
+  final private ArrayList<ClassDefinition> classList = new ArrayList<ClassDefinition>();
   File generatedSourcesDir;
 
   private ClassGenerator(MetaDictionaryCollection mds, File generatedSourcesDir) {
@@ -516,83 +623,24 @@ public class ClassGenerator {
 
     ClassGenerator g = new ClassGenerator(mds, generatedSourcesDir);
 
-    var classList = new ArrayList<ClassDefinition>();
-
     for (var md : mds.getDictionaries()) {
 
       if (md.getSchemeURI().toString().equals("http://www.ebu.ch/metadata/schemas/ebucore/smpte/class13/group"))
         continue;
 
       for (var def : md.getDefinitions()) {
-
-        if (!(def instanceof ClassDefinition))
-          continue;
-
-        ClassDefinition classDef = (ClassDefinition) def;
-
-        /* skip type definition classes */
-        if (TYPE_DEFINITIONS.equalsWithMask(def.getIdentification(), 0b1111111111111000))
-          continue;
-
-        if (IndexTableSegment_AUID.equals(def.getIdentification()))
-          continue;
-
-        classList.add(classDef);
-
-        var data = new HashMap<String, Object>();
-
-        data.put("className", classDef.getSymbol());
-        data.put("identification", classDef.getIdentification().toString());
-        if (!classDef.isConcrete()) {
-          data.put("isAbstract", "1");
-        }
-
-        AUID parentClassID = classDef.getParentClass();
-        if (parentClassID != null) {
-          var parentClass = (ClassDefinition) mds.getDefinition(classDef.getParentClass());
-
-          data.put("parentClassName", parentClass.getSymbol());
-        }
-
         try {
-
-          var members = new ArrayList<HashMap<String, String>>();
-
-          for (var propertyAUID : mds.getMembersOf(classDef)) {
-            PropertyDefinition propertyDef = (PropertyDefinition) mds.getDefinition(propertyAUID);
-            if (propertyDef == null) {
-              throw new RuntimeException("Failed to find property definition for " + propertyAUID);
-            }
-
-            Definition typeDef = g.resolver.getDefinition(propertyDef.getType());
-
-            TypeMaker t = g.getTypeInformation(typeDef, true);
-
-            var member = new HashMap<String, String>();
-            member.put("identification", propertyDef.getIdentification().toString());
-            member.put("type", propertyDef.getType().toString());
-            member.put("typeName", t.getTypeName());
-            member.put("adapterName", t.getAdapterName());
-            member.put("symbol", propertyDef.getSymbol());
-            member.put("localIdentification", Integer.toString(propertyDef.getLocalIdentification()));
-            member.put("isOptional", propertyDef.isOptional() ? "true" : "false");
-
-            members.add(member);
-          }
-          data.put("members", members);
-
-        } catch (Exception e) {
+          if (def instanceof ClassDefinition)
+            g.getTypeInformation(def, false);
+        } finally {
           continue;
         }
-
-        g.generateSource(classTemplate, "com.sandflow.smpte.mxf.types", classDef.getSymbol(), data);
-
       }
     }
 
     /* generate the class factory */
 
-    g.generateSource(classFactoryTemplate, "com.sandflow.smpte.mxf", "ClassFactory", classList);
+    g.generateSource(classFactoryTemplate, "com.sandflow.smpte.mxf", "ClassFactory", g.classList);
   }
 
   private void generateSource(Template template, String packageName, String symbol, Object data) {

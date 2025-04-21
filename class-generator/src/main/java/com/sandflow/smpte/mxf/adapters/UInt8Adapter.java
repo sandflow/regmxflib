@@ -28,11 +28,12 @@ package com.sandflow.smpte.mxf.adapters;
 
 import java.io.IOException;
 
+import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
 
 public class UInt8Adapter {
 
-  public static short fromStream(MXFInputStream is) throws IOException {
+  public static short fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return (short) Byte.toUnsignedInt(is.readByte());
   }
 

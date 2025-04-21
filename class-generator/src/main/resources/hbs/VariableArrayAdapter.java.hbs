@@ -34,17 +34,18 @@ import java.io.IOException;
 
 import com.sandflow.smpte.mxf.types.*;
 import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFInputContext;
 
 public class {{adapterName}} {
  
-   public static {{itemTypeName}}[] fromStream(MXFInputStream is)  throws IOException {
+   public static {{itemTypeName}}[] fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
     int itemcount = (int) (is.readInt() & 0xfffffffL);
     int itemlength = (int) (is.readInt() & 0xfffffffL);
 
     var items = new {{itemTypeName}}[itemcount]; 
 
     for (int i = 0; i < items.length; i++) {
-      items[i] = {{itemAdapterName}}.fromStream(is);
+      items[i] = {{itemAdapterName}}.fromStream(is, ctx);
     }
     
     return items;

@@ -33,14 +33,15 @@ package com.sandflow.smpte.mxf.adapters;
 import java.io.IOException;
 
 import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFInputContext;
 
 public class {{adapterName}} {
  
-   public static {{itemTypeName}}[] fromStream(MXFInputStream is)  throws IOException {
+   public static {{itemTypeName}}[] fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
     var items = new com.sandflow.smpte.mxf.types.{{itemTypeName}}[{{itemCount}}]; 
 
     for (int i = 0; i < items.length; i++) {
-      items[i] = {{itemAdapterName}}.fromStream(is);
+      items[i] = {{itemAdapterName}}.fromStream(is, ctx);
     }
     
     return items;
