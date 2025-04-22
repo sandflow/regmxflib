@@ -60,7 +60,6 @@ import com.sandflow.smpte.mxf.adapters.LocalDateAdapter;
 import com.sandflow.smpte.mxf.adapters.LocalDateTimeAdapter;
 import com.sandflow.smpte.mxf.adapters.LocalTimeAdapter;
 import com.sandflow.smpte.mxf.adapters.RationalAdapter;
-import com.sandflow.smpte.mxf.adapters.RecordAdapter;
 import com.sandflow.smpte.mxf.adapters.UInt16Adapter;
 import com.sandflow.smpte.mxf.adapters.UInt32Adapter;
 import com.sandflow.smpte.mxf.adapters.UInt64Adapter;
@@ -203,13 +202,21 @@ public class ClassGenerator {
     @Override
     public void visit(ClassDefinition def) throws VisitorException {
 
-      /* skip type definition classes */
-      if (TYPE_DEFINITIONS.equalsWithMask(def.getIdentification(), 0b1111111111111000))
+      final UL METADEFINITIONS_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.02000000");
+      final UL MXFFILESTRUCTURESETSANDPACKS_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.01000000");
+      final UL ROOT_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.03000000");
+
+      /* skip definition classes */
+      if (METADEFINITIONS_UL.equalsWithMask(def.getIdentification(), 0b1111_1010_1111_1000))
         throw new VisitorException("Skipping definition classes");
 
-      /* skip index segments */
-      if (IndexTableSegment_AUID.equals(def.getIdentification()))
-        throw new VisitorException("Skipping index segments");
+      /* skip root */
+      if (ROOT_UL.equalsWithMask(def.getIdentification(), 0b1111_1010_1111_1000))
+      throw new VisitorException("Skipping packs");
+
+      /* skip packs */
+      if (MXFFILESTRUCTURESETSANDPACKS_UL.equalsWithMask(def.getIdentification(), 0b1111_1010_1111_1000))
+        throw new VisitorException("Skipping packs");
 
       var data = new HashMap<String, Object>();
 
@@ -468,7 +475,7 @@ public class ClassGenerator {
         this.adapterName = ADAPTER_PACKAGE_NAME + "." + adapterName;
 
         templateData.put("fqdnName", this.typeName);
-        
+
         generateSource(recordAdapterTemplate, ADAPTER_PACKAGE_NAME, adapterName, templateData);
 
       }
@@ -498,9 +505,9 @@ public class ClassGenerator {
       templateData.put("itemTypeName", tm.getTypeName());
       templateData.put("itemAdapterName", tm.getAdapterName());
 
-      generateSource(variableArrayTemplate, "com.sandflow.smpte.mxf.adapters", adapterName, templateData);
+      generateSource(variableArrayTemplate, ADAPTER_PACKAGE_NAME, adapterName, templateData);
 
-      this.adapterName = adapterName;
+      this.adapterName = ADAPTER_PACKAGE_NAME + "." + adapterName;
       this.typeName = tm.getTypeName() + "[]";
     }
 
@@ -618,6 +625,7 @@ public class ClassGenerator {
   }
 
   private TypeMaker getTypeInformation(Definition def, boolean isNullabe) throws VisitorException {
+    /* TODO: make nullable a field of TypeMaker */
     HashMap<AUID, TypeMaker> t = isNullabe ? nullableTypeCache : typeCache;
     TypeMaker tm = t.get(def.getIdentification());
     if (tm == null) {
@@ -649,9 +657,6 @@ public class ClassGenerator {
 
     return props;
   }
-
-  final static private UL TYPE_DEFINITIONS = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.02000000");
-  private static final AUID IndexTableSegment_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.01100100");
 
   public static void generate(MetaDictionaryCollection mds, File generatedSourcesDir)
       throws IOException, URISyntaxException, VisitorException {
@@ -693,6 +698,15 @@ public class ClassGenerator {
     }
   }
 
+  private static void deleteFile(File f) {
+    if (f.isDirectory()) {
+      for (File nf : f.listFiles()) {
+        deleteFile(nf);
+      }
+    }
+    f.delete();
+  }
+
   public static void main(String[] args) throws URISyntaxException, IllegalDictionaryException, JAXBException,
       IOException, IllegalDefinitionException, VisitorException {
     File dir = new File(args[0]);
@@ -715,6 +729,8 @@ public class ClassGenerator {
     File generatedClassDir = new File(args[1]);
     if (!generatedClassDir.exists()) {
       generatedClassDir.mkdirs();
+    } else {
+      deleteFile(generatedClassDir);
     }
 
     ClassGenerator.generate(mds, generatedClassDir);
