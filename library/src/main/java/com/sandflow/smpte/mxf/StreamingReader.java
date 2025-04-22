@@ -4,19 +4,23 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import org.apache.commons.numbers.fraction.Fraction;
 
+import com.sandflow.smpte.klv.Group;
 import com.sandflow.smpte.klv.KLVInputStream;
 import com.sandflow.smpte.klv.LocalSet;
 import com.sandflow.smpte.klv.LocalTagRegister;
 import com.sandflow.smpte.klv.MemoryTriplet;
 import com.sandflow.smpte.klv.Triplet;
-import com.sandflow.smpte.klv.Group;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.PartitionPack.Kind;
 import com.sandflow.smpte.mxf.adapters.ClassAdapter;
+import com.sandflow.smpte.mxf.types.FileDescriptor;
+import com.sandflow.smpte.mxf.types.Preface;
+import com.sandflow.smpte.mxf.types.SourcePackage;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.BoundedInputStream;
 import com.sandflow.smpte.util.CountingInputStream;
@@ -25,12 +29,10 @@ import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.BasicEvent;
 import com.sandflow.util.events.Event;
 import com.sandflow.util.events.EventHandler;
-import com.sandflow.smpte.mxf.types.Preface;
 
 
 public class StreamingReader {
   private static final UL PREFACE_KEY = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.01012f00");
-  private static final UL FILEPACKAGE_KEY = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.01013700");
 
   public class Track {
     FileDescriptor fileDescriptor;
@@ -206,7 +208,6 @@ public class StreamingReader {
     }
 
     Preface preface;
-    FilePackage filePackage;
     for (Group agroup : gs) {
       if (agroup.getKey().equalsWithMask(PREFACE_KEY, 0b1111101011111111 /* ignore version and Group coding */)) {
         Set s = Set.fromGroup(agroup);
@@ -217,12 +218,12 @@ public class StreamingReader {
           }
         });
         System.out.println(preface.FileLastModified);
-      } else if (agroup.getKey().equalsWithMask(FILEPACKAGE_KEY, 0b1111101011111111 /* ignore version and Group coding */)) {
-        Set s = Set.fromGroup(agroup);
-        filePackage = FilePackage.fromSet(s, setresolver);
+
+        SourcePackage sp = (SourcePackage) Arrays.stream(preface.ContentStorageObject.Packages).filter(x -> x instanceof SourcePackage).findFirst().orElse(null);
 
         unitTrack = new Track();
-        unitTrack.fileDescriptor = filePackage.descriptor;
+        unitTrack.fileDescriptor = (FileDescriptor) sp.EssenceDescription;
+
       }
     }
 

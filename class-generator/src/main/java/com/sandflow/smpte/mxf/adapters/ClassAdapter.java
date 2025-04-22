@@ -67,7 +67,7 @@ public class ClassAdapter {
 
       Object obj = clazz.getConstructor().newInstance();
 
-      for (Field field : clazz.getDeclaredFields()) {
+      for (Field field : clazz.getFields()) {
         if (field.isAnnotationPresent(MXFPropertyDefinition.class)) {
           MXFPropertyDefinition annotation = field.getAnnotation(MXFPropertyDefinition.class);
           field.setAccessible(true);
