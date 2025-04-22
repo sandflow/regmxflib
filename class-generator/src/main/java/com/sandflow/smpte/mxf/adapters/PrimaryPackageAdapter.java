@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Sandflow Consulting, LLC
+ * Copyright (c) 2014, Pierre-Anthony Lemieux (pal@sandflow.com)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,27 +24,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
-* @author Pierre-Anthony Lemieux
-*/
+package com.sandflow.smpte.mxf.adapters;
 
-package com.sandflow.smpte.mxf.types;
+import java.io.IOException;
 
-import com.sandflow.smpte.mxf.annotation.MXFPropertyDefinition;
-{{#if members}}
-import com.sandflow.smpte.mxf.adapters.*;
-{{/if}}
+import com.sandflow.smpte.klv.Triplet;
+import com.sandflow.smpte.mxf.MXFInputContext;
+import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.util.AUID;
+import com.sandflow.smpte.util.UMID;
+import com.sandflow.smpte.util.UUID;
 
-public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassName}} extends {{parentClassName}}{{/if}} {
+public class PrimaryPackageAdapter {
 
-{{#each members}}
-  @MXFPropertyDefinition(
-    Identification="{{identification}}",
-    AdapterClass={{adapterName}}.class,
-    isOptional={{isOptional}},
-    LocalIdentification={{localIdentification}}
-  )
-  public {{typeName}} {{symbol}};
-{{/each}}
+  private static final AUID PACKAGEID_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01010101.01011510.00000000");
+
+  public static UMID fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+    UUID uuid = is.readUUID();
+    var s = ctx.getSet(uuid);
+    Triplet t = s.getItem(PACKAGEID_AUID);
+    MXFInputStream mis = new MXFInputStream(t.getValueAsStream());
+    return mis.readUMID();
+  }
 
 }

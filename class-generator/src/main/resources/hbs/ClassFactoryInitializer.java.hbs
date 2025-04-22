@@ -30,16 +30,16 @@
 
 package com.sandflow.smpte.mxf;
 
-import com.sandflow.smpte.util.AUID;
+import com.sandflow.smpte.util.UL;
 
 {{#.}}import com.sandflow.smpte.mxf.types.{{getSymbol}};
 {{/.}}
 
 public class ClassFactoryInitializer {
   static {
-    {{#.}}
-    ClassFactory.classMap.put(AUID.fromURN("{{getIdentification}}"), {{getSymbol}}.class);
-    {{/.}}
+{{#.}}
+    ClassFactory.putClass(UL.fromURN("{{getIdentification}}"), {{getSymbol}}.class);
+{{/.}}
   }
 
 }

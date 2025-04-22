@@ -155,4 +155,13 @@ public class AUID {
         return isUL() ? new UL(value) : null;
     }
 
+    /**
+     * Returns the sequence of bytes that make up the AUID
+     *
+     * @return Sequence of 16 bytes
+     */
+    public byte[] getValue() {
+        return value;
+    }
+
 }

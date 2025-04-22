@@ -16,6 +16,7 @@ import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.Group;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.PartitionPack.Kind;
+import com.sandflow.smpte.mxf.adapters.ClassAdapter;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.BoundedInputStream;
 import com.sandflow.smpte.util.CountingInputStream;
@@ -24,6 +25,8 @@ import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.BasicEvent;
 import com.sandflow.util.events.Event;
 import com.sandflow.util.events.EventHandler;
+import com.sandflow.smpte.mxf.types.Preface;
+
 
 public class StreamingReader {
   private static final UL PREFACE_KEY = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.01012f00");
@@ -207,7 +210,13 @@ public class StreamingReader {
     for (Group agroup : gs) {
       if (agroup.getKey().equalsWithMask(PREFACE_KEY, 0b1111101011111111 /* ignore version and Group coding */)) {
         Set s = Set.fromGroup(agroup);
-        preface = Preface.fromSet(s, setresolver);
+        preface = (Preface) ClassAdapter.fromSet(s, new MXFInputContext() {
+          @Override
+          public Set getSet(UUID uuid) {
+            return setresolver.get(uuid);
+          }
+        });
+        System.out.println(preface.FileLastModified);
       } else if (agroup.getKey().equalsWithMask(FILEPACKAGE_KEY, 0b1111101011111111 /* ignore version and Group coding */)) {
         Set s = Set.fromGroup(agroup);
         filePackage = FilePackage.fromSet(s, setresolver);

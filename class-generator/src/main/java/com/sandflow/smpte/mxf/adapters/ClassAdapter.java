@@ -39,6 +39,7 @@ import com.sandflow.smpte.mxf.MXFInputStream;
 import com.sandflow.smpte.mxf.Set;
 import com.sandflow.smpte.mxf.annotation.MXFPropertyDefinition;
 import com.sandflow.smpte.util.AUID;
+import com.sandflow.smpte.util.UL;
 
 /* TODO: this should be split into StrongReference and ClassLoader */
 public class ClassAdapter {
@@ -52,31 +53,47 @@ public class ClassAdapter {
 
       return (T) fromSet(s, ctx);
     } catch (Exception e) {
+      /* TODO: log error */
+      System.err.println(e.getMessage());
     }
 
     return null;
   }
 
-  public static Object fromSet(Set s, MXFInputContext ctx) throws IOException, NoSuchMethodException, SecurityException,
-      IllegalArgumentException, IllegalAccessException, InvocationTargetException, InstantiationException {
-    Class<?> clazz = ClassFactory.getClass(new AUID(s.getKey()));
+  public static Object fromSet(Set s, MXFInputContext ctx) {
+    try {
 
-    Object obj = clazz.getDeclaredConstructor().newInstance();
+      Class<?> clazz = ClassFactory.getClass(s.getKey());
 
-    for (Field field : clazz.getDeclaredFields()) {
-      if (field.isAnnotationPresent(MXFPropertyDefinition.class)) {
-        MXFPropertyDefinition annotation = field.getAnnotation(MXFPropertyDefinition.class);
-        field.setAccessible(true);
+      Object obj = clazz.getConstructor().newInstance();
 
-        Triplet t = s.getItem(AUID.fromURN(annotation.Identification()));
-        MXFInputStream is = new MXFInputStream(new ByteArrayInputStream(t.getValue()));
+      for (Field field : clazz.getDeclaredFields()) {
+        if (field.isAnnotationPresent(MXFPropertyDefinition.class)) {
+          MXFPropertyDefinition annotation = field.getAnnotation(MXFPropertyDefinition.class);
+          field.setAccessible(true);
 
-        var method = annotation.AdapterClass().getMethod("fromStream", MXFInputStream.class, MXFInputContext.class);
-        field.set(obj, method.invoke(null, is, ctx));
+          Triplet t = s.getItem(AUID.fromURN(annotation.Identification()));
+          if (t == null)
+            continue;
+
+          MXFInputStream is = new MXFInputStream(new ByteArrayInputStream(t.getValue()));
+
+          try {
+            var method = annotation.AdapterClass().getMethod("fromStream", MXFInputStream.class, MXFInputContext.class);
+            field.set(obj, method.invoke(null, is, ctx));
+          } catch (Exception e) {
+            System.err.println("Error accessing " + annotation.Identification().toString());
+          }
+        }
       }
+
+      return obj;
+    } catch (Exception e) {
+      /* TODO: log error */
+      System.err.println("Error reading object: " + s.getKey().toString());
     }
 
-    return obj;
+    return null;
   }
 
 }

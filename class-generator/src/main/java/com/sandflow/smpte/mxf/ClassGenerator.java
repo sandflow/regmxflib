@@ -59,6 +59,7 @@ import com.sandflow.smpte.mxf.adapters.Int8Adapter;
 import com.sandflow.smpte.mxf.adapters.LocalDateAdapter;
 import com.sandflow.smpte.mxf.adapters.LocalDateTimeAdapter;
 import com.sandflow.smpte.mxf.adapters.LocalTimeAdapter;
+import com.sandflow.smpte.mxf.adapters.PrimaryPackageAdapter;
 import com.sandflow.smpte.mxf.adapters.RationalAdapter;
 import com.sandflow.smpte.mxf.adapters.UInt16Adapter;
 import com.sandflow.smpte.mxf.adapters.UInt32Adapter;
@@ -255,7 +256,11 @@ public class ClassGenerator {
           member.put("identification", propertyDef.getIdentification().toString());
           member.put("type", propertyDef.getType().toString());
           member.put("typeName", t.getTypeName());
-          member.put("adapterName", t.getAdapterName());
+          if (PrimaryPackage_UL.equalsIgnoreVersion(propertyAUID)) {
+            member.put("adapterName", PrimaryPackageAdapter.class.getName());
+          } else {
+            member.put("adapterName", t.getAdapterName());
+          }
           member.put("symbol", propertyDef.getSymbol());
           member.put("localIdentification", Integer.toString(propertyDef.getLocalIdentification()));
           member.put("isOptional", propertyDef.isOptional() ? "true" : "false");

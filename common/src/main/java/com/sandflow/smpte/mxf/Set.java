@@ -67,16 +67,26 @@ public class Set implements Group{
     private Set(Group group, UUID instanceID) {
         this.group = group;
         this.instanceID = instanceID;
-        
+
         for(var t : group.getItems()) {
-            this.tripletByID.put(t.getKey(), t);
+            this.tripletByID.put(makeNormalizedAUID(t.getKey()), t);
         }
     }
 
-    public Triplet getItem(AUID auid) {
-        return this.tripletByID.get(auid);
+    private AUID makeNormalizedAUID(AUID auid) {
+        byte[] newValue = auid.getValue();
+        if (!auid.isUL())
+            return new AUID(newValue);
+
+        /* zero out the version number */
+        newValue[7] = 0;
+        return new AUID(newValue);
     }
-    
+
+    public Triplet getItem(AUID auid) {
+        return this.tripletByID.get(makeNormalizedAUID(auid));
+    }
+
     @Override
     public Collection<Triplet> getItems() {
         return group.getItems();
