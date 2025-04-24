@@ -30,6 +30,8 @@
 
 package com.sandflow.smpte.mxf.types;
 
+import java.io.IOException;
+
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.mxf.ClassFactory;
 import com.sandflow.smpte.mxf.MXFInputContext;
@@ -43,9 +45,10 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
   public {{typeName}} {{symbol}};
 {{/each}}
 
-{{#unless isAbstract}}
-  void readFromSet(Set s, MXFInputContext ctx) {
+  void readFromSet(Set s, MXFInputContext ctx) throws IOException {
+{{#if parentClassName}}
     super.readFromSet(s, ctx);
+{{/if}}
 {{#if members}}
 
     Triplet t;
@@ -59,14 +62,24 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
 {{/each}}
 {{/if}}
   }
-
   public static {{className}} fromSet(Set s, MXFInputContext ctx) {
-    var obj = new {{className}}();
-    obj.readFromSet(s, ctx);
-    return obj;
+    Class<?> clazz = ClassFactory.getClass(s.getKey());
+    if (clazz == null) {
+      return null;
+    }
+    try {
+      {{className}} obj;
+      obj = ({{className}}) clazz.getConstructor().newInstance();
+      obj.readFromSet(s, ctx);
+      return obj;
+    } catch (Exception e) {
+      /* TODO: log error */
+    }
+     
+    return null;
   }
 
-  public static {{className}} fromStream(MXFInputStream is, MXFInputContext ctx) {
+  public static {{className}} fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     try {
       var uuid = is.readUUID();
       var s = ctx.getSet(uuid);
@@ -81,6 +94,5 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
 
     return null;
   }
-{{/unless}}
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Sandflow Consulting, LLC
+ * Copyright (c) 2014, Pierre-Anthony Lemieux (pal@sandflow.com)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,33 +24,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
-* @author Pierre-Anthony Lemieux
-*/
-
-package com.sandflow.smpte.mxf.types;
+package com.sandflow.smpte.mxf.adapters;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.ArrayList;
 
-import com.sandflow.smpte.mxf.MXFInputStream;
 import com.sandflow.smpte.mxf.MXFInputContext;
+import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.util.UL;
 
-public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
+public class ULAdapter {
 
-  public {{adapterName}}(int count) {
-    super(count);
+  public static UL fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+    return is.readUL();
   }
 
-   public static {{adapterName}} fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
-    var items = new {{adapterName}}({{itemCount}});
-
-    for (int i = 0; i < items.size(); i++) {
-      items.set(i, {{itemAdapterName}}.fromStream(is, ctx));
-    }
-
-    return items;
-   }
-
- }
+}

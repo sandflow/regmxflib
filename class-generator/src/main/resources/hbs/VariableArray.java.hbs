@@ -38,13 +38,17 @@ import com.sandflow.smpte.mxf.MXFInputContext;
 
 public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
 
-   public static  ArrayList<{{itemTypeName}}> fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
+  public {{adapterName}}(int count) {
+    super(count);
+  }
+
+   public static {{adapterName}} fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
     int itemcount = (int) (is.readInt() & 0xfffffffL);
     int itemlength = (int) (is.readInt() & 0xfffffffL);
 
-    var items = new ArrayList<{{itemTypeName}}>(itemcount);
+    var items = new {{adapterName}}(itemcount);
 
-    for (int i = 0; i < items.length; i++) {
+    for (int i = 0; i < items.size(); i++) {
       items.set(i, {{itemAdapterName}}.fromStream(is, ctx));
     }
 

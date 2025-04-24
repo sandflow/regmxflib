@@ -17,7 +17,6 @@ import com.sandflow.smpte.klv.MemoryTriplet;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.PartitionPack.Kind;
-import com.sandflow.smpte.mxf.adapters.StrongReferenceAdapter;
 import com.sandflow.smpte.mxf.types.FileDescriptor;
 import com.sandflow.smpte.mxf.types.Preface;
 import com.sandflow.smpte.mxf.types.SourcePackage;
@@ -211,7 +210,7 @@ public class StreamingReader {
     for (Group agroup : gs) {
       if (agroup.getKey().equalsWithMask(PREFACE_KEY, 0b1111101011111111 /* ignore version and Group coding */)) {
         Set s = Set.fromGroup(agroup);
-        preface = (Preface) StrongReferenceAdapter.fromSet(s, new MXFInputContext() {
+        preface = Preface.fromSet(s, new MXFInputContext() {
           @Override
           public Set getSet(UUID uuid) {
             return setresolver.get(uuid);
@@ -219,7 +218,7 @@ public class StreamingReader {
         });
         System.out.println(preface.FileLastModified);
 
-        SourcePackage sp = (SourcePackage) Arrays.stream(preface.ContentStorageObject.Packages).filter(x -> x instanceof SourcePackage).findFirst().orElse(null);
+        SourcePackage sp = (SourcePackage) preface.ContentStorageObject.Packages.stream().filter(x -> x instanceof SourcePackage).findFirst().orElse(null);
 
         unitTrack = new Track();
         unitTrack.fileDescriptor = (FileDescriptor) sp.EssenceDescription;

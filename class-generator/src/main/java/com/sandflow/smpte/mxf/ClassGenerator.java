@@ -50,7 +50,6 @@ import com.github.jknack.handlebars.Template;
 import com.sandflow.smpte.mxf.adapters.ASCIIStringAdapter;
 import com.sandflow.smpte.mxf.adapters.AUIDAdapter;
 import com.sandflow.smpte.mxf.adapters.BooleanAdapter;
-import com.sandflow.smpte.mxf.adapters.StrongReferenceAdapter;
 import com.sandflow.smpte.mxf.adapters.EnumerationAdapter;
 import com.sandflow.smpte.mxf.adapters.Int16Adapter;
 import com.sandflow.smpte.mxf.adapters.Int32Adapter;
@@ -65,6 +64,7 @@ import com.sandflow.smpte.mxf.adapters.UInt16Adapter;
 import com.sandflow.smpte.mxf.adapters.UInt32Adapter;
 import com.sandflow.smpte.mxf.adapters.UInt64Adapter;
 import com.sandflow.smpte.mxf.adapters.UInt8Adapter;
+import com.sandflow.smpte.mxf.adapters.ULAdapter;
 import com.sandflow.smpte.mxf.adapters.UMIDAdapter;
 import com.sandflow.smpte.mxf.adapters.UTF16StringAdapter;
 import com.sandflow.smpte.mxf.adapters.UTF8StringAdapter;
@@ -102,7 +102,6 @@ import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UMID;
 import com.sandflow.smpte.util.UUID;
-import com.sandflow.smpte.util.xml.ULAdapter;
 
 import jakarta.xml.bind.JAXBException;
 
