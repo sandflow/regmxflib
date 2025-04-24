@@ -1,4 +1,4 @@
-package com.sandflow.smpte.mxf.classes;
+package com.sandflow.smpte.mxf.types;
 
 public class Version {
   private int major;

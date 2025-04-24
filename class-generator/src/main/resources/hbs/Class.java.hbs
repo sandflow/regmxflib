@@ -30,21 +30,57 @@
 
 package com.sandflow.smpte.mxf.types;
 
-import com.sandflow.smpte.mxf.annotation.MXFPropertyDefinition;
-{{#if members}}
-import com.sandflow.smpte.mxf.adapters.*;
-{{/if}}
+import com.sandflow.smpte.klv.Triplet;
+import com.sandflow.smpte.mxf.ClassFactory;
+import com.sandflow.smpte.mxf.MXFInputContext;
+import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.Set;
+import com.sandflow.smpte.util.AUID;
 
 public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassName}} extends {{parentClassName}}{{/if}} {
 
 {{#each members}}
-  @MXFPropertyDefinition(
-    Identification="{{identification}}",
-    AdapterClass={{adapterName}}.class,
-    isOptional={{isOptional}},
-    LocalIdentification={{localIdentification}}
-  )
   public {{typeName}} {{symbol}};
 {{/each}}
+
+{{#unless isAbstract}}
+  void readFromSet(Set s, MXFInputContext ctx) {
+    super.readFromSet(s, ctx);
+{{#if members}}
+
+    Triplet t;
+
+{{#each members}}
+    final AUID {{symbol}}_AUID = AUID.fromURN("{{identification}}");
+    t = s.getItem({{symbol}}_AUID);
+    if (t != null) {
+      this.{{symbol}} = {{adapterName}}.fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
+    }
+{{/each}}
+{{/if}}
+  }
+
+  public static {{className}} fromSet(Set s, MXFInputContext ctx) {
+    var obj = new {{className}}();
+    obj.readFromSet(s, ctx);
+    return obj;
+  }
+
+  public static {{className}} fromStream(MXFInputStream is, MXFInputContext ctx) {
+    try {
+      var uuid = is.readUUID();
+      var s = ctx.getSet(uuid);
+      if (s == null)
+        return null;
+
+      return {{className}}.fromSet(s, ctx);
+    } catch (Exception e) {
+      /* TODO: log error */
+      System.err.println(e.getMessage());
+    }
+
+    return null;
+  }
+{{/unless}}
 
 }

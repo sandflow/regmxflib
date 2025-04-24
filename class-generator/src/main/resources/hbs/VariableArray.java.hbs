@@ -28,24 +28,27 @@
 * @author Pierre-Anthony Lemieux
 */
 
-package com.sandflow.smpte.mxf.adapters;
+package com.sandflow.smpte.mxf.types;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import com.sandflow.smpte.mxf.MXFInputStream;
 import com.sandflow.smpte.mxf.MXFInputContext;
 
-public class {{adapterName}} {
- 
-   public static {{itemTypeName}}[] fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
-    var items = new {{itemTypeName}}[{{itemCount}}]; 
+public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
+
+   public static  ArrayList<{{itemTypeName}}> fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
+    int itemcount = (int) (is.readInt() & 0xfffffffL);
+    int itemlength = (int) (is.readInt() & 0xfffffffL);
+
+    var items = new ArrayList<{{itemTypeName}}>(itemcount);
 
     for (int i = 0; i < items.length; i++) {
-      items[i] = {{itemAdapterName}}.fromStream(is, ctx);
+      items.set(i, {{itemAdapterName}}.fromStream(is, ctx));
     }
-    
+
     return items;
    }
- 
+
  }
- 

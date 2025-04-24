@@ -30,7 +30,7 @@ import java.io.IOException;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
-import com.sandflow.smpte.mxf.classes.Version;
+import com.sandflow.smpte.mxf.types.Version;
 
 public class VersionAdapter {
 

@@ -42,7 +42,7 @@ import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 
 /* TODO: this should be split into StrongReference and ClassLoader */
-public class ClassAdapter {
+public class StrongReferenceAdapter {
 
   public static <T> T fromStream(MXFInputStream is, MXFInputContext ctx) {
     try {

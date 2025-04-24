@@ -50,7 +50,7 @@ import com.github.jknack.handlebars.Template;
 import com.sandflow.smpte.mxf.adapters.ASCIIStringAdapter;
 import com.sandflow.smpte.mxf.adapters.AUIDAdapter;
 import com.sandflow.smpte.mxf.adapters.BooleanAdapter;
-import com.sandflow.smpte.mxf.adapters.ClassAdapter;
+import com.sandflow.smpte.mxf.adapters.StrongReferenceAdapter;
 import com.sandflow.smpte.mxf.adapters.EnumerationAdapter;
 import com.sandflow.smpte.mxf.adapters.Int16Adapter;
 import com.sandflow.smpte.mxf.adapters.Int32Adapter;
@@ -70,7 +70,7 @@ import com.sandflow.smpte.mxf.adapters.UTF16StringAdapter;
 import com.sandflow.smpte.mxf.adapters.UTF8StringAdapter;
 import com.sandflow.smpte.mxf.adapters.UUIDAdapter;
 import com.sandflow.smpte.mxf.adapters.VersionAdapter;
-import com.sandflow.smpte.mxf.classes.Version;
+import com.sandflow.smpte.mxf.types.Version;
 import com.sandflow.smpte.regxml.dict.DefinitionResolver;
 import com.sandflow.smpte.regxml.dict.MetaDictionary;
 import com.sandflow.smpte.regxml.dict.MetaDictionaryCollection;
@@ -110,8 +110,6 @@ public class ClassGenerator {
   public static final Handlebars handlebars = new Handlebars();
   public static final Template classTemplate;
   public static final Template enumerationTemplate;
-  public static final Template variableArrayTemplate;
-  public static final Template fixedArrayTemplate;
   public static final Template recordTemplate;
   public static final Template recordAdapterTemplate;
   public static final Template classFactoryTemplate;
@@ -120,10 +118,8 @@ public class ClassGenerator {
     try {
       classTemplate = handlebars.compile("hbs/Class.java");
       enumerationTemplate = handlebars.compile("hbs/Enumeration.java");
-      variableArrayTemplate = handlebars.compile("hbs/VariableArrayAdapter.java");
       recordTemplate = handlebars.compile("hbs/Record.java");
       classFactoryTemplate = handlebars.compile("hbs/ClassFactoryInitializer.java");
-      fixedArrayTemplate = handlebars.compile("hbs/FixedArrayAdapter.java");
       recordAdapterTemplate = handlebars.compile("hbs/RecordAdapter.java");
     } catch (Exception e) {
       throw new RuntimeException("Failed to load template", e);
@@ -183,8 +179,6 @@ public class ClassGenerator {
     private static final AUID InstanceID_AUID = new AUID(
         UL.fromURN("urn:smpte:ul:060e2b34.01010101.01011502.00000000"));
 
-    boolean isNullable;
-
     String typeName;
     String adapterName;
 
@@ -194,10 +188,6 @@ public class ClassGenerator {
 
     public String getAdapterName() {
       return adapterName;
-    }
-
-    private TypeMaker(boolean isNullabe) {
-      this.isNullable = isNullabe;
     }
 
     @Override
@@ -250,7 +240,7 @@ public class ClassGenerator {
 
         try {
 
-          TypeMaker t = getTypeInformation(typeDef, true);
+          TypeMaker t = getTypeInformation(typeDef);
 
           var member = new HashMap<String, String>();
           member.put("identification", propertyDef.getIdentification().toString());
@@ -278,7 +268,7 @@ public class ClassGenerator {
       generateSource(classTemplate, TYPE_PACKAGE_NAME, def.getSymbol(), data);
 
       this.typeName = TYPE_PACKAGE_NAME + "." + def.getSymbol();
-      this.adapterName = ClassAdapter.class.getName();
+      this.adapterName = this.typeName;
     }
 
     @Override
@@ -301,19 +291,19 @@ public class ClassGenerator {
       if (def.isSigned()) {
         switch (def.getSize()) {
           case ONE:
-            this.typeName = this.isNullable ? "Byte" : "byte";
+            this.typeName = "Byte";
             this.adapterName = Int8Adapter.class.getName();
             break;
           case TWO:
-            this.typeName = this.isNullable ? "Short" : "short";
+            this.typeName = "Short";
             this.adapterName = Int16Adapter.class.getName();
             break;
           case FOUR:
-            this.typeName = this.isNullable ? "Integer" : "int";
+            this.typeName = "Integer";
             this.adapterName = Int32Adapter.class.getName();
             break;
           case EIGHT:
-            this.typeName = this.isNullable ? "Long" : "long";
+            this.typeName = "Long";
             this.adapterName = Int64Adapter.class.getName();
             break;
           default:
@@ -322,19 +312,19 @@ public class ClassGenerator {
       } else {
         switch (def.getSize()) {
           case ONE:
-            this.typeName = this.isNullable ? "Short" : "short";
+            this.typeName = "Short";
             this.adapterName = UInt8Adapter.class.getName();
             break;
           case TWO:
-            this.typeName = this.isNullable ? "Integer" : "int";
+            this.typeName = "Integer";
             this.adapterName = UInt16Adapter.class.getName();
             break;
           case FOUR:
-            this.typeName = this.isNullable ? "Long" : "long";
+            this.typeName = "Long";
             this.adapterName = UInt32Adapter.class.getName();
             break;
           case EIGHT:
-            this.typeName = this.isNullable ? "Long" : "long";
+            this.typeName = "Long";
             this.adapterName = UInt64Adapter.class.getName();
             break;
           default:
@@ -355,7 +345,7 @@ public class ClassGenerator {
     public void visit(EnumerationTypeDefinition def) throws VisitorException {
       if (BOOLEAN_TYPE.equals(def.getIdentification())) {
         this.adapterName = BooleanAdapter.class.getName();
-        this.typeName = this.isNullable ? "Boolean" : "boolean";
+        this.typeName = "Boolean";
         return;
       }
 
@@ -381,6 +371,13 @@ public class ClassGenerator {
 
     @Override
     public void visit(FixedArrayTypeDefinition def) throws VisitorException {
+      final Template fixedArrayTemplate;
+      try {
+        fixedArrayTemplate = handlebars.compile("hbs/FixedArray.java");
+      } catch (IOException e) {
+        throw new VisitorException("Wrapped exception", e);
+      }
+
       if (UUID_UL.equalsIgnoreVersion(def.getIdentification())) {
         this.typeName = UUID.class.getName();
         this.adapterName = UUIDAdapter.class.getName();
@@ -389,18 +386,17 @@ public class ClassGenerator {
 
       var templateData = new HashMap<String, Object>();
 
-      String adapterName = def.getSymbol() + "Adapter";
-      templateData.put("adapterName", def.getSymbol() + "Adapter");
+      templateData.put("adapterName", def.getSymbol());
       templateData.put("itemCount", def.getElementCount());
 
-      TypeMaker tm = getTypeInformation(resolver.getDefinition(def.getElementType()), false);
+      TypeMaker tm = getTypeInformation(resolver.getDefinition(def.getElementType()));
       templateData.put("itemTypeName", tm.getTypeName());
       templateData.put("itemAdapterName", tm.getAdapterName());
 
-      generateSource(fixedArrayTemplate, ADAPTER_PACKAGE_NAME, adapterName, templateData);
+      generateSource(fixedArrayTemplate, TYPE_PACKAGE_NAME, def.getSymbol(), templateData);
 
-      this.adapterName = ADAPTER_PACKAGE_NAME + "." + adapterName;
-      this.typeName = tm.getTypeName() + "[]";
+      this.adapterName = TYPE_PACKAGE_NAME + "." + def.getSymbol();
+      this.typeName = this.adapterName;
     }
 
     @Override
@@ -463,7 +459,7 @@ public class ClassGenerator {
             throw new RuntimeException(
                 String.format("Bad type %s at member %s.", member.getType().toString(), member.getName()));
           }
-          TypeMaker tm = getTypeInformation(memberTypeDef, false);
+          TypeMaker tm = getTypeInformation(memberTypeDef);
           var valueData = new HashMap<String, String>();
           valueData.put("memberAdapterName", tm.getAdapterName());
           valueData.put("memberName", member.getName());
@@ -488,7 +484,7 @@ public class ClassGenerator {
 
     @Override
     public void visit(RenameTypeDefinition def) throws VisitorException {
-      TypeMaker tm = getTypeInformation(resolver.getDefinition(def.getRenamedType()), this.isNullable);
+      TypeMaker tm = getTypeInformation(resolver.getDefinition(def.getRenamedType()));
 
       this.typeName = tm.typeName;
       this.adapterName = tm.adapterName;
@@ -496,24 +492,30 @@ public class ClassGenerator {
 
     @Override
     public void visit(SetTypeDefinition def) throws VisitorException {
+      final Template variableArrayTemplate;
+
+      try {
+        variableArrayTemplate = handlebars.compile("hbs/VariableArray.java");
+      } catch (Exception e) {
+        throw new VisitorException("Cannot load VariableArray template", e);
+      }
       /*
        * TODO: essentially the same as variable array, but need to check for
        * uniqueness?
        */
       var templateData = new HashMap<String, Object>();
 
-      String adapterName = def.getSymbol() + "Adapter";
-      templateData.put("adapterName", adapterName);
+      templateData.put("adapterName", def.getSymbol());
 
       Definition itemDef = resolver.getDefinition(def.getElementType());
-      TypeMaker tm = getTypeInformation(itemDef, false);
+      TypeMaker tm = getTypeInformation(itemDef);
       templateData.put("itemTypeName", tm.getTypeName());
       templateData.put("itemAdapterName", tm.getAdapterName());
 
-      generateSource(variableArrayTemplate, ADAPTER_PACKAGE_NAME, adapterName, templateData);
+      generateSource(variableArrayTemplate, TYPE_PACKAGE_NAME, def.getSymbol(), templateData);
 
-      this.adapterName = ADAPTER_PACKAGE_NAME + "." + adapterName;
-      this.typeName = tm.getTypeName() + "[]";
+      this.adapterName = TYPE_PACKAGE_NAME + "." + def.getSymbol();
+      this.typeName = this.adapterName;
     }
 
     @Override
@@ -526,7 +528,7 @@ public class ClassGenerator {
     public void visit(StrongReferenceTypeDefinition def) throws VisitorException {
       ClassDefinition cdef = (ClassDefinition) resolver.getDefinition(def.getReferencedType());
 
-      TypeMaker tm = getTypeInformation(cdef, true);
+      TypeMaker tm = getTypeInformation(cdef);
 
       this.typeName = tm.getTypeName();
       this.adapterName = tm.getAdapterName();
@@ -551,20 +553,27 @@ public class ClassGenerator {
 
     @Override
     public void visit(VariableArrayTypeDefinition def) throws VisitorException {
+      final Template variableArrayTemplate;
+
+      try {
+        variableArrayTemplate = handlebars.compile("hbs/VariableArray.java");
+      } catch (Exception e) {
+        throw new VisitorException("Cannot load VariableArray template", e);
+      }
+
       var templateData = new HashMap<String, Object>();
 
-      String adapterName = def.getSymbol() + "Adapter";
-      templateData.put("adapterName", adapterName);
+      templateData.put("adapterName", def.getSymbol());
 
       Definition itemDef = resolver.getDefinition(def.getElementType());
-      TypeMaker tm = getTypeInformation(itemDef, false);
+      TypeMaker tm = getTypeInformation(itemDef);
       templateData.put("itemTypeName", tm.getTypeName());
       templateData.put("itemAdapterName", tm.getAdapterName());
 
-      generateSource(variableArrayTemplate, ADAPTER_PACKAGE_NAME, adapterName, templateData);
+      generateSource(variableArrayTemplate, TYPE_PACKAGE_NAME, def.getSymbol(), templateData);
 
-      this.adapterName = ADAPTER_PACKAGE_NAME + "." + adapterName;
-      this.typeName = tm.getTypeName() + "[]";
+      this.adapterName = TYPE_PACKAGE_NAME + "." + def.getSymbol();
+      this.typeName = this.adapterName;
     }
 
     @Override
@@ -586,7 +595,7 @@ public class ClassGenerator {
             + " does not have a unique identifier");
       }
 
-      TypeMaker tm = getTypeInformation(resolver.getDefinition(uniquepropdef.getType()), true);
+      TypeMaker tm = getTypeInformation(resolver.getDefinition(uniquepropdef.getType()));
 
       this.typeName = tm.typeName;
       this.adapterName = tm.adapterName;
@@ -620,7 +629,6 @@ public class ClassGenerator {
 
   DefinitionResolver resolver;
   final private HashMap<AUID, TypeMaker> typeCache = new HashMap<AUID, TypeMaker>();
-  final private HashMap<AUID, TypeMaker> nullableTypeCache = new HashMap<AUID, TypeMaker>();
   final private ArrayList<ClassDefinition> classList = new ArrayList<ClassDefinition>();
   File generatedSourcesDir;
 
@@ -629,14 +637,12 @@ public class ClassGenerator {
     this.generatedSourcesDir = generatedSourcesDir;
   }
 
-  private TypeMaker getTypeInformation(Definition def, boolean isNullabe) throws VisitorException {
-    /* TODO: make nullable a field of TypeMaker */
-    HashMap<AUID, TypeMaker> t = isNullabe ? nullableTypeCache : typeCache;
-    TypeMaker tm = t.get(def.getIdentification());
+  private TypeMaker getTypeInformation(Definition def) throws VisitorException {
+    TypeMaker tm = typeCache.get(def.getIdentification());
     if (tm == null) {
-      tm = this.new TypeMaker(isNullabe);
+      tm = this.new TypeMaker();
       def.accept(tm);
-      t.put(def.getIdentification(), tm);
+      typeCache.put(def.getIdentification(), tm);
     }
     return tm;
   }
@@ -676,7 +682,7 @@ public class ClassGenerator {
       for (var def : md.getDefinitions()) {
         try {
           if (def instanceof ClassDefinition)
-            g.getTypeInformation(def, true);
+            g.getTypeInformation(def);
         } finally {
           continue;
         }
