@@ -50,7 +50,6 @@ import com.github.jknack.handlebars.Template;
 import com.sandflow.smpte.mxf.adapters.ASCIIStringAdapter;
 import com.sandflow.smpte.mxf.adapters.AUIDAdapter;
 import com.sandflow.smpte.mxf.adapters.BooleanAdapter;
-import com.sandflow.smpte.mxf.adapters.EnumerationAdapter;
 import com.sandflow.smpte.mxf.adapters.Int16Adapter;
 import com.sandflow.smpte.mxf.adapters.Int32Adapter;
 import com.sandflow.smpte.mxf.adapters.Int64Adapter;
@@ -180,6 +179,7 @@ public class ClassGenerator {
 
     String typeName;
     String adapterName;
+    Class<?> primitiveType;
 
     public String getTypeName() {
       return typeName;
@@ -187,6 +187,10 @@ public class ClassGenerator {
 
     public String getAdapterName() {
       return adapterName;
+    }
+
+    public Class<?> getPrimitiveType() {
+      return primitiveType;
     }
 
     @Override
@@ -291,18 +295,22 @@ public class ClassGenerator {
         switch (def.getSize()) {
           case ONE:
             this.typeName = "Byte";
+            this.primitiveType = byte.class;
             this.adapterName = Int8Adapter.class.getName();
             break;
           case TWO:
             this.typeName = "Short";
+            this.primitiveType = short.class;
             this.adapterName = Int16Adapter.class.getName();
             break;
           case FOUR:
             this.typeName = "Integer";
+            this.primitiveType = int.class;
             this.adapterName = Int32Adapter.class.getName();
             break;
           case EIGHT:
             this.typeName = "Long";
+            this.primitiveType = long.class;
             this.adapterName = Int64Adapter.class.getName();
             break;
           default:
@@ -312,18 +320,22 @@ public class ClassGenerator {
         switch (def.getSize()) {
           case ONE:
             this.typeName = "Short";
+            this.primitiveType = short.class;
             this.adapterName = UInt8Adapter.class.getName();
             break;
           case TWO:
             this.typeName = "Integer";
+            this.primitiveType = int.class;
             this.adapterName = UInt16Adapter.class.getName();
             break;
           case FOUR:
             this.typeName = "Long";
+            this.primitiveType = long.class;
             this.adapterName = UInt32Adapter.class.getName();
             break;
           case EIGHT:
             this.typeName = "Long";
+            this.primitiveType = long.class;
             this.adapterName = UInt64Adapter.class.getName();
             break;
           default:
@@ -348,9 +360,13 @@ public class ClassGenerator {
         return;
       }
 
+      TypeMaker tm = getTypeInformation(resolver.getDefinition(def.getElementType()));
+
       var templateData = new HashMap<String, Object>();
       templateData.put("symbol", def.getSymbol());
-      templateData.put("valuesTypeName", "int");
+      templateData.put("valuesTypeName", tm.getTypeName());
+      templateData.put("valuesAdapterName", tm.getAdapterName());
+      templateData.put("valuesPrimitiveName", tm.getPrimitiveType().getSimpleName());
 
       var valuesData = new ArrayList<HashMap<String, String>>();
       templateData.put("values", valuesData);
@@ -364,8 +380,8 @@ public class ClassGenerator {
 
       generateSource(enumerationTemplate, TYPE_PACKAGE_NAME, def.getSymbol(), templateData);
 
-      this.adapterName = EnumerationAdapter.class.getName();
-      this.typeName = TYPE_PACKAGE_NAME + "." + def.getSymbol();
+      this.adapterName = TYPE_PACKAGE_NAME + "." + def.getSymbol();
+      this.typeName = this.adapterName;
     }
 
     @Override
