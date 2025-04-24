@@ -32,12 +32,12 @@ package com.sandflow.smpte.mxf.types;
 
 import java.io.IOException;
 
-import com.sandflow.smpte.klv.Triplet;
+{{#if members}}import com.sandflow.smpte.klv.Triplet;
+import com.sandflow.smpte.util.AUID;{{/if}}
 import com.sandflow.smpte.mxf.ClassFactory;
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
 import com.sandflow.smpte.mxf.Set;
-import com.sandflow.smpte.util.AUID;
 
 public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassName}} extends {{parentClassName}}{{/if}} {
 
