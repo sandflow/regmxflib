@@ -42,17 +42,17 @@ public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
     super(count);
   }
 
-   public static {{adapterName}} fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
+  public static {{adapterName}} fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
     int itemcount = (int) (is.readInt() & 0xfffffffL);
     int itemlength = (int) (is.readInt() & 0xfffffffL);
 
     var items = new {{adapterName}}(itemcount);
 
-    for (int i = 0; i < items.size(); i++) {
-      items.set(i, {{itemAdapterName}}.fromStream(is, ctx));
+    for (int i = 0; i < itemcount; i++) {
+      items.add({{itemAdapterName}}.fromStream(is, ctx));
     }
 
     return items;
-   }
+  }
 
  }

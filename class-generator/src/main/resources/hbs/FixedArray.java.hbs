@@ -46,8 +46,8 @@ public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
    public static {{adapterName}} fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
     var items = new {{adapterName}}({{itemCount}});
 
-    for (int i = 0; i < items.size(); i++) {
-      items.set(i, {{itemAdapterName}}.fromStream(is, ctx));
+    for (int i = 0; i < {{itemCount}}; i++) {
+      items.add({{itemAdapterName}}.fromStream(is, ctx));
     }
 
     return items;
