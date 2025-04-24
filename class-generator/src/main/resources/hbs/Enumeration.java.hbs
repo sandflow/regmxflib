@@ -35,13 +35,19 @@ import java.io.IOException;
 import com.sandflow.smpte.mxf.MXFInputStream;
 import com.sandflow.smpte.mxf.MXFInputContext;
 
+{{#if description}}/**
+  * {{description}}
+  */{{/if}}
 public enum {{symbol}} {
-
-  {{#each values}}{{name}}(({{valuesPrimitiveName}}) {{value}}){{#unless @last}},{{/unless}}{{/each}};
+{{#each values}}
+{{#if description}}  /**
+    * {{description}}
+    */{{/if}}
+  {{name}}(({{valuesPrimitiveName}}) {{value}}){{#unless @last}},{{/unless}}{{/each}};
 
   private final {{valuesTypeName}} value;
 
-  {{symbol}}({{valuesTypeName}} value) {
+  private {{symbol}}({{valuesTypeName}} value) {
     this.value = value;
   }
 

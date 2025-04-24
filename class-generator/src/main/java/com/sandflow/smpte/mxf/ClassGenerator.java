@@ -219,6 +219,7 @@ public class ClassGenerator {
       if (!def.isConcrete()) {
         data.put("isAbstract", "1");
       }
+      data.put("description", def.getDescription());
 
       AUID parentClassID = def.getParentClass();
       if (parentClassID != null) {
@@ -247,6 +248,7 @@ public class ClassGenerator {
 
           var member = new HashMap<String, String>();
           member.put("identification", propertyDef.getIdentification().toString());
+          member.put("description", propertyDef.getDescription());
           member.put("type", propertyDef.getType().toString());
           member.put("typeName", t.getTypeName());
           if (PrimaryPackage_UL.equalsIgnoreVersion(propertyAUID)) {
@@ -364,6 +366,7 @@ public class ClassGenerator {
 
       var templateData = new HashMap<String, Object>();
       templateData.put("symbol", def.getSymbol());
+      templateData.put("description", def.getDescription());
       templateData.put("valuesTypeName", tm.getTypeName());
       templateData.put("valuesAdapterName", tm.getAdapterName());
       templateData.put("valuesPrimitiveName", tm.getPrimitiveType().getSimpleName());
@@ -374,6 +377,7 @@ public class ClassGenerator {
       for (var value : def.getElements()) {
         var valueData = new HashMap<String, String>();
         valueData.put("name", value.getName());
+        valueData.put("description", value.getDescription());
         valueData.put("value", Integer.toString(value.getValue()));
         valuesData.add(valueData);
       }
