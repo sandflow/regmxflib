@@ -1,8 +1,11 @@
 package com.sandflow.smpte.mxf;
 
 import java.io.EOFException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -205,22 +208,29 @@ public class StreamingReader {
               cis.getCount(), pp.getHeaderByteCount())));
     }
 
-    Preface preface;
+    
     for (Group agroup : gs) {
       if (agroup.getKey().equalsWithMask(PREFACE_KEY, 0b1111101011111111 /* ignore version and Group coding */)) {
         Set s = Set.fromGroup(agroup);
-        preface = Preface.fromSet(s, new MXFInputContext() {
+        final Preface preface = Preface.fromSet(s, new MXFInputContext() {
           @Override
           public Set getSet(UUID uuid) {
             return setresolver.get(uuid);
           }
         });
-        System.out.println(preface.FileLastModified);
 
-        SourcePackage sp = (SourcePackage) preface.ContentStorageObject.Packages.stream().filter(x -> x instanceof SourcePackage).findFirst().orElse(null);
+        SourcePackage sp = (SourcePackage) preface.ContentStorageObject.Packages.stream().filter(x -> x.PackageID.equals(preface.PrimaryPackage)).findFirst().orElse(null);
 
         unitTrack = new Track();
         unitTrack.fileDescriptor = (FileDescriptor) sp.EssenceDescription;
+
+        try {
+          Writer w = new FileWriter("out.json");
+          JSONSerializer.serialize(preface, w);
+          w.close();
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
 
       }
     }

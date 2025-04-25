@@ -30,10 +30,21 @@
 
 package com.sandflow.smpte.mxf.types;
 
-public class {{name}} {
+import java.io.IOException;
 
+import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFInputContext;
+
+public class {{name}} {
 {{#each members}}
-  public {{memberTypeName}} {{memberName}};
-{{/each}}
+  public {{memberTypeName}} {{memberName}};{{/each}}
+
+  public static {{name}} fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
+    var r = new {{name}}();
+{{#each members}}
+    r.{{memberName}} = {{memberAdapterName}}.fromStream(is, ctx);{{/each}}
+
+    return r;
+  }
 
 }

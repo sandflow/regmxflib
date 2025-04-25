@@ -105,12 +105,13 @@ import com.sandflow.smpte.util.UUID;
 import jakarta.xml.bind.JAXBException;
 
 public class ClassGenerator {
-  public static final Handlebars handlebars = new Handlebars();
-  public static final Template classTemplate;
-  public static final Template enumerationTemplate;
-  public static final Template recordTemplate;
-  public static final Template recordAdapterTemplate;
-  public static final Template classFactoryTemplate;
+  static final Handlebars handlebars = new Handlebars();
+  static final Template classTemplate;
+  static final Template enumerationTemplate;
+  static final Template recordTemplate;
+  static final Template classFactoryTemplate;
+  static final Template variableArrayTemplate;
+  static final Template fixedArrayTemplate;
 
   static {
     try {
@@ -118,7 +119,9 @@ public class ClassGenerator {
       enumerationTemplate = handlebars.compile("hbs/Enumeration.java");
       recordTemplate = handlebars.compile("hbs/Record.java");
       classFactoryTemplate = handlebars.compile("hbs/ClassFactoryInitializer.java");
-      recordAdapterTemplate = handlebars.compile("hbs/RecordAdapter.java");
+      fixedArrayTemplate = handlebars.compile("hbs/FixedArray.java");
+      variableArrayTemplate = handlebars.compile("hbs/VariableArray.java");
+
     } catch (Exception e) {
       throw new RuntimeException("Failed to load template", e);
     }
@@ -390,13 +393,6 @@ public class ClassGenerator {
 
     @Override
     public void visit(FixedArrayTypeDefinition def) throws VisitorException {
-      final Template fixedArrayTemplate;
-      try {
-        fixedArrayTemplate = handlebars.compile("hbs/FixedArray.java");
-      } catch (IOException e) {
-        throw new VisitorException("Wrapped exception", e);
-      }
-
       if (UUID_UL.equalsIgnoreVersion(def.getIdentification())) {
         this.typeName = UUID.class.getName();
         this.adapterName = UUIDAdapter.class.getName();
@@ -488,16 +484,8 @@ public class ClassGenerator {
 
         generateSource(recordTemplate, TYPE_PACKAGE_NAME, def.getSymbol(), templateData);
 
-        String adapterName = def.getSymbol() + "Adapter";
-        templateData.put("adapterName", adapterName);
-
         this.typeName = TYPE_PACKAGE_NAME + "." + def.getSymbol();
-        this.adapterName = ADAPTER_PACKAGE_NAME + "." + adapterName;
-
-        templateData.put("fqdnName", this.typeName);
-
-        generateSource(recordAdapterTemplate, ADAPTER_PACKAGE_NAME, adapterName, templateData);
-
+        this.adapterName =  this.typeName;
       }
     }
 
@@ -511,13 +499,6 @@ public class ClassGenerator {
 
     @Override
     public void visit(SetTypeDefinition def) throws VisitorException {
-      final Template variableArrayTemplate;
-
-      try {
-        variableArrayTemplate = handlebars.compile("hbs/VariableArray.java");
-      } catch (Exception e) {
-        throw new VisitorException("Cannot load VariableArray template", e);
-      }
       /*
        * TODO: essentially the same as variable array, but need to check for
        * uniqueness?
@@ -572,14 +553,6 @@ public class ClassGenerator {
 
     @Override
     public void visit(VariableArrayTypeDefinition def) throws VisitorException {
-      final Template variableArrayTemplate;
-
-      try {
-        variableArrayTemplate = handlebars.compile("hbs/VariableArray.java");
-      } catch (Exception e) {
-        throw new VisitorException("Cannot load VariableArray template", e);
-      }
-
       var templateData = new HashMap<String, Object>();
 
       templateData.put("adapterName", def.getSymbol());
