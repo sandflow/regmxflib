@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 
 import org.apache.commons.numbers.fraction.Fraction;
@@ -45,7 +46,6 @@ public class StreamingReader {
   KLVInputStream kis;
   boolean isDone = false;
 
-  Track unitTrack;
   BoundedInputStream unitPayload;
   Long unitLength;
   AUID unitKey;
@@ -230,7 +230,7 @@ public class StreamingReader {
         for(EssenceData ed : this.preface.ContentStorageObject.EssenceDataObjects) {
 
           /* retrieve the File Package */
-          SourcePackage fp;
+          SourcePackage fp = null;
           for(Package p : preface.ContentStorageObject.Packages) {
             if (p.PackageID.equals(ed.LinkedPackageID)) {
               fp = (SourcePackage) p;
@@ -241,7 +241,7 @@ public class StreamingReader {
           /* TODO: error in case no package is found */
 
           /* do we have a multi-descriptor */
-          FileDescriptor fds[];
+          FileDescriptor fds[] = null;
           if (fp.EssenceDescription instanceof MultipleDescriptor) {
             fds = ((MultipleDescriptor) fp.EssenceDescription).SubDescriptors.toArray(fds);
           } else {
@@ -249,7 +249,7 @@ public class StreamingReader {
           }
 
           for(FileDescriptor fd : fds) {
-            Track foundTrack;
+            Track foundTrack = null;
 
             for(Track t : fp.PackageTracks) {
               if (t.TrackID == fd.LinkedTrackID) {
@@ -296,12 +296,13 @@ public class StreamingReader {
 
   public class TrackInfo {
     Fraction position;
-    EssenceDescriptor descriptor;
+    FileDescriptor descriptor;
     Track track;
     EssenceData container;
   }
 
   long currentSID;
+  TrackInfo unitTrackInfo;
 
   boolean nextUnit() throws KLVException, EOFException, IOException {
 
@@ -360,6 +361,21 @@ public class StreamingReader {
       } else {
 
         /* we have reached an essence element */
+        UL essenceKey = auid.asUL();
+        long trackNum = (essenceKey.getValueOctet(12) << 24) +
+          (essenceKey.getValueOctet(13) << 16) +
+          (essenceKey.getValueOctet(14) << 8) +
+          essenceKey.getValueOctet(15);
+
+        /* find track info */
+        this.unitTrackInfo = null;
+        for (TrackInfo trackInfo : this.tracks) {
+          if (trackInfo.container.EssenceStreamID == currentSID &&
+              trackInfo.track.EssenceTrackNumber == trackNum) {
+                this.unitTrackInfo = trackInfo;
+                break;
+              }
+        }
 
         this.unitPayload = new BoundedInputStream(kis, len);
         this.unitLength = len;
@@ -371,12 +387,11 @@ public class StreamingReader {
   }
 
   Fraction getUnitOffset() {
-    // TODO Auto-generated method stub
-    return null;
+    return this.unitTrackInfo.position;
   }
 
-  Track getUnitTrack() {
-    return this.unitTrack;
+  TrackInfo getUnitTrackInfo() {
+    return this.unitTrackInfo;
   }
 
   long getUnitPayloadLength() {
@@ -387,9 +402,8 @@ public class StreamingReader {
     return this.unitPayload;
   }
 
-  Track[] getTracks() {
-    // TODO Auto-generated method stub
-    return null;
+  Collection<TrackInfo> getTracks() {
+    return this.tracks;
   }
 
   boolean isDone() {
