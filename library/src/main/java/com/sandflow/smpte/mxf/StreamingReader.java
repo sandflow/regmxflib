@@ -46,6 +46,7 @@ public class StreamingReader {
   BoundedInputStream unitPayload;
   Long unitLength;
   AUID unitKey;
+  Preface preface;
 
   /**
    * Defines all events raised by this class
@@ -208,29 +209,22 @@ public class StreamingReader {
               cis.getCount(), pp.getHeaderByteCount())));
     }
 
-    
+    MXFInputContext mic = new MXFInputContext() {
+      @Override
+      public Set getSet(UUID uuid) {
+        return setresolver.get(uuid);
+      }
+    };
+
     for (Group agroup : gs) {
-      if (agroup.getKey().equalsWithMask(PREFACE_KEY, 0b1111101011111111 /* ignore version and Group coding */)) {
+      if (Preface.getKey().equalsIgnoreVersionAndGroupCoding(agroup.getKey())) {
         Set s = Set.fromGroup(agroup);
-        final Preface preface = Preface.fromSet(s, new MXFInputContext() {
-          @Override
-          public Set getSet(UUID uuid) {
-            return setresolver.get(uuid);
-          }
-        });
+        this.preface = Preface.fromSet(s, mic);
 
         SourcePackage sp = (SourcePackage) preface.ContentStorageObject.Packages.stream().filter(x -> x.PackageID.equals(preface.PrimaryPackage)).findFirst().orElse(null);
 
         unitTrack = new Track();
         unitTrack.fileDescriptor = (FileDescriptor) sp.EssenceDescription;
-
-        try {
-          Writer w = new FileWriter("out.json");
-          JSONSerializer.serialize(preface, w);
-          w.close();
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
 
       }
     }
@@ -333,6 +327,10 @@ public class StreamingReader {
 
   boolean isDone() {
     return this.isDone;
+  }
+
+  Preface getPreface() {
+    return this.preface;
   }
 
 }

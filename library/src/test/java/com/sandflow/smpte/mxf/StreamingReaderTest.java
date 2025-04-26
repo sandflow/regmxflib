@@ -28,7 +28,9 @@ package com.sandflow.smpte.mxf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.io.FileWriter;
 import java.io.InputStream;
+import java.io.Writer;
 
 import org.junit.jupiter.api.Test;
 
@@ -47,6 +49,19 @@ class StreamingReaderTest {
 
     assertEquals(288000, sr.getUnitPayloadLength());
 
-    assert(UL.fromURN("urn:smpte:ul:060e2b34.04010101.0d010301.02060200").equalsIgnoreVersion(sr.getUnitTrack().fileDescriptor.ContainerFormat));
+    assert (UL.fromURN("urn:smpte:ul:060e2b34.04010101.0d010301.02060200")
+        .equalsIgnoreVersion(sr.getUnitTrack().fileDescriptor.ContainerFormat));
+  }
+
+  @Test
+  void testPreface() throws Exception {
+    InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/audio.mxf");
+
+    StreamingReader sr = new StreamingReader(is, null);
+
+    Writer w = new FileWriter("out.json");
+    JSONSerializer.serialize(sr.getPreface(), w);
+    w.close();
+
   }
 }

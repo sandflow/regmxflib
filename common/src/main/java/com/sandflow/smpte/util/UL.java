@@ -149,7 +149,17 @@ public class UL {
 
         return true;
     }
-    
+
+    /**
+     * Compares this UL to another UL, ignoring the version byte and group coding
+     *
+     * @param ul Other UL to compare
+     * @return true if the ULs are equal
+     */
+    public boolean equalsIgnoreVersionAndGroupCoding(UL ul) {
+        return this.equalsWithMask(ul, 0b1111101011111111);
+    }
+
         /**
      * Compares this UL to another AUID, ignoring the version byte
      *

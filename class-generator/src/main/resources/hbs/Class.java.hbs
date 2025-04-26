@@ -34,6 +34,7 @@ import java.io.IOException;
 
 {{#if members}}import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.util.AUID;{{/if}}
+import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.mxf.ClassFactory;
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
@@ -43,6 +44,7 @@ import com.sandflow.smpte.mxf.Set;
   * {{description}}
   */
 public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassName}} extends {{parentClassName}}{{/if}} {
+  private static final UL KEY = UL.fromURN("{{identification}}");
 {{#each members}}
   private static final AUID {{symbol}}_AUID = AUID.fromURN("{{identification}}");{{/each}}
 {{#each members}}
@@ -96,6 +98,15 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
     }
 
     return null;
+  }
+
+  /**
+    * Returns the Set Key
+    *
+    * @return UL Key
+    */
+  public static UL getKey() {
+    return KEY;
   }
 
 }

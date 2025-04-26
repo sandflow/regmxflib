@@ -38,7 +38,7 @@ import com.sandflow.smpte.util.UL;
 public class ClassFactoryInitializer {
   static {
 {{#.}}
-    ClassFactory.putClass(UL.fromURN("{{getIdentification}}"), {{getSymbol}}.class);
+    ClassFactory.putClass({{getSymbol}}.getKey(), {{getSymbol}}.class);
 {{/.}}
   }
 
