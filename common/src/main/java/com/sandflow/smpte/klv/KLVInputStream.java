@@ -283,7 +283,7 @@ public class KLVInputStream extends InputStream implements DataInput {
         
         if (byteorder == ByteOrder.BIG_ENDIAN) {
         
-            return ((long) dis.readInt()) & 0xFFFF;
+            return ((long) dis.readInt()) & 0xFFFFFFFF;
             
         } else {
             
