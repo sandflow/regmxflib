@@ -292,7 +292,7 @@ public class KLVInputStream extends InputStream implements DataInput {
             int b2 = readUnsignedByte();
             int b3 = readUnsignedByte();
             
-            return ((long) b0 + (b1 << 8) + (b2 << 16) + (b3 << 24)) & 0xFFFF;
+            return ((long) b0 + (b1 << 8) + (b2 << 16) + (b3 << 24)) & 0xFFFFFFFF;
             
         }
         
