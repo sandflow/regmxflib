@@ -19,9 +19,15 @@ import com.sandflow.smpte.klv.MemoryTriplet;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.PartitionPack.Kind;
+import com.sandflow.smpte.mxf.types.EssenceData;
+import com.sandflow.smpte.mxf.types.EssenceDescriptor;
 import com.sandflow.smpte.mxf.types.FileDescriptor;
+import com.sandflow.smpte.mxf.types.MaterialPackage;
+import com.sandflow.smpte.mxf.types.MultipleDescriptor;
+import com.sandflow.smpte.mxf.types.Package;
 import com.sandflow.smpte.mxf.types.Preface;
 import com.sandflow.smpte.mxf.types.SourcePackage;
+import com.sandflow.smpte.mxf.types.Track;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.BoundedInputStream;
 import com.sandflow.smpte.util.CountingInputStream;
@@ -35,9 +41,6 @@ import com.sandflow.util.events.EventHandler;
 public class StreamingReader {
   private static final UL PREFACE_KEY = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.01012f00");
 
-  public class Track {
-    FileDescriptor fileDescriptor;
-  }
 
   KLVInputStream kis;
   boolean isDone = false;
@@ -47,6 +50,8 @@ public class StreamingReader {
   Long unitLength;
   AUID unitKey;
   Preface preface;
+
+  ArrayList<TrackInfo> tracks = new ArrayList<TrackInfo>();
 
   /**
    * Defines all events raised by this class
@@ -221,10 +226,61 @@ public class StreamingReader {
         Set s = Set.fromGroup(agroup);
         this.preface = Preface.fromSet(s, mic);
 
-        SourcePackage sp = (SourcePackage) preface.ContentStorageObject.Packages.stream().filter(x -> x.PackageID.equals(preface.PrimaryPackage)).findFirst().orElse(null);
+        /* collect tracks that are stored in essence containers */
+        for(EssenceData ed : this.preface.ContentStorageObject.EssenceDataObjects) {
 
-        unitTrack = new Track();
-        unitTrack.fileDescriptor = (FileDescriptor) sp.EssenceDescription;
+          /* retrieve the File Package */
+          SourcePackage fp;
+          for(Package p : preface.ContentStorageObject.Packages) {
+            if (p.PackageID.equals(ed.LinkedPackageID)) {
+              fp = (SourcePackage) p;
+              break;
+            }
+          }
+
+          /* TODO: error in case no package is found */
+
+          /* do we have a multi-descriptor */
+          FileDescriptor fds[];
+          if (fp.EssenceDescription instanceof MultipleDescriptor) {
+            fds = ((MultipleDescriptor) fp.EssenceDescription).SubDescriptors.toArray(fds);
+          } else {
+            fds = new FileDescriptor[] {(FileDescriptor) fp.EssenceDescription};
+          }
+
+          for(FileDescriptor fd : fds) {
+            Track foundTrack;
+
+            for(Track t : fp.PackageTracks) {
+              if (t.TrackID == fd.LinkedTrackID) {
+                foundTrack = t;
+                break;
+              }
+            }
+
+            /* TODO: handle missing Track */
+
+            TrackInfo ts = new TrackInfo();
+
+            ts.container = ed;
+            ts.descriptor = fd;
+            ts.track = foundTrack;
+            ts.position = Fraction.from(0);
+
+            this.tracks.add(ts);
+          }
+        }
+
+        /* find the first material package */
+        /* TODO: what to do if more than one Material Package */
+
+        MaterialPackage mp;
+        for(Package p : preface.ContentStorageObject.Packages) {
+          if (p instanceof MaterialPackage) {
+            mp = (MaterialPackage) p;
+            break;
+          }
+        }
 
       }
     }
@@ -238,13 +294,22 @@ public class StreamingReader {
 
   }
 
+  public class TrackInfo {
+    Fraction position;
+    EssenceDescriptor descriptor;
+    Track track;
+    EssenceData container;
+  }
+
+  long currentSID;
+
   boolean nextUnit() throws KLVException, EOFException, IOException {
 
     if (this.isDone) {
       return false;
     }
 
-    /* exhause current unit */
+    /* exhaust current unit */
 
     if (this.unitPayload != null) {
       this.unitPayload.exhaust();
@@ -279,13 +344,15 @@ public class StreamingReader {
           return false;
         }
 
+        this.currentSID = pp.getBodySID();
+
         kis.skip(pp.getHeaderByteCount());
         if (pp.getIndexSID() != 0) {
           kis.skip(pp.getIndexByteCount());
         }
 
       } else if (FillItem.getKey().equalsIgnoreVersion(auid)) {
-      
+
         /* skip over the fill item */
 
         kis.skip(len);
