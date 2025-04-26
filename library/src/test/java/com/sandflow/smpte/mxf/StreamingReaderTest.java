@@ -50,7 +50,7 @@ class StreamingReaderTest {
     assertEquals(288000, sr.getUnitPayloadLength());
 
     assert (UL.fromURN("urn:smpte:ul:060e2b34.04010101.0d010301.02060200")
-        .equalsIgnoreVersion(sr.getUnitTrackInfo().descriptor.ContainerFormat));
+        .equalsIgnoreVersion(sr.getUnitTrackInfo().descriptor().ContainerFormat));
   }
 
   @Test

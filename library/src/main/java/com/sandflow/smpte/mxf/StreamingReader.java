@@ -38,21 +38,7 @@ import com.sandflow.util.events.BasicEvent;
 import com.sandflow.util.events.Event;
 import com.sandflow.util.events.EventHandler;
 
-
 public class StreamingReader {
-  private static final UL PREFACE_KEY = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.01012f00");
-
-
-  KLVInputStream kis;
-  boolean isDone = false;
-
-  BoundedInputStream unitPayload;
-  Long unitLength;
-  AUID unitKey;
-  Preface preface;
-
-  ArrayList<TrackInfo> tracks = new ArrayList<TrackInfo>();
-
   /**
    * Defines all events raised by this class
    */
@@ -123,6 +109,27 @@ public class StreamingReader {
       throw new MXFException(evt.getMessage());
     }
   }
+
+  public record TrackInfo (
+    FileDescriptor descriptor,
+    Track track,
+    EssenceData container
+  ) {}
+
+  private class TrackState {
+    Fraction currentPosition;
+    TrackInfo info;
+
+    TrackState(TrackInfo info) {
+      this.currentPosition = Fraction.from(0);
+      this.info = info;
+    }
+  }
+
+  KLVInputStream kis;
+  boolean isDone = false;
+  Preface preface;
+  ArrayList<TrackState> tracks = new ArrayList<TrackState>();
 
   StreamingReader(InputStream is, EventHandler evthandler) throws IOException, KLVException, MXFException {
     if (is == null) {
@@ -227,11 +234,11 @@ public class StreamingReader {
         this.preface = Preface.fromSet(s, mic);
 
         /* collect tracks that are stored in essence containers */
-        for(EssenceData ed : this.preface.ContentStorageObject.EssenceDataObjects) {
+        for (EssenceData ed : this.preface.ContentStorageObject.EssenceDataObjects) {
 
           /* retrieve the File Package */
           SourcePackage fp = null;
-          for(Package p : preface.ContentStorageObject.Packages) {
+          for (Package p : preface.ContentStorageObject.Packages) {
             if (p.PackageID.equals(ed.LinkedPackageID)) {
               fp = (SourcePackage) p;
               break;
@@ -245,13 +252,13 @@ public class StreamingReader {
           if (fp.EssenceDescription instanceof MultipleDescriptor) {
             fds = ((MultipleDescriptor) fp.EssenceDescription).SubDescriptors.toArray(fds);
           } else {
-            fds = new FileDescriptor[] {(FileDescriptor) fp.EssenceDescription};
+            fds = new FileDescriptor[] { (FileDescriptor) fp.EssenceDescription };
           }
 
-          for(FileDescriptor fd : fds) {
+          for (FileDescriptor fd : fds) {
             Track foundTrack = null;
 
-            for(Track t : fp.PackageTracks) {
+            for (Track t : fp.PackageTracks) {
               if (t.TrackID == fd.LinkedTrackID) {
                 foundTrack = t;
                 break;
@@ -260,14 +267,7 @@ public class StreamingReader {
 
             /* TODO: handle missing Track */
 
-            TrackInfo ts = new TrackInfo();
-
-            ts.container = ed;
-            ts.descriptor = fd;
-            ts.track = foundTrack;
-            ts.position = Fraction.from(0);
-
-            this.tracks.add(ts);
+            this.tracks.add(new TrackState(new TrackInfo(fd, foundTrack, ed)));
           }
         }
 
@@ -275,7 +275,7 @@ public class StreamingReader {
         /* TODO: what to do if more than one Material Package */
 
         MaterialPackage mp;
-        for(Package p : preface.ContentStorageObject.Packages) {
+        for (Package p : preface.ContentStorageObject.Packages) {
           if (p instanceof MaterialPackage) {
             mp = (MaterialPackage) p;
             break;
@@ -294,15 +294,11 @@ public class StreamingReader {
 
   }
 
-  public class TrackInfo {
-    Fraction position;
-    FileDescriptor descriptor;
-    Track track;
-    EssenceData container;
-  }
-
   long currentSID;
-  TrackInfo unitTrackInfo;
+  BoundedInputStream currentPlayload;
+  long currentPayloadLength;
+  TrackInfo currentTrackInfo;
+  Fraction currentOffset;
 
   boolean nextUnit() throws KLVException, EOFException, IOException {
 
@@ -311,9 +307,8 @@ public class StreamingReader {
     }
 
     /* exhaust current unit */
-
-    if (this.unitPayload != null) {
-      this.unitPayload.exhaust();
+    if (this.currentPlayload != null) {
+      this.currentPlayload.exhaust();
     }
 
     /* loop until we find an essence element */
@@ -363,22 +358,24 @@ public class StreamingReader {
         /* we have reached an essence element */
         UL essenceKey = auid.asUL();
         long trackNum = (essenceKey.getValueOctet(12) << 24) +
-          (essenceKey.getValueOctet(13) << 16) +
-          (essenceKey.getValueOctet(14) << 8) +
-          essenceKey.getValueOctet(15);
+            (essenceKey.getValueOctet(13) << 16) +
+            (essenceKey.getValueOctet(14) << 8) +
+            essenceKey.getValueOctet(15);
 
         /* find track info */
-        this.unitTrackInfo = null;
-        for (TrackInfo trackInfo : this.tracks) {
-          if (trackInfo.container.EssenceStreamID == currentSID &&
-              trackInfo.track.EssenceTrackNumber == trackNum) {
-                this.unitTrackInfo = trackInfo;
-                break;
-              }
+        this.currentTrackInfo = null;
+        for (TrackState trackState : this.tracks) {
+          if (trackState.info.container.EssenceStreamID == currentSID &&
+              trackState.info.track.EssenceTrackNumber == trackNum) {
+            this.currentOffset = trackState.currentPosition;
+            trackState.currentPosition = trackState.currentPosition.add(trackState.info.descriptor.SampleRate.reciprocal());
+            this.currentTrackInfo = trackState.info;
+            break;
+          }
         }
 
-        this.unitPayload = new BoundedInputStream(kis, len);
-        this.unitLength = len;
+        this.currentPlayload = new BoundedInputStream(kis, len);
+        this.currentPayloadLength = len;
         break;
       }
     }
@@ -387,22 +384,22 @@ public class StreamingReader {
   }
 
   Fraction getUnitOffset() {
-    return this.unitTrackInfo.position;
+    return this.currentOffset;
   }
 
   TrackInfo getUnitTrackInfo() {
-    return this.unitTrackInfo;
+    return this.currentTrackInfo;
   }
 
   long getUnitPayloadLength() {
-    return this.unitLength;
+    return this.currentPayloadLength;
   }
 
   InputStream getUnitPayload() {
-    return this.unitPayload;
+    return this.currentPlayload;
   }
 
-  Collection<TrackInfo> getTracks() {
+  Collection<TrackState> getTracks() {
     return this.tracks;
   }
 
