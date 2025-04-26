@@ -9,6 +9,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 
 import org.apache.commons.numbers.fraction.Fraction;
 
@@ -399,8 +400,12 @@ public class StreamingReader {
     return this.currentPlayload;
   }
 
-  Collection<TrackState> getTracks() {
-    return this.tracks;
+  TrackInfo track(int i) {
+    return this.tracks.get(i).info;
+  }
+
+  int trackCount() {
+    return this.tracks.size();
   }
 
   boolean isDone() {

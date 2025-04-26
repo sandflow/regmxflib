@@ -32,6 +32,7 @@ import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.Writer;
 
+import org.apache.commons.numbers.fraction.Fraction;
 import org.junit.jupiter.api.Test;
 
 import com.sandflow.smpte.util.UL;
@@ -60,8 +61,11 @@ class StreamingReaderTest {
 
     StreamingReader sr = new StreamingReader(is, null);
 
+    Fraction frameTime = sr.track(0).descriptor().SampleRate.reciprocal();
+
     int i = 0;
     while (sr.nextUnit()) {
+      assertEquals(frameTime.multiply(i), sr.getUnitOffset());
       i++;
     }
 
