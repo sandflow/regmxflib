@@ -31,13 +31,29 @@ import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.EventHandler;
 
+/**
+ * StreamingReader provides a streaming interface to read MXF (Material Exchange
+ * Format) files.
+ */
 public class StreamingReader {
-  public record TrackInfo (
-    FileDescriptor descriptor,
-    Track track,
-    EssenceData container
-  ) {}
 
+  /**
+   * Represents information associated with an Essence Track.
+   *
+   * @param descriptor File descriptor associated with the track.
+   * @param track      Track metadata.
+   * @param container  Essence container reference.
+   */
+  public record TrackInfo(
+      FileDescriptor descriptor,
+      Track track,
+      EssenceData container) {
+  }
+
+  /**
+   * Represents the state of a track during streaming,
+   * including its current playback position.
+   */
   private class TrackState {
     Fraction currentPosition;
     TrackInfo info;
@@ -48,11 +64,18 @@ public class StreamingReader {
     }
   }
 
-  KLVInputStream kis;
-  boolean isDone = false;
-  Preface preface;
-  ArrayList<TrackState> tracks = new ArrayList<TrackState>();
+  private KLVInputStream kis;
+  private boolean isDone = false;
+  private Preface preface;
+  private ArrayList<TrackState> tracks = new ArrayList<TrackState>();
 
+  /**
+   * Creates a new StreamingReader from an InputStream.
+   *
+   * @param is         InputStream containing the MXF file data.
+   * @param evthandler Event handler for reporting parsing events or
+   *                   inconsistencies.
+   */
   StreamingReader(InputStream is, EventHandler evthandler) throws IOException, KLVException, MXFException {
     if (is == null) {
       throw new NullPointerException("InputStream cannot be null");
@@ -216,12 +239,19 @@ public class StreamingReader {
 
   }
 
-  long currentSID;
-  BoundedInputStream currentPlayload;
-  long currentPayloadLength;
-  TrackInfo currentTrackInfo;
-  Fraction currentOffset;
+  private long currentSID;
+  private BoundedInputStream currentPlayload;
+  private long currentPayloadLength;
+  private TrackInfo currentTrackInfo;
+  private Fraction currentOffset;
 
+  /**
+   * Advances the stream to the next essence unit.
+   *
+   * @return true if a new unit is available; false if end of stream.
+   * @throws IOException  if an I/O error occurs.
+   * @throws KLVException if a KLV reading error occurs.
+   */
   boolean nextUnit() throws KLVException, EOFException, IOException {
 
     if (this.isDone) {
@@ -290,7 +320,8 @@ public class StreamingReader {
           if (trackState.info.container.EssenceStreamID == currentSID &&
               trackState.info.track.EssenceTrackNumber == trackNum) {
             this.currentOffset = trackState.currentPosition;
-            trackState.currentPosition = trackState.currentPosition.add(trackState.info.descriptor.SampleRate.reciprocal());
+            trackState.currentPosition = trackState.currentPosition
+                .add(trackState.info.descriptor.SampleRate.reciprocal());
             this.currentTrackInfo = trackState.info;
             break;
           }
@@ -305,34 +336,75 @@ public class StreamingReader {
     return true;
   }
 
+  /**
+   * Returns the temporal offset of the current unit.
+   *
+   * @return Fractional offset from start.
+   */
   Fraction getUnitOffset() {
     return this.currentOffset;
   }
 
+  /**
+   * Returns metadata about the current essence unit's track.
+   *
+   * @return TrackInfo object associated with the current unit.
+   */
   TrackInfo getUnitTrackInfo() {
     return this.currentTrackInfo;
   }
 
+  /**
+   * Returns the length of the current payload in bytes.
+   *
+   * @return Payload length.
+   */
   long getUnitPayloadLength() {
     return this.currentPayloadLength;
   }
 
+  /**
+   * Returns an InputStream over the current essence payload.
+   *
+   * @return InputStream for reading payload data.
+   */
   InputStream getUnitPayload() {
     return this.currentPlayload;
   }
 
+  /**
+   * Returns the TrackInfo for a specific track.
+   *
+   * @param i index of the track.
+   * @return TrackInfo object.
+   */
   TrackInfo getTrack(int i) {
     return this.tracks.get(i).info;
   }
 
+  /**
+   * Returns the number of essence tracks available.
+   *
+   * @return number of tracks.
+   */
   int getTrackCount() {
     return this.tracks.size();
   }
 
+  /**
+   * Checks if the stream has reached the end.
+   *
+   * @return true if done reading, false otherwise.
+   */
   boolean isDone() {
     return this.isDone;
   }
 
+  /**
+   * Returns the Preface metadata object parsed from the MXF file.
+   *
+   * @return Preface object.
+   */
   Preface getPreface() {
     return this.preface;
   }
