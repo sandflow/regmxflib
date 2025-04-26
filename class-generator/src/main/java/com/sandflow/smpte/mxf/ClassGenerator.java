@@ -158,6 +158,7 @@ public class ClassGenerator {
     private static final UL PrimaryPackage_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010104.06010104.01080000");
     private static final UL LinkedGenerationID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.05200701.08000000");
     private static final UL GenerationID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.05200701.01000000");
+    private static final AUID UINT16_AUID= AUID.fromURN("urn:smpte:ul:060e2b34.01040101.01010200.00000000");
     private static final UL ApplicationProductID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.05200701.07000000");
     private static final AUID AUID_AUID = new AUID(UL.fromDotValue("06.0E.2B.34.01.04.01.01.01.03.01.00.00.00.00.00"));
     private static final AUID UUID_AUID = new AUID(UL.fromDotValue("06.0E.2B.34.01.04.01.01.01.03.03.00.00.00.00.00"));
@@ -365,7 +366,15 @@ public class ClassGenerator {
         return;
       }
 
-      TypeMaker tm = getTypeInformation(resolver.getDefinition(def.getElementType()));
+
+      TypeMaker tm;
+      if (ProductReleaseType_UL.equalsIgnoreVersion(def.getIdentification())) {
+        /* EXCEPTION: ProductReleaseType_UL is listed as
+        a UInt8 enum but encoded as a UInt16 */
+        tm = getTypeInformation(resolver.getDefinition(UINT16_AUID));
+      } else {
+        tm = getTypeInformation(resolver.getDefinition(def.getElementType()));
+      }
 
       var templateData = new HashMap<String, Object>();
       templateData.put("symbol", def.getSymbol());

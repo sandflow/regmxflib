@@ -88,11 +88,9 @@ public class JSONSerializer {
       }
       w.write("]");
     } else if (obj.getClass().isEnum() || obj instanceof String || PRIMITIVES.contains(obj.getClass())) {
-      w.write("\"" + obj.toString() + "\"");
+      w.write(String.format("\"%s\"", escapeJSONString(obj.toString())));
     } else if (NUMBERS.contains(obj.getClass())) {
       w.write(obj.toString());
-    } else if (obj instanceof String) {
-      w.write(escapeJSONString((String) obj));
     } else {
       w.write("{");
       boolean first = true;
@@ -110,7 +108,7 @@ public class JSONSerializer {
           } else {
             first = false;
           }
-          w.write("\"" + field.getName() + "\": ");
+          w.write(String.format("\"%s\": ", field.getName()));
           serialize(v, w);
         }
         clazz = clazz.getSuperclass();
