@@ -70,6 +70,9 @@ import com.sandflow.smpte.mxf.adapters.UTF8StringAdapter;
 import com.sandflow.smpte.mxf.adapters.UUIDAdapter;
 import com.sandflow.smpte.mxf.adapters.VersionAdapter;
 import com.sandflow.smpte.mxf.types.Version;
+import com.sandflow.smpte.register.LabelsRegister;
+import com.sandflow.smpte.register.LabelsRegister.Entry.Kind;
+import com.sandflow.smpte.register.exceptions.DuplicateEntryException;
 import com.sandflow.smpte.regxml.dict.DefinitionResolver;
 import com.sandflow.smpte.regxml.dict.MetaDictionary;
 import com.sandflow.smpte.regxml.dict.MetaDictionaryCollection;
@@ -112,6 +115,7 @@ public class ClassGenerator {
   static final Template classFactoryTemplate;
   static final Template variableArrayTemplate;
   static final Template fixedArrayTemplate;
+  static final Template labelsTemplate;
 
   static {
     try {
@@ -121,7 +125,7 @@ public class ClassGenerator {
       classFactoryTemplate = handlebars.compile("hbs/ClassFactoryInitializer.java");
       fixedArrayTemplate = handlebars.compile("hbs/FixedArray.java");
       variableArrayTemplate = handlebars.compile("hbs/VariableArray.java");
-
+      labelsTemplate = handlebars.compile("hbs/Labels.java");
     } catch (Exception e) {
       throw new RuntimeException("Failed to load template", e);
     }
@@ -670,7 +674,7 @@ public class ClassGenerator {
     return props;
   }
 
-  public static void generate(MetaDictionaryCollection mds, File generatedSourcesDir)
+  public static void generate(MetaDictionaryCollection mds, LabelsRegister lr, File generatedSourcesDir)
       throws IOException, URISyntaxException, VisitorException {
 
     ClassGenerator g = new ClassGenerator(mds, generatedSourcesDir);
@@ -684,15 +688,22 @@ public class ClassGenerator {
         try {
           if (def instanceof ClassDefinition)
             g.getTypeInformation(def);
-        } finally {
-          continue;
+        } catch (Exception e) {
+          /* TODO: log */
         }
       }
     }
 
     /* generate the class factory */
-
     g.generateSource(classFactoryTemplate, "com.sandflow.smpte.mxf", "ClassFactoryInitializer", g.classList);
+
+    /* generate labels */
+    g.generateSource(
+      labelsTemplate,
+      "com.sandflow.smpte.mxf",
+      "Labels",
+      lr.getEntries().stream().filter(e -> e.getKind() == Kind.LEAF).toArray()
+    );
   }
 
   private void generateSource(Template template, String packageName, String symbol, Object data) {
@@ -720,7 +731,7 @@ public class ClassGenerator {
   }
 
   public static void main(String[] args) throws URISyntaxException, IllegalDictionaryException, JAXBException,
-      IOException, IllegalDefinitionException, VisitorException {
+      IOException, IllegalDefinitionException, VisitorException, DuplicateEntryException {
     File dir = new File(args[0]);
 
     File[] mdFiles = dir.listFiles(
@@ -745,6 +756,14 @@ public class ClassGenerator {
       deleteFile(generatedClassDir);
     }
 
-    ClassGenerator.generate(mds, generatedClassDir);
+    /* labels register */
+
+    final FileReader labelreader = new FileReader(args[2]);
+    final LabelsRegister lr = LabelsRegister.fromXML(labelreader);
+    labelreader.close();
+
+    /* generate the source files */
+
+    ClassGenerator.generate(mds, lr, generatedClassDir);
   }
 }
