@@ -29,82 +29,9 @@ import com.sandflow.smpte.util.BoundedInputStream;
 import com.sandflow.smpte.util.CountingInputStream;
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UUID;
-import com.sandflow.util.events.BasicEvent;
-import com.sandflow.util.events.Event;
 import com.sandflow.util.events.EventHandler;
 
 public class StreamingReader {
-  /**
-   * Defines all events raised by this class
-   */
-  public static enum EventCodes {
-
-    /**
-     * No root object found
-     */
-    MISSING_ROOT_OBJECT(Event.Severity.FATAL),
-    /**
-     * No partition pack found in the MXF file
-     */
-    MISSING_PARTITION_PACK(Event.Severity.FATAL),
-    /**
-     * No primer pack found in the MXF file
-     */
-    MISSING_PRIMER_PACK(Event.Severity.FATAL),
-    /**
-     * Unexpected group sequence encountered
-     */
-    UNEXPECTED_STRUCTURE(Event.Severity.ERROR),
-    /**
-     * Failed to read Group
-     */
-    GROUP_READ_FAILED(Event.Severity.ERROR),
-    /**
-     * Inconsistent header metadata length
-     */
-    INCONSISTENT_HEADER_LENGTH(Event.Severity.FATAL);
-
-    public final Event.Severity severity;
-
-    private EventCodes(Event.Severity severity) {
-      this.severity = severity;
-    }
-
-  }
-
-  /**
-   * All events raised by this class are instance of this class
-   */
-  public static class MXFEvent extends BasicEvent {
-
-    public MXFEvent(EventCodes kind, String message) {
-      super(kind.severity, kind, message);
-    }
-
-  }
-
-  public static class MXFException extends Exception {
-
-    public MXFException(String msg) {
-      super(msg);
-    }
-  }
-
-  private static void handleEvent(EventHandler handler, com.sandflow.util.events.Event evt) throws MXFException {
-    if (handler != null) {
-      if (!handler.handle(evt) ||
-          evt.getSeverity() == Event.Severity.FATAL) {
-        /* die on FATAL events or if requested by the handler */
-        throw new MXFException(evt.getMessage());
-
-      }
-    } else if (evt.getSeverity() == Event.Severity.ERROR ||
-        evt.getSeverity() == Event.Severity.FATAL) {
-      /* if no event handler was provided, die on FATAL and ERROR events */
-      throw new MXFException(evt.getMessage());
-    }
-  }
-
   public record TrackInfo (
     FileDescriptor descriptor,
     Track track,
@@ -143,8 +70,8 @@ public class StreamingReader {
     }
 
     if (pp == null) {
-      handleEvent(evthandler,
-          new MXFEvent(EventCodes.MISSING_PARTITION_PACK, "No Partition Pack found"));
+      MXFEvent.handle(evthandler,
+          new MXFEvent(MXFEvent.EventCodes.MISSING_PARTITION_PACK, "No Partition Pack found"));
     }
 
     /* start counting header metadata bytes */
@@ -162,8 +89,8 @@ public class StreamingReader {
     }
 
     if (localreg == null) {
-      handleEvent(evthandler, new MXFEvent(
-          EventCodes.MISSING_PRIMER_PACK,
+      MXFEvent.handle(evthandler, new MXFEvent(
+          MXFEvent.EventCodes.MISSING_PRIMER_PACK,
           "No Primer Pack found"));
     }
 
@@ -195,13 +122,13 @@ public class StreamingReader {
           }
 
         } else {
-          handleEvent(evthandler, new MXFEvent(
-              EventCodes.GROUP_READ_FAILED,
+          MXFEvent.handle(evthandler, new MXFEvent(
+              MXFEvent.EventCodes.GROUP_READ_FAILED,
               String.format("Failed to read Group: {0}", t.getKey().toString())));
         }
       } catch (KLVException ke) {
-        handleEvent(evthandler, new MXFEvent(
-            EventCodes.GROUP_READ_FAILED,
+        MXFEvent.handle(evthandler, new MXFEvent(
+            MXFEvent.EventCodes.GROUP_READ_FAILED,
             String.format("Failed to read Group %s with error %s", t.getKey().toString(), ke.getMessage())));
       }
     }
@@ -210,8 +137,8 @@ public class StreamingReader {
      * check that the header metadata length is consistent
      */
     if (cis.getCount() != pp.getHeaderByteCount()) {
-      handleEvent(evthandler, new MXFEvent(
-          EventCodes.INCONSISTENT_HEADER_LENGTH,
+      MXFEvent.handle(evthandler, new MXFEvent(
+          MXFEvent.EventCodes.INCONSISTENT_HEADER_LENGTH,
           String.format("Actual Header Metadata length (%s) does not match the Partition Pack information (%s)",
               cis.getCount(), pp.getHeaderByteCount())));
     }
