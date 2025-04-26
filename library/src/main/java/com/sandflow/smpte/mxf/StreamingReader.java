@@ -1,15 +1,10 @@
 package com.sandflow.smpte.mxf;
 
 import java.io.EOFException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 
 import org.apache.commons.numbers.fraction.Fraction;
 
@@ -22,7 +17,6 @@ import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.PartitionPack.Kind;
 import com.sandflow.smpte.mxf.types.EssenceData;
-import com.sandflow.smpte.mxf.types.EssenceDescriptor;
 import com.sandflow.smpte.mxf.types.FileDescriptor;
 import com.sandflow.smpte.mxf.types.MaterialPackage;
 import com.sandflow.smpte.mxf.types.MultipleDescriptor;
@@ -400,11 +394,11 @@ public class StreamingReader {
     return this.currentPlayload;
   }
 
-  TrackInfo track(int i) {
+  TrackInfo getTrack(int i) {
     return this.tracks.get(i).info;
   }
 
-  int trackCount() {
+  int getTrackCount() {
     return this.tracks.size();
   }
 

@@ -61,7 +61,7 @@ class StreamingReaderTest {
 
     StreamingReader sr = new StreamingReader(is, null);
 
-    Fraction frameTime = sr.track(0).descriptor().SampleRate.reciprocal();
+    Fraction frameTime = sr.getTrack(0).descriptor().SampleRate.reciprocal();
 
     int i = 0;
     while (sr.nextUnit()) {
