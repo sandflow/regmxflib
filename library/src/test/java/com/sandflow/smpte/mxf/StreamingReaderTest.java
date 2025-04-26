@@ -39,7 +39,7 @@ import com.sandflow.smpte.util.UL;
 class StreamingReaderTest {
 
   @Test
-  void testNextUnit() throws Exception {
+  void testGetUnitTrackInfo() throws Exception {
     InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/audio.mxf");
     assertNotNull(is);
 
@@ -51,6 +51,21 @@ class StreamingReaderTest {
 
     assert (UL.fromURN("urn:smpte:ul:060e2b34.04010101.0d010301.02060200")
         .equalsIgnoreVersion(sr.getUnitTrackInfo().descriptor().ContainerFormat));
+  }
+
+  @Test
+  void testNextUnit() throws Exception {
+    InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/video.mxf");
+    assertNotNull(is);
+
+    StreamingReader sr = new StreamingReader(is, null);
+
+    int i = 0;
+    while (sr.nextUnit()) {
+      i++;
+    }
+
+    assertEquals(24, i);
   }
 
   @Test

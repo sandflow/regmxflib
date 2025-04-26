@@ -83,7 +83,10 @@ public class BoundedInputStream extends CountingInputStream {
         if (maxCount < 0) {
             return -1;
         }
-        return this.skip(maxCount - getCount());
+        long count = maxCount - getCount();
+        while (maxCount > getCount())
+            this.skip(maxCount - getCount());
+        return count;
     }
 
 
