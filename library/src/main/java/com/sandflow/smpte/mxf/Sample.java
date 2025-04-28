@@ -3,7 +3,6 @@ package com.sandflow.smpte.mxf;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import com.sandflow.smpte.klv.MemoryGroup;
 import com.sandflow.smpte.mxf.types.InterchangeObject;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;

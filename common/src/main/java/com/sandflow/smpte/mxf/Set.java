@@ -36,76 +36,75 @@ import java.util.HashMap;
 /**
  * Represents a MXF Set (see SMPTE ST 377-1)
  */
-public class Set implements Group{
-    private static final UL INSTANCE_UID_ITEM_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010101.01011502.00000000");
+public class Set implements Group {
+  private static final UL INSTANCE_UID_ITEM_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010101.01011502.00000000");
 
-    /**
-     * Creates an MXF Set from a Group
-     * @param group Group from which to create the MXF Set
-     * @return MXF Set or null if the Group does not contain an Instance ID property
-     */
-    static public Set fromGroup(Group group) {
-        
-        for (Triplet t : group.getItems()) {
+  /**
+   * Creates an MXF Set from a Group
+   * 
+   * @param group Group from which to create the MXF Set
+   * @return MXF Set or null if the Group does not contain an Instance ID property
+   */
+  static public Set fromGroup(Group group) {
 
-            if (INSTANCE_UID_ITEM_UL.equalsIgnoreVersion(t.getKey())) {
+    for (Triplet t : group.getItems()) {
 
-                UUID uuid = new UUID(t.getValue());
+      if (INSTANCE_UID_ITEM_UL.equalsIgnoreVersion(t.getKey())) {
 
-                return new Set(group, uuid);
-            }
+        UUID uuid = new UUID(t.getValue());
 
-        }
-        
-        return null;
+        return new Set(group, uuid);
+      }
+
     }
 
-    private final UUID instanceID;
-    private final Group group;
-    private final HashMap<AUID, Triplet> tripletByID = new HashMap<>();
+    return null;
+  }
 
-    private Set(Group group, UUID instanceID) {
-        this.group = group;
-        this.instanceID = instanceID;
+  private final UUID instanceID;
+  private final Group group;
+  private final HashMap<AUID, Triplet> tripletByID = new HashMap<>();
 
-        for(var t : group.getItems()) {
-            this.tripletByID.put(makeNormalizedAUID(t.getKey()), t);
-        }
+  private Set(Group group, UUID instanceID) {
+    this.group = group;
+    this.instanceID = instanceID;
+
+    for (var t : group.getItems()) {
+      this.tripletByID.put(makeNormalizedAUID(t.getKey()), t);
     }
+  }
 
-    private AUID makeNormalizedAUID(AUID auid) {
-        byte[] newValue = auid.getValue();
-        if (!auid.isUL())
-            return new AUID(newValue);
+  private AUID makeNormalizedAUID(AUID auid) {
+    byte[] newValue = auid.getValue();
+    if (!auid.isUL())
+      return new AUID(newValue);
 
-        /* zero out the version number */
-        newValue[7] = 0;
-        return new AUID(newValue);
-    }
+    /* zero out the version number */
+    newValue[7] = 0;
+    return new AUID(newValue);
+  }
 
-    public Triplet getItem(AUID auid) {
-        return this.tripletByID.get(makeNormalizedAUID(auid));
-    }
+  public Triplet getItem(AUID auid) {
+    return this.tripletByID.get(makeNormalizedAUID(auid));
+  }
 
-    @Override
-    public Collection<Triplet> getItems() {
-        return group.getItems();
-    }
+  @Override
+  public Collection<Triplet> getItems() {
+    return group.getItems();
+  }
 
-    @Override
-    public UL getKey() {
-        return group.getKey();
-    }
+  @Override
+  public UL getKey() {
+    return group.getKey();
+  }
 
-    /**
-     * Returns the Instance ID of the MXF Set
-     *
-     * @return UUID
-     */
-    public UUID getInstanceID() {
-        return instanceID;
-    }
+  /**
+   * Returns the Instance ID of the MXF Set
+   *
+   * @return UUID
+   */
+  public UUID getInstanceID() {
+    return instanceID;
+  }
 
-    
-        
 }
