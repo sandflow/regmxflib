@@ -30,11 +30,17 @@ import java.io.IOException;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFOutputContext;
+import com.sandflow.smpte.mxf.MXFOutputStream;
 
 public class BooleanAdapter {
 
   public static boolean fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return is.readByte() != 0;
+  }
+
+  public static void toStream(boolean value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+    os.writeByte(value ? 1 : 0);
   }
 
 }

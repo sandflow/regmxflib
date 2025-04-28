@@ -81,6 +81,8 @@ public class StreamingReader {
       throw new NullPointerException("InputStream cannot be null");
     }
 
+    /* TODO: handle byte ordering */
+
     CountingInputStream cis = new CountingInputStream(is);
     kis = new KLVInputStream(cis);
 

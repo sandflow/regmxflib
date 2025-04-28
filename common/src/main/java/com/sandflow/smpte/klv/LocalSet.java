@@ -25,13 +25,15 @@
  */
 package com.sandflow.smpte.klv;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.klv.exceptions.TripletLengthException;
+import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.CountingInputStream;
 import com.sandflow.smpte.util.UL;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * LocalSet implements a Local Set as specified in SMPTE ST 336. 
@@ -138,7 +140,7 @@ public class LocalSet implements Group {
         
     }
 
-    private final ArrayList<Triplet> items = new ArrayList<>();
+    private final HashMap<AUID, Triplet> items = new HashMap<>();
 
     private final UL key;
 
@@ -153,11 +155,11 @@ public class LocalSet implements Group {
 
     @Override
     public Collection<Triplet> getItems() {
-        return items;
+        return items.values();
     }
 
-    private void addItem(Triplet triplet) {
-        items.add(triplet);
+    public void addItem(Triplet triplet) {
+        items.put(triplet.getKey(), triplet);
     }
 
 }

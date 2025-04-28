@@ -30,12 +30,18 @@ import java.io.IOException;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFOutputContext;
+import com.sandflow.smpte.mxf.MXFOutputStream;
 import com.sandflow.smpte.util.UMID;
 
 public class UMIDAdapter {
 
   public static UMID fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return is.readUMID();
+  }
+
+  public static void toStream(UMID value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+    os.writeUMID(value);
   }
 
 }

@@ -32,6 +32,9 @@ import java.time.LocalDateTime;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFOutputContext;
+import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.util.UMID;
 
 public class LocalDateTimeAdapter {
 
@@ -45,6 +48,16 @@ public class LocalDateTimeAdapter {
     int fraction = is.readUnsignedByte();
 
     return LocalDateTime.of(year, month, day, hour, minute, second, fraction * 4000);
+  }
+
+  public static void toStream(LocalDateTime t, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+    os.writeUnsignedShort(t.getYear());
+    os.writeUnsignedByte((byte) t.getMonth().getValue());
+    os.writeUnsignedByte((byte) t.getDayOfMonth());
+    os.writeUnsignedByte((byte) t.getHour());
+    os.writeUnsignedByte((byte) t.getMinute());
+    os.writeUnsignedByte((byte) t.getSecond());
+    os.writeUnsignedByte((byte) (t.getNano() / 4000));
   }
 
 }

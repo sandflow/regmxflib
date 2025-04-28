@@ -204,6 +204,8 @@ public class ClassGenerator {
     @Override
     public void visit(ClassDefinition def) throws VisitorException {
 
+      /* TODO: how to prevent circular references */
+
       final UL METADEFINITIONS_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.02000000");
       final UL MXFFILESTRUCTURESETSANDPACKS_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.01000000");
       final UL ROOT_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.03000000");

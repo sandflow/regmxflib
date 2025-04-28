@@ -30,11 +30,17 @@ import java.io.IOException;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFOutputContext;
+import com.sandflow.smpte.mxf.MXFOutputStream;
 
 public class Int32Adapter {
 
   public static int fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return is.readInt();
+  }
+
+  public static void toStream(int value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+    os.writeInt(value);
   }
 
 }

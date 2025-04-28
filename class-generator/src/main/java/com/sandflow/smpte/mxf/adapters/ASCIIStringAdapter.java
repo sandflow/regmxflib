@@ -28,10 +28,13 @@ package com.sandflow.smpte.mxf.adapters;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFOutputContext;
+import com.sandflow.smpte.mxf.MXFOutputStream;
 
 public class ASCIIStringAdapter {
 
@@ -41,9 +44,15 @@ public class ASCIIStringAdapter {
 
     var buf = new char[256];
     int c;
+    /* TODO: stop on null string */
     while((c = isr.read(buf)) != -1)
       sb.append(buf, 0, c);
     return sb.toString();
+  }
+
+  public static void toStream(String s, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+    var osw = new OutputStreamWriter(os, StandardCharsets.US_ASCII);
+    osw.write(s);
   }
 
 }

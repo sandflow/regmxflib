@@ -27,14 +27,21 @@
 package com.sandflow.smpte.mxf.adapters;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFOutputContext;
+import com.sandflow.smpte.mxf.MXFOutputStream;
 
 public class Int64Adapter {
 
   public static long fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return is.readLong();
+  }
+
+  public static void toStream(long value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+    os.writeLong(value);
   }
 
 }

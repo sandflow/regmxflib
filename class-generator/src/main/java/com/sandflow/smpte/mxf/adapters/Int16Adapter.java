@@ -30,11 +30,17 @@ import java.io.IOException;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFOutputContext;
+import com.sandflow.smpte.mxf.MXFOutputStream;
 
 public class Int16Adapter {
 
   public static short fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return is.readShort();
+  }
+
+  public static void toStream(short value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+    os.writeShort(value);
   }
 
 }

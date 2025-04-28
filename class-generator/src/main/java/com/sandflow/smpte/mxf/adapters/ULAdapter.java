@@ -30,6 +30,8 @@ import java.io.IOException;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFOutputContext;
+import com.sandflow.smpte.mxf.MXFOutputStream;
 import com.sandflow.smpte.util.UL;
 
 public class ULAdapter {
@@ -38,4 +40,7 @@ public class ULAdapter {
     return is.readUL();
   }
 
+  public static void toStream(UL value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+    os.writeUL(value);
+  }
 }

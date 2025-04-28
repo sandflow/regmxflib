@@ -31,6 +31,8 @@ import java.io.IOException;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFOutputContext;
+import com.sandflow.smpte.mxf.MXFOutputStream;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UMID;
 import com.sandflow.smpte.util.UUID;
@@ -42,9 +44,15 @@ public class PrimaryPackageAdapter {
   public static UMID fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     UUID uuid = is.readUUID();
     var s = ctx.getSet(uuid);
+    /* TODO: check if no set found */
     Triplet t = s.getItem(PACKAGEID_AUID);
     MXFInputStream mis = new MXFInputStream(t.getValueAsStream());
     return mis.readUMID();
+  }
+
+  public static void toStream(UMID packageID, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+    /* TODO: check if no package found */
+    os.writeUUID(ctx.getPackageInstanceID(packageID));
   }
 
 }

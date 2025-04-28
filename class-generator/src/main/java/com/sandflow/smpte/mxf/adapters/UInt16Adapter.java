@@ -30,6 +30,8 @@ import java.io.IOException;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFOutputContext;
+import com.sandflow.smpte.mxf.MXFOutputStream;
 
 public class UInt16Adapter {
 
@@ -37,4 +39,7 @@ public class UInt16Adapter {
     return is.readUnsignedShort();
   }
 
+  public static void toStream(int value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+    os.writeUnsignedShort(value);
+  }
 }

@@ -58,6 +58,14 @@ public class IDAU {
     private byte[] value;
     
     private IDAU() { }
+
+    /**
+     * Returns the underlying bytes of the IDAU
+     * @return Bytes of the IDAU
+     */
+    public byte[] getValue() {
+        return this.value;
+    }
     
     /**
      * Instantiates a IDAU from a 16-byte buffer

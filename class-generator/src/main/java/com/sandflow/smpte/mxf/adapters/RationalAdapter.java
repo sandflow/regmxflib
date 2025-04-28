@@ -32,6 +32,8 @@ import org.apache.commons.numbers.fraction.Fraction;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFOutputContext;
+import com.sandflow.smpte.mxf.MXFOutputStream;
 
 public class RationalAdapter {
 
@@ -42,4 +44,8 @@ public class RationalAdapter {
     return Fraction.of(numerator, denominator);
   }
 
+  public static void toStream(Fraction value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+    os.writeInt(value.getNumerator());
+    os.writeInt(value.getDenominator());
+  }
 }

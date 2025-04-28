@@ -27,10 +27,13 @@
 package com.sandflow.smpte.mxf.adapters;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFOutputContext;
+import com.sandflow.smpte.mxf.MXFOutputStream;
 
 public class LocalTimeAdapter {
 
@@ -46,6 +49,13 @@ public class LocalTimeAdapter {
     int fraction = is.readUnsignedByte();
 
     return LocalTime.of(hour, minute, second, 4 * fraction * 1000);
+  }
+
+  public static void toStream(LocalDateTime t, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+    os.writeUnsignedByte((byte) t.getHour());
+    os.writeUnsignedByte((byte) t.getMinute());
+    os.writeUnsignedByte((byte) t.getSecond());
+    os.writeUnsignedByte((byte) (t.getNano() / 4000));
   }
 
 }
