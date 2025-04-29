@@ -37,6 +37,8 @@ import com.sandflow.smpte.mxf.MXFOutputStream;
 
 public class RationalAdapter {
 
+  public static final Integer ITEM_LENGTH = 8;
+
   public static Fraction fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     int numerator = is.readInt();
     int denominator = is.readInt();

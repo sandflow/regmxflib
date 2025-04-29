@@ -37,6 +37,7 @@ public class UL {
     private final static Pattern DOTVALUE_PATTERN = Pattern.compile("[a-fA-F0-9]{2}(\\.[a-fA-F0-9]{2}){15}");
     private final static int CATEGORY_DESIGNATOR_BYTE = 4;
     private final static int REGISTRY_DESIGNATOR_BYTE = 5;
+    private final static int VERSION_BYTE = 7;
 
     /**
      * Creates a UL from a URN
@@ -118,6 +119,16 @@ public class UL {
     private UL() {
         this.value = new byte[16];
     }
+
+    public UL makeVersionNormalized() {
+        if (this.getValueOctet(VERSION_BYTE) == 0) {
+            return this;
+        }
+
+        byte[] nv = this.getValue().clone();
+        nv[7] = 0;
+        return new UL(nv);
+      }
 
     /**
      * Instantiates a UL from a sequence of 16 bytes

@@ -10,7 +10,7 @@ import org.apache.commons.numbers.fraction.Fraction;
 
 import com.sandflow.smpte.klv.Group;
 import com.sandflow.smpte.klv.KLVInputStream;
-import com.sandflow.smpte.klv.LocalSet;
+import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.LocalTagRegister;
 import com.sandflow.smpte.klv.MemoryTriplet;
 import com.sandflow.smpte.klv.Triplet;
@@ -136,14 +136,13 @@ public class StreamingReader {
       }
 
       try {
-        Group g = LocalSet.fromTriplet(t, localreg);
+        Set s = Set.fromLocalSet(t, localreg);
 
-        if (g != null) {
+        if (s != null) {
 
-          gs.add(g);
-          Set set = Set.fromGroup(g);
-          if (set != null) {
-            setresolver.put(set.getInstanceID(), set);
+          UUID instanceID = HeaderMetadataSet.getInstanceID(s);
+          if (instanceID != null) {
+            setresolver.put(instanceID, s);
           }
 
         } else {
@@ -175,9 +174,8 @@ public class StreamingReader {
       }
     };
 
-    for (Group agroup : gs) {
-      if (Preface.getKey().equalsIgnoreVersionAndGroupCoding(agroup.getKey())) {
-        Set s = Set.fromGroup(agroup);
+    for (Set s : setresolver.values()) {
+      if (Preface.getKey().equalsIgnoreVersionAndGroupCoding(s.getKey())) {
         this.preface = Preface.fromSet(s, mic);
 
         /* collect tracks that are stored in essence containers */

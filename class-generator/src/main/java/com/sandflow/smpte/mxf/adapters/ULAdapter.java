@@ -35,6 +35,7 @@ import com.sandflow.smpte.mxf.MXFOutputStream;
 import com.sandflow.smpte.util.UL;
 
 public class ULAdapter {
+  public static final Integer ITEM_LENGTH = 16;
 
   public static UL fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return is.readUL();

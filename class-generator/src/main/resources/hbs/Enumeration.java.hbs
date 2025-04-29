@@ -34,6 +34,8 @@ import java.io.IOException;
 
 import com.sandflow.smpte.mxf.MXFInputStream;
 import com.sandflow.smpte.mxf.MXFInputContext;
+import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFOutputContext;
 
 {{#if description}}/**
   * {{description}}
@@ -46,6 +48,8 @@ public enum {{symbol}} {
   {{name}}(({{valuesPrimitiveName}}) {{value}}){{#unless @last}},{{/unless}}{{/each}};
 
   private final {{valuesTypeName}} value;
+  public static final Integer ITEM_LENGTH = {{valuesAdapterName}}.ITEM_LENGTH;
+
 
   private {{symbol}}({{valuesTypeName}} value) {
     this.value = value;
@@ -61,5 +65,9 @@ public enum {{symbol}} {
     }
 
     return null;
+  }
+
+  public static void toStream({{symbol}} value, MXFOutputStream os, MXFOutputContext ctx)  throws IOException {
+      {{valuesAdapterName}}.toStream(value.value, os, ctx);
   }
 }

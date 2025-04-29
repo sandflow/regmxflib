@@ -35,6 +35,9 @@ import java.util.ArrayList;
 
 import com.sandflow.smpte.mxf.MXFInputStream;
 import com.sandflow.smpte.mxf.MXFInputContext;
+import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFOutputContext;
+
 
 public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
 
@@ -53,6 +56,15 @@ public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
     }
 
     return items;
+  }
+
+  public static void toStream({{adapterName}} v, MXFOutputStream os, MXFOutputContext ctx)  throws IOException {
+    os.writeUnsignedInt(v.size());
+    os.writeUnsignedInt({{itemAdapterName}}.ITEM_LENGTH);
+
+    for (int i = 0; i < v.size(); i++) {
+      {{itemAdapterName}}.toStream(v.get(i), os, ctx);
+    }
   }
 
  }

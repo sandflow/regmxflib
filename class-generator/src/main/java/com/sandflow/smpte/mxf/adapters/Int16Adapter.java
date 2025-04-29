@@ -34,6 +34,7 @@ import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.MXFOutputStream;
 
 public class Int16Adapter {
+  public static final Integer ITEM_LENGTH = 2;
 
   public static short fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return is.readShort();

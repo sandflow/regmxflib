@@ -36,6 +36,7 @@ import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.MXFOutputStream;
 
 public class LocalTimeAdapter {
+  public static final Integer ITEM_LENGTH = 4;
 
   public static LocalTime fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
 

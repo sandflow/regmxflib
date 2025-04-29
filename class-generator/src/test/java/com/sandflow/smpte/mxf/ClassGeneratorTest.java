@@ -26,12 +26,8 @@
 package com.sandflow.smpte.mxf;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.FilenameFilter;
-import org.junit.jupiter.api.Test;
 
-import com.sandflow.smpte.regxml.dict.MetaDictionary;
-import com.sandflow.smpte.regxml.dict.MetaDictionaryCollection;
+import org.junit.jupiter.api.Test;
 
 class ClassGeneratorTest {
 

@@ -34,6 +34,7 @@ import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.MXFOutputStream;
 
 public class BooleanAdapter {
+  public static final Integer ITEM_LENGTH = 1;
 
   public static boolean fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return is.readByte() != 0;

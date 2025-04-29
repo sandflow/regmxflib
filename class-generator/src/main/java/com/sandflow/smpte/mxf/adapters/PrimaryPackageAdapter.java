@@ -38,8 +38,10 @@ import com.sandflow.smpte.util.UMID;
 import com.sandflow.smpte.util.UUID;
 
 public class PrimaryPackageAdapter {
+  public static final Integer ITEM_LENGTH = 16;
 
   private static final AUID PACKAGEID_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01010101.01011510.00000000");
+  
 
   public static UMID fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     UUID uuid = is.readUUID();

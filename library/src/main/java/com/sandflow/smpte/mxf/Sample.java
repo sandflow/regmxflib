@@ -1,8 +1,8 @@
 package com.sandflow.smpte.mxf;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.mxf.types.InterchangeObject;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
@@ -13,23 +13,22 @@ public class Sample extends InterchangeObject {
       .fromURN("urn:smpte:ul:060e2b34.0101010e.04020403.01030000");
   Short AACChannelConfiguration;
 
-  public static void toGroup(MXFOutputContext ctx) throws IOException {
+  private void writeToSet(Set s, MXFOutputContext ctx) throws IOException {
+    /* super.toSet(s, ctx); */
 
+    LocalSetItemAdapter.toSetItem(this.AACChannelConfiguration, AACChannelConfiguration_AUID,
+        com.sandflow.smpte.mxf.adapters.UInt8Adapter::toStream, s, ctx);
 
   }
 
-  void toStream(MXFOutputStream mos, MXFOutputContext ctx) throws IOException {
-    mos.writeUUID(InstanceID);
+  public void serialize(MXFOutputContext ctx) throws IOException {
+    Set s = new Set(KEY);
+    this.writeToSet(s, ctx);
+    ctx.putSet(s);
+  }
 
-    ByteArrayOutputStream vbos = new ByteArrayOutputStream();
-
-    LocalSetItemAdapter.toStream(this.AACChannelConfiguration, AACChannelConfiguration_AUID,
-        com.sandflow.smpte.mxf.adapters.UInt8Adapter::toStream, vbos, ctx);
-
-    vbos.flush();
-
-    mos.writeLocalSetKeyWithBERLength(KEY);
-    mos.writeBERLength(vbos.size());
-    vbos.writeTo(mos);
+  public static void toStream(Sample value, MXFOutputStream mos, MXFOutputContext ctx) throws IOException {
+    mos.writeUUID(value.InstanceID);
+    value.serialize(ctx);
   }
 }

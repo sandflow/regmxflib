@@ -48,10 +48,4 @@ public interface Group {
      */
     UL getKey();
 
-    /**
-     * Add an item to the Group
-     * 
-     * @param item Triplet to be added to the group
-     */
-    void addItem(Triplet item);
 }

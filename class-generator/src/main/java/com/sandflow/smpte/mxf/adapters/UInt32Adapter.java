@@ -34,6 +34,7 @@ import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.MXFOutputStream;
 
 public class UInt32Adapter {
+  public static final Integer ITEM_LENGTH = 4;
 
   public static long fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return is.readUnsignedInt();

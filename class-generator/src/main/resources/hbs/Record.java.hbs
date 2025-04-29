@@ -34,6 +34,8 @@ import java.io.IOException;
 
 import com.sandflow.smpte.mxf.MXFInputStream;
 import com.sandflow.smpte.mxf.MXFInputContext;
+import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFOutputContext;
 
 public class {{name}} {
 {{#each members}}
@@ -45,6 +47,11 @@ public class {{name}} {
     r.{{memberName}} = {{memberAdapterName}}.fromStream(is, ctx);{{/each}}
 
     return r;
+  }
+
+  public static void toStream({{name}} value, MXFOutputStream os, MXFOutputContext ctx)  throws IOException {
+{{#each members}}
+    {{memberAdapterName}}.toStream(value.{{memberName}}, os, ctx);{{/each}}
   }
 
 }

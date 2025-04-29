@@ -26,6 +26,7 @@
 package com.sandflow.smpte.mxf;
 
 import com.sandflow.smpte.klv.Group;
+import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
@@ -36,75 +37,20 @@ import java.util.HashMap;
 /**
  * Represents a MXF Set (see SMPTE ST 377-1)
  */
-public class Set implements Group {
-  private static final UL INSTANCE_UID_ITEM_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010101.01011502.00000000");
-
-  /**
-   * Creates an MXF Set from a Group
-   * 
-   * @param group Group from which to create the MXF Set
-   * @return MXF Set or null if the Group does not contain an Instance ID property
-   */
-  static public Set fromGroup(Group group) {
-
-    for (Triplet t : group.getItems()) {
-
-      if (INSTANCE_UID_ITEM_UL.equalsIgnoreVersion(t.getKey())) {
-
-        UUID uuid = new UUID(t.getValue());
-
-        return new Set(group, uuid);
-      }
-
-    }
-
-    return null;
-  }
-
-  private final UUID instanceID;
-  private final Group group;
-  private final HashMap<AUID, Triplet> tripletByID = new HashMap<>();
-
-  private Set(Group group, UUID instanceID) {
-    this.group = group;
-    this.instanceID = instanceID;
-
-    for (var t : group.getItems()) {
-      this.tripletByID.put(makeNormalizedAUID(t.getKey()), t);
-    }
-  }
-
-  private AUID makeNormalizedAUID(AUID auid) {
-    byte[] newValue = auid.getValue();
-    if (!auid.isUL())
-      return new AUID(newValue);
-
-    /* zero out the version number */
-    newValue[7] = 0;
-    return new AUID(newValue);
-  }
-
-  public Triplet getItem(AUID auid) {
-    return this.tripletByID.get(makeNormalizedAUID(auid));
-  }
-
-  @Override
-  public Collection<Triplet> getItems() {
-    return group.getItems();
-  }
-
-  @Override
-  public UL getKey() {
-    return group.getKey();
-  }
+public class HeaderMetadataSet {
+  private static final AUID INSTANCE_UID_ITEM_UL = AUID.fromURN("urn:smpte:ul:060e2b34.01010101.01011502.00000000");
 
   /**
    * Returns the Instance ID of the MXF Set
    *
    * @return UUID
    */
-  public UUID getInstanceID() {
-    return instanceID;
+  public static UUID getInstanceID(Set s) {
+    Triplet t = s.getItem(INSTANCE_UID_ITEM_UL);
+    if (t == null) {
+      return null;
+    }
+    return new UUID(t.getValue());
   }
 
 }

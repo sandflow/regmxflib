@@ -39,6 +39,7 @@ import com.sandflow.smpte.mxf.MXFOutputStream;
 import com.sandflow.smpte.util.UL;
 
 public class ExtendibleEnumerationAdapter {
+  public static final Integer ITEM_LENGTH = 16;
 
   /* TODO: shouldn't this be a AUID? */
   

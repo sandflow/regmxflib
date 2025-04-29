@@ -35,6 +35,7 @@ import com.sandflow.smpte.mxf.MXFOutputStream;
 import com.sandflow.smpte.util.AUID;
 
 public class AUIDAdapter {
+  public static final Integer ITEM_LENGTH = 16;
 
   public static AUID fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return is.readAUID();

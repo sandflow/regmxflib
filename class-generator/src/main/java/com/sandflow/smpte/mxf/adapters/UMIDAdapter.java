@@ -35,6 +35,7 @@ import com.sandflow.smpte.mxf.MXFOutputStream;
 import com.sandflow.smpte.util.UMID;
 
 public class UMIDAdapter {
+  public static final Integer ITEM_LENGTH = 32;
 
   public static UMID fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return is.readUMID();

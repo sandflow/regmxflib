@@ -35,6 +35,7 @@ import com.sandflow.smpte.mxf.MXFOutputStream;
 import com.sandflow.smpte.util.UUID;
 
 public class UUIDAdapter {
+  public static final Integer ITEM_LENGTH = 16;
 
   public static UUID fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return is.readUUID();

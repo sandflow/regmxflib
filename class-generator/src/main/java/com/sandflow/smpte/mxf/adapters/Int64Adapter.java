@@ -35,6 +35,7 @@ import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.MXFOutputStream;
 
 public class Int64Adapter {
+  public static final Integer ITEM_LENGTH = 8;
 
   public static long fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return is.readLong();

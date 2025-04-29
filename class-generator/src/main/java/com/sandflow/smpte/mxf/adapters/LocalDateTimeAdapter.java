@@ -27,16 +27,15 @@
 package com.sandflow.smpte.mxf.adapters;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.MXFOutputStream;
-import com.sandflow.smpte.util.UMID;
 
 public class LocalDateTimeAdapter {
+  public static final Integer ITEM_LENGTH = 8;
 
   public static LocalDateTime fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     int year = is.readUnsignedShort();

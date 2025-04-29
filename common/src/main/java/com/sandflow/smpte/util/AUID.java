@@ -100,7 +100,6 @@ public class AUID {
         return Arrays.equals(ul.getValue(), this.value);
     }
 
-    
     @Override
     public int hashCode() {
         return Arrays.hashCode(value);

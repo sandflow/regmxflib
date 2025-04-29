@@ -38,13 +38,17 @@ import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.mxf.ClassFactory;
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
-import com.sandflow.smpte.mxf.Set;
+import com.sandflow.smpte.mxf.LocalSetItemAdapter;
+import com.sandflow.smpte.mxf.MXFOutputContext;
+import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.klv.Set;
 
 /**
   * {{description}}
   */
 public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassName}} extends {{parentClassName}}{{/if}} {
   private static final UL KEY = UL.fromURN("{{identification}}");
+  public static final int ITEM_LENGTH = 16;
 {{#each members}}
   private static final AUID {{symbol}}_AUID = AUID.fromURN("{{identification}}");{{/each}}
 {{#each members}}
@@ -98,6 +102,25 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
     }
 
     return null;
+  }
+
+  void writeToSet(Set s, MXFOutputContext ctx) throws IOException {
+{{#if parentClassName}}
+    super.writeToSet(s, ctx);{{/if}}
+{{#each members}}
+    LocalSetItemAdapter.toSetItem(this.{{symbol}}, {{symbol}}_AUID, {{adapterName}}::toStream, s, ctx);
+{{/each}}
+  }
+
+  public void serialize(MXFOutputContext ctx) throws IOException {
+    Set s = new Set(KEY);
+    this.writeToSet(s, ctx);
+    ctx.putSet(s);
+  }
+
+  public static void toStream({{className}} value, MXFOutputStream mos, MXFOutputContext ctx) throws IOException {
+    mos.writeUUID(value.InstanceID);
+    value.serialize(ctx);
   }
 
   /**

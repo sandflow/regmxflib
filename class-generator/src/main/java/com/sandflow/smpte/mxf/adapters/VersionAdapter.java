@@ -27,10 +27,7 @@
 package com.sandflow.smpte.mxf.adapters;
 
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 
-import com.sandflow.smpte.klv.KLVInputStream.ByteOrder;
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
 import com.sandflow.smpte.mxf.MXFOutputContext;
@@ -38,6 +35,7 @@ import com.sandflow.smpte.mxf.MXFOutputStream;
 import com.sandflow.smpte.mxf.types.Version;
 
 public class VersionAdapter {
+  public static final Integer ITEM_LENGTH = 2;
 
   public static Version fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     int major = is.readUnsignedByte();
