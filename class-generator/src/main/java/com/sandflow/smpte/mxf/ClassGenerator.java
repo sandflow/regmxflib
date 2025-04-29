@@ -643,20 +643,7 @@ public class ClassGenerator {
 
     @Override
     public void visit(FloatTypeDefinition def) throws VisitorException {
-      switch (def.getSize()) {
-        case HALF:
-          this.typeName = "float";
-          this.adapterName = "HalfFloatAdapter";
-          break;
-        case SINGLE:
-          this.typeName = "float";
-          this.adapterName = "FloatAdapter";
-          break;
-        case DOUBLE:
-          this.typeName = "double";
-          this.adapterName = "DoubleAdapter";
-          break;
-      }
+      throw new VisitorException("Floating point types not supported: " + def.getSymbol());
     }
 
     @Override
