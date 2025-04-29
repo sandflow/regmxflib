@@ -144,6 +144,7 @@ public class ClassGenerator {
 }
 
   class TypeMaker extends NullDefinitionVisitor {
+    /* TODO: normalize to UL or AUID */
     private static final UL INSTANCE_UID_ITEM_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010101.01011502.00000000");
     private static final UL AUID_UL = UL.fromDotValue("06.0E.2B.34.01.04.01.01.01.03.01.00.00.00.00.00");
     private static final UL UUID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01030300.00000000");
@@ -272,7 +273,7 @@ public class ClassGenerator {
         if (ObjectClass_AUID.equals(propertyAUID))
           continue;
 
-        Definition typeDef = resolver.getDefinition(propertyDef.getType());
+        Definition typeDef = findBaseDefinition(resolver.getDefinition(propertyDef.getType()));
 
         try {
 
@@ -401,7 +402,7 @@ public class ClassGenerator {
         a UInt8 enum but encoded as a UInt16 */
         tm = getTypeInformation(resolver.getDefinition(UINT16_AUID));
       } else {
-        tm = getTypeInformation(resolver.getDefinition(def.getElementType()));
+        tm = getTypeInformation(findBaseDefinition(resolver.getDefinition(def.getElementType())));
       }
 
       var templateData = new HashMap<String, Object>();
@@ -441,7 +442,7 @@ public class ClassGenerator {
       templateData.put("adapterName", def.getSymbol());
       templateData.put("itemCount", def.getElementCount());
 
-      TypeMaker tm = getTypeInformation(resolver.getDefinition(def.getElementType()));
+      TypeMaker tm = getTypeInformation(findBaseDefinition(resolver.getDefinition(def.getElementType())));
       templateData.put("itemTypeName", tm.getTypeName());
       templateData.put("itemAdapterName", tm.getAdapterName());
 
@@ -511,7 +512,7 @@ public class ClassGenerator {
         templateData.put("members", membersData);
 
         for (var member : def.getMembers()) {
-          Definition memberTypeDef = resolver.getDefinition(member.getType());
+          Definition memberTypeDef = findBaseDefinition(resolver.getDefinition(member.getType()));
           if (memberTypeDef == null) {
             throw new RuntimeException(
                 String.format("Bad type %s at member %s.", member.getType().toString(), member.getName()));
@@ -533,7 +534,7 @@ public class ClassGenerator {
 
     @Override
     public void visit(RenameTypeDefinition def) throws VisitorException {
-      TypeMaker tm = getTypeInformation(resolver.getDefinition(def.getRenamedType()));
+      TypeMaker tm = getTypeInformation(findBaseDefinition(resolver.getDefinition(def.getRenamedType())));
 
       this.typeName = tm.typeName;
       this.adapterName = tm.adapterName;
@@ -549,7 +550,7 @@ public class ClassGenerator {
 
       templateData.put("adapterName", def.getSymbol());
 
-      Definition itemDef = resolver.getDefinition(def.getElementType());
+      Definition itemDef = findBaseDefinition(resolver.getDefinition(def.getElementType()));
       TypeMaker tm = getTypeInformation(itemDef);
       templateData.put("itemTypeName", tm.getTypeName());
       templateData.put("itemAdapterName", tm.getAdapterName());
@@ -568,7 +569,7 @@ public class ClassGenerator {
 
     @Override
     public void visit(StrongReferenceTypeDefinition def) throws VisitorException {
-      ClassDefinition cdef = (ClassDefinition) resolver.getDefinition(def.getReferencedType());
+      ClassDefinition cdef = (ClassDefinition) findBaseDefinition(resolver.getDefinition(def.getReferencedType()));
 
       TypeMaker tm = getTypeInformation(cdef);
 
@@ -595,7 +596,7 @@ public class ClassGenerator {
 
     @Override
     public void visit(VariableArrayTypeDefinition def) throws VisitorException {
-      Definition itemDef = resolver.getDefinition(def.getElementType());
+      Definition itemDef = findBaseDefinition(resolver.getDefinition(def.getElementType()));
 
       if (itemDef instanceof CharacterTypeDefinition || itemDef.getName().contains("StringArray")) {
         throw new VisitorException("StringArray not supported: " + def.getIdentification());
