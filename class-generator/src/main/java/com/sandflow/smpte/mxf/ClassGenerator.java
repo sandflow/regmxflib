@@ -154,6 +154,7 @@ public class ClassGenerator {
     private static final UL TimeStamp_UL = UL.fromDotValue("06.0E.2B.34.01.04.01.01.03.01.07.00.00.00.00.00");
     private static final UL VersionType_UL = UL.fromDotValue("06.0E.2B.34.01.04.01.01.03.01.03.00.00.00.00.00");
     private static final UL ByteOrder_UL = UL.fromDotValue("06.0E.2B.34.01.01.01.01.03.01.02.01.02.00.00.00");
+    private static final UL J2KExtendedCapabilities_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.03010d00.00000000");
     private static final UL Character_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01100100.00000000");
     private static final UL Char_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01100300.00000000");
     private static final UL UTF8Character_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01100500.00000000");
@@ -209,6 +210,27 @@ public class ClassGenerator {
       final UL METADEFINITIONS_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.02000000");
       final UL MXFFILESTRUCTURESETSANDPACKS_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.01000000");
       final UL ROOT_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.03000000");
+      final AUID INTERCHANGE_OBJECT_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.01010100");
+
+      /* skip non-header-classes */
+
+      boolean isHeaderClass = false;
+      ClassDefinition parent = def;
+      do {
+        if (INTERCHANGE_OBJECT_AUID.equals(parent.getIdentification())) {
+          isHeaderClass = true;
+          break;
+        }
+        if (parent.getParentClass() == null) {
+          break;
+        }
+        parent = (ClassDefinition) resolver.getDefinition(parent.getParentClass());
+      } while (parent != null);
+
+      if (!isHeaderClass) {
+        /* TODO: do not throw an exception here */
+        throw new VisitorException("Skipping non header classes");
+      }
 
       /* skip definition classes */
       if (METADEFINITIONS_UL.equalsWithMask(def.getIdentification(), 0b1111_1010_1111_1000))
@@ -480,6 +502,11 @@ public class ClassGenerator {
         var templateData = new HashMap<String, Object>();
         templateData.put("name", def.getSymbol());
 
+        if (J2KExtendedCapabilities_UL.equalsIgnoreVersion(def.getIdentification())) {
+          /* Exception: Record with variable length fields */
+          templateData.put("isVariableLength", "true");
+        }
+
         var membersData = new ArrayList<HashMap<String, String>>();
         templateData.put("members", membersData);
 
@@ -568,11 +595,16 @@ public class ClassGenerator {
 
     @Override
     public void visit(VariableArrayTypeDefinition def) throws VisitorException {
+      Definition itemDef = resolver.getDefinition(def.getElementType());
+
+      if (itemDef instanceof CharacterTypeDefinition || itemDef.getName().contains("StringArray")) {
+        throw new VisitorException("StringArray not supported: " + def.getIdentification());
+      }
+
       var templateData = new HashMap<String, Object>();
 
       templateData.put("adapterName", def.getSymbol());
 
-      Definition itemDef = resolver.getDefinition(def.getElementType());
       TypeMaker tm = getTypeInformation(itemDef);
       templateData.put("itemTypeName", tm.getTypeName());
       templateData.put("itemAdapterName", tm.getAdapterName());

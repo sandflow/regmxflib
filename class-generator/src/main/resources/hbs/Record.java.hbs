@@ -38,6 +38,7 @@ import com.sandflow.smpte.mxf.MXFOutputStream;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 
 public class {{name}} {
+  {{#unless isVariableLength}}public static final Integer ITEM_LENGTH = {{#each members}}{{memberAdapterName}}.ITEM_LENGTH{{#unless @last}} + {{/unless}}{{/each}};{{/unless}}
 {{#each members}}
   public {{memberTypeName}} {{memberName}};{{/each}}
 
