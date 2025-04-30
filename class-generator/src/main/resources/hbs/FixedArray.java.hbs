@@ -41,12 +41,12 @@ import com.sandflow.smpte.mxf.MXFOutputContext;
 
 public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
 
-  public {{adapterName}}(int count) {
-    super(count);
+  public {{adapterName}}() {
+    super();
   }
 
    public static {{adapterName}} fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
-    var items = new {{adapterName}}({{itemCount}});
+    var items = new {{adapterName}}();
 
     for (int i = 0; i < {{itemCount}}; i++) {
       items.add({{itemAdapterName}}.fromStream(is, ctx));

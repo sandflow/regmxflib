@@ -33,6 +33,7 @@ import java.util.function.Function;
 
 import com.sandflow.smpte.klv.KLVInputStream.ByteOrder;
 import com.sandflow.smpte.klv.KLVOutputStream;
+import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.util.IDAU;
 import com.sandflow.smpte.util.UL;
@@ -148,12 +149,18 @@ public class MXFOutputStream extends KLVOutputStream {
   public void writeLocalSetKeyWithBERLength(UL key) throws IOException {
     /* TODO: check if ul is local set key */
     /* TODO: move to UL maybe */
-
+  
     byte v[] = key.getValue().clone();
 
     /* BER length and 2-byte local tags */
     v[5] = 0x13;
 
     writeUL(new UL(v));
+  }
+
+  public void writeTriplet(Triplet triplet) throws IOException {
+    writeAUID(triplet.getKey());
+    writeBERLength(triplet.getLength());
+    write(triplet.getValue());
   }
 }

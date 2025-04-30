@@ -27,7 +27,6 @@
 package com.sandflow.smpte.mxf.adapters;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;

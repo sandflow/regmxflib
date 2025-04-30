@@ -30,13 +30,13 @@
 
 package com.sandflow.smpte.mxf;
 
-import com.sandflow.smpte.util.UL;
+import com.sandflow.smpte.util.AUID;
 
 public class Labels {
 {{#.}}
   /**
    * {{getDefinition}}
    */
-  public static final UL {{getSymbol}} = UL.fromURN("{{getUL}}");
+  public static final AUID {{getSymbol}} = AUID.fromURN("{{getUL}}");
 {{/.}}
 }
