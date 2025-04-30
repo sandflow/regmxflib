@@ -28,6 +28,8 @@ package com.sandflow.smpte.klv;
 import com.sandflow.smpte.util.AUID;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * LocalTagRegister maps Local Tags found in a Local Set to AUID Keys
@@ -35,7 +37,7 @@ import java.util.Map;
 public class LocalTagRegister {
 
     private final HashMap<Long, AUID> entries = new HashMap<>();
-    
+
     /**
      * Instantiates an empty LocalTagRegister
      */
@@ -57,7 +59,7 @@ public class LocalTagRegister {
     public AUID get(long localtag) {
         return entries.get(localtag);
     }
-    
+
     /**
      * Adds a Local Tag to the registry.
      * @param localtag Local Tag
@@ -67,6 +69,22 @@ public class LocalTagRegister {
     public AUID add(long localtag, AUID key) {
         return entries.put(localtag, key);
     }
-    
+
+
+    /**
+     * Returns the number of entries in the registry
+     * @return Number of entries in the registry
+     */
+    public int size() {
+        return entries.size();
+    }
+
+    /**
+     * Returns the entries in the registry
+     * @return Entries in the registry
+     */
+    public Set<Entry<Long, AUID>> getEntries() {
+        return entries.entrySet();
+    }
 
 }

@@ -120,6 +120,11 @@ public class UL {
         this.value = new byte[16];
     }
 
+    /**
+     * Creates a version-normalized UL
+     *
+     * @return A new UL with the version byte set to 0
+     */
     public UL makeVersionNormalized() {
         if (this.getValueOctet(VERSION_BYTE) == 0) {
             return this;

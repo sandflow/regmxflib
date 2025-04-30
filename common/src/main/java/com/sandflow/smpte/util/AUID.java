@@ -31,136 +31,158 @@ import java.util.Arrays;
  * AUID as specified in SMPTE ST 377-1
  */
 public class AUID {
-    
-    /**
-     * Creates a AUID from a UL or UUID URN. 
-     * @param urn URN from which to create the AUID
-     * @return AUID, or null if invalid URN
-     */
-    public static AUID fromURN(String urn) {
-        
-        if (urn == null) return null;
-        
-        if (urn.startsWith("urn:smpte:ul:")) {
-            
-            return new AUID(UL.fromURN(urn));
-            
-        } else if (urn.startsWith("urn:uuid:")) {
-            
-            return new AUID(UUID.fromURN(urn));
-            
-        }
 
-        return null;
- 
+  /**
+   * Creates a AUID from a UL or UUID URN.
+   * 
+   * @param urn URN from which to create the AUID
+   * @return AUID, or null if invalid URN
+   */
+  public static AUID fromURN(String urn) {
+
+    if (urn == null)
+      return null;
+
+    if (urn.startsWith("urn:smpte:ul:")) {
+
+      return new AUID(UL.fromURN(urn));
+
+    } else if (urn.startsWith("urn:uuid:")) {
+
+      return new AUID(UUID.fromURN(urn));
+
     }
 
-    private byte[] value;
-    
-    private AUID() { }
-    
-    /**
-     * Instantiates a AUID from a 16-byte buffer
-     * @param auid 16-bytes
-     */
-    public AUID(byte[] auid) {
-        this.value = java.util.Arrays.copyOf(auid, 16);
-    }
+    return null;
 
-    
-    /**
-     * Instantiates a AUID from a UL
-     * @param ul UL from which to create the AUID
-     */
-    public AUID(UL ul) {
-        this.value = ul.getValue();
-    }
+  }
 
-    /**
-     * Instantiates a AUID from a UUID
-     * @param uuid UUID from which to create the AUID
-     */
-    public AUID(UUID uuid) {
-        
-        value = new byte[16];
-        
-        System.arraycopy(uuid.getValue(), 8, value, 0, 8);
-        System.arraycopy(uuid.getValue(), 0, value, 8, 8);
-    }
+  private byte[] value;
 
-    @Override
-    public boolean equals(Object auid) {
-        if (!(auid instanceof AUID)) {
-            return false;
-        }
-        return Arrays.equals(((AUID) auid).value, this.value);
-    }
+  private AUID() {
+  }
 
-    public boolean equals(UL ul) {
-        return Arrays.equals(ul.getValue(), this.value);
-    }
+  /**
+   * Instantiates a AUID from a 16-byte buffer
+   * 
+   * @param auid 16-bytes
+   */
+  public AUID(byte[] auid) {
+    this.value = java.util.Arrays.copyOf(auid, 16);
+  }
 
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(value);
-    }
+  /**
+   * Instantiates a AUID from a UL
+   * 
+   * @param ul UL from which to create the AUID
+   */
+  public AUID(UL ul) {
+    this.value = ul.getValue();
+  }
 
-    @Override
-    public String toString() {
-        if (isUL()) {
-            return asUL().toString();
-        } else {           
-            return asUUID().toString();
-        }
-    }
+  /**
+   * Instantiates a AUID from a UUID
+   * 
+   * @param uuid UUID from which to create the AUID
+   */
+  public AUID(UUID uuid) {
 
-    /**
-     * Is the AUID a UL?
-     * @return true if the AUID is a UL
-     */
-    public boolean isUL() {
-        return (value[0] & 0x80) == 0;
-    }
-    
-    /**
-     * Is the AUID a UUID?
-     * @return true if the AUID is a UUID
-     */
-    public boolean isUUID() {
-        return ! isUL();
-    }
-    
-    /**
-     * Returns the underlying UUID if available
-     * @return Underlying UUID, or null if not a UUID
-     */
-    public UUID asUUID() {
-        
-        if (isUL()) return null;
-        
-        byte[] uuid = new byte[16];
-        
-        System.arraycopy(this.value, 8, uuid, 0, 8);
-        System.arraycopy(this.value, 0, uuid, 8, 8);
-        
-        return new UUID(uuid);
-    }
+    value = new byte[16];
 
-    /**
-     * Returns the underlying UL if available
-     * @return Underlying UL, or null if not a UL
-     */
-    public UL asUL() {
-        return isUL() ? new UL(value) : null;
-    }
+    System.arraycopy(uuid.getValue(), 8, value, 0, 8);
+    System.arraycopy(uuid.getValue(), 0, value, 8, 8);
+  }
 
-    /**
-     * Returns the sequence of bytes that make up the AUID
-     *
-     * @return Sequence of 16 bytes
-     */
-    public byte[] getValue() {
-        return value;
+  @Override
+  public boolean equals(Object auid) {
+    if (!(auid instanceof AUID)) {
+      return false;
     }
+    return Arrays.equals(((AUID) auid).value, this.value);
+  }
 
+  public boolean equals(UL ul) {
+    return Arrays.equals(ul.getValue(), this.value);
+  }
+
+  @Override
+  public int hashCode() {
+    return Arrays.hashCode(value);
+  }
+
+  @Override
+  public String toString() {
+    if (isUL()) {
+      return asUL().toString();
+    } else {
+      return asUUID().toString();
+    }
+  }
+
+  /**
+   * Is the AUID a UL?
+   * 
+   * @return true if the AUID is a UL
+   */
+  public boolean isUL() {
+    return (value[0] & 0x80) == 0;
+  }
+
+  /**
+   * Is the AUID a UUID?
+   * 
+   * @return true if the AUID is a UUID
+   */
+  public boolean isUUID() {
+    return !isUL();
+  }
+
+  /**
+   * Returns the underlying UUID if available
+   * 
+   * @return Underlying UUID, or null if not a UUID
+   */
+  public UUID asUUID() {
+
+    if (isUL())
+      return null;
+
+    byte[] uuid = new byte[16];
+
+    System.arraycopy(this.value, 8, uuid, 0, 8);
+    System.arraycopy(this.value, 0, uuid, 8, 8);
+
+    return new UUID(uuid);
+  }
+
+  /**
+   * Returns the underlying UL if available
+   * 
+   * @return Underlying UL, or null if not a UL
+   */
+  public UL asUL() {
+    return isUL() ? new UL(value) : null;
+  }
+
+  /**
+   * Returns the sequence of bytes that make up the AUID
+   *
+   * @return Sequence of 16 bytes
+   */
+  public byte[] getValue() {
+    return value;
+  }
+
+  /**
+   * Returns a normalized AUID
+   *
+   * @return Normalized UL is the AUID is a UL, or the original AUID otherwise
+   */
+  public AUID makeVersionNormalized() {
+    if (isUL()) {
+      return new AUID(this.asUL().makeVersionNormalized());
+    } else {
+      return this;
+    }
+  }
 }

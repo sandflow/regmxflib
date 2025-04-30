@@ -116,6 +116,7 @@ public class ClassGenerator {
   static final Template variableArrayTemplate;
   static final Template fixedArrayTemplate;
   static final Template labelsTemplate;
+  static final Template localTagsTemplate;
 
   static {
     try {
@@ -126,6 +127,7 @@ public class ClassGenerator {
       fixedArrayTemplate = handlebars.compile("hbs/FixedArray.java");
       variableArrayTemplate = handlebars.compile("hbs/VariableArray.java");
       labelsTemplate = handlebars.compile("hbs/Labels.java");
+      localTagsTemplate = handlebars.compile("hbs/StaticLocalTagsInitializer.java");
     } catch (Exception e) {
       throw new RuntimeException("Failed to load template", e);
     }
@@ -144,6 +146,8 @@ public class ClassGenerator {
 }
 
   class TypeMaker extends NullDefinitionVisitor {
+    /* TODO: handle byte ordering */
+
     /* TODO: normalize to UL or AUID */
     private static final UL INSTANCE_UID_ITEM_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010101.01011502.00000000");
     private static final UL AUID_UL = UL.fromDotValue("06.0E.2B.34.01.04.01.01.01.03.01.00.00.00.00.00");
@@ -699,6 +703,8 @@ public class ClassGenerator {
   public static void generate(MetaDictionaryCollection mds, LabelsRegister lr, File generatedSourcesDir)
       throws IOException, URISyntaxException, VisitorException {
 
+    final ArrayList<PropertyDefinition> propList = new ArrayList<PropertyDefinition>();
+
     ClassGenerator g = new ClassGenerator(mds, generatedSourcesDir);
 
     for (var md : mds.getDictionaries()) {
@@ -708,8 +714,15 @@ public class ClassGenerator {
 
       for (var def : md.getDefinitions()) {
         try {
-          if (def instanceof ClassDefinition)
+          if (def instanceof ClassDefinition) {
             g.getTypeInformation(def);
+          }
+          else if (def instanceof PropertyDefinition) {
+            var propDef = (PropertyDefinition) def;
+            if (propDef.getLocalIdentification() != 0) {
+              propList.add(propDef);
+            }
+          }
         } catch (Exception e) {
           /* TODO: log */
         }
@@ -718,6 +731,9 @@ public class ClassGenerator {
 
     /* generate the class factory */
     g.generateSource(classFactoryTemplate, "com.sandflow.smpte.mxf", "ClassFactoryInitializer", g.classList);
+
+    /* generate the static local tags */
+    g.generateSource(localTagsTemplate, "com.sandflow.smpte.mxf", "StaticLocalTagsInitializer", propList);
 
     /* generate labels */
     g.generateSource(

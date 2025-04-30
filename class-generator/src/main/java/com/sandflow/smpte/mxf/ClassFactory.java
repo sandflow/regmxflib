@@ -11,7 +11,7 @@ public class ClassFactory {
     try {
       Class.forName("com.sandflow.smpte.mxf.ClassFactoryInitializer");
     } catch (Exception e) {
-      // Ignored
+      throw new RuntimeException(e);
     }
   }
 

@@ -26,10 +26,14 @@
 package com.sandflow.smpte.mxf;
 
 import com.sandflow.smpte.klv.LocalTagRegister;
+import com.sandflow.smpte.klv.MemoryTriplet;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
+
+import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.HashMap;
 
@@ -74,6 +78,33 @@ public class PrimerPack {
         }
 
         return new LocalTagRegister(reg);
+    }
+
+    /**
+     * Creates a Primer Pack from a LocalTagRegister
+     *
+     * @param reg LocalTagRegister
+     * @return Primer Pack Triplet
+     * @throws IOException 
+     * @throws EOFException 
+     */
+    public static Triplet createTriplet(LocalTagRegister reg) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        MXFOutputStream os = new MXFOutputStream(bos);
+
+        os.writeUnsignedInt(reg.size()); // itemlength
+        os.writeUnsignedInt(18); // itemcount
+
+        for (var entry : reg.getEntries()) {
+            if (entry.getKey() != null && entry.getValue() != null) {
+                os.writeUnsignedShort((int) entry.getKey().longValue());
+                os.writeAUID(entry.getValue());
+            } else {
+                throw new IllegalArgumentException("Local Tag and AUID must not be null");
+            }
+        }
+
+        return new MemoryTriplet(new AUID(KEY), bos.toByteArray());
     }
 
     /**
