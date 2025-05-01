@@ -86,7 +86,7 @@ public class Set implements Group {
     MXFOutputStream mbos = new MXFOutputStream(bos);
 
     for (Triplet t : g.getItems()) {
-      mbos.writeUnsignedShort(0);
+      mbos.writeUnsignedShort((int) reg.getOrMakeLocalTag(t.getKey()));
       if (isBERLocalLength) {
         mbos.writeBERLength(t.getLength());
       } else {
