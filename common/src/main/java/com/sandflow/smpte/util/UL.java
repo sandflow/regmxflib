@@ -35,9 +35,9 @@ public class UL {
 
     private final static Pattern URN_PATTERN = Pattern.compile("urn:smpte:ul:[a-fA-F0-9]{8}\\.[a-fA-F0-9]{8}\\.[a-fA-F0-9]{8}\\.[a-fA-F0-9]{8}");
     private final static Pattern DOTVALUE_PATTERN = Pattern.compile("[a-fA-F0-9]{2}(\\.[a-fA-F0-9]{2}){15}");
-    private final static int CATEGORY_DESIGNATOR_BYTE = 4;
-    private final static int REGISTRY_DESIGNATOR_BYTE = 5;
-    private final static int VERSION_BYTE = 7;
+    public final static int CATEGORY_DESIGNATOR_BYTE = 4;
+    public final static int REGISTRY_DESIGNATOR_BYTE = 5;
+    public final static int VERSION_BYTE = 7;
 
     /**
      * Creates a UL from a URN
@@ -99,6 +99,7 @@ public class UL {
      * @return true if the UL is a Key for a KLV Group (see SMPTE ST 336)
      */
     public boolean isGroup() {
+        /* TODO: move to Group? */
         return getValueOctet(CATEGORY_DESIGNATOR_BYTE) == 2;
     }
 
@@ -106,6 +107,7 @@ public class UL {
      * @return true if the UL is a Key for a KLV Local Set (see SMPTE ST 336)
      */
     public boolean isLocalSet() {
+        /* TODO: move to Group? */
         return isGroup() && (getRegistryDesignator() & 7) == 3;
     }
 
@@ -262,6 +264,7 @@ public class UL {
      * @return Value of the byte
      */
     public byte getValueOctet(int i) {
+        /* TODO: should this be cloned? */
         return value[i];
     }
 

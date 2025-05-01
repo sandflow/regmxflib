@@ -108,10 +108,7 @@ public class PartitionPack {
       mos.writeLong(pp.getBodyOffset());
       mos.writeUnsignedInt(pp.getBodySID());
       mos.writeUL(pp.getOperationalPattern());
-
-      for (UL ec : pp.getEssenceContainers()) {
-        mos.writeUL(ec);
-      }
+      mos.writeBatch(pp.getEssenceContainers(), 16L, ULValueAdapter::toValue);
 
     } catch (IOException e) {
       throw new KLVException(e);

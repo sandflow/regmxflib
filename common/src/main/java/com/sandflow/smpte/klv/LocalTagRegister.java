@@ -25,66 +25,108 @@
  */
 package com.sandflow.smpte.klv;
 
-import com.sandflow.smpte.util.AUID;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+
+import com.sandflow.smpte.util.AUID;
 
 /**
  * LocalTagRegister maps Local Tags found in a Local Set to AUID Keys
  */
 public class LocalTagRegister {
 
-    private final HashMap<Long, AUID> entries = new HashMap<>();
+  public record Entry(Long localTag, AUID auid) {
+  }
 
-    /**
-     * Instantiates an empty LocalTagRegister
-     */
-    public LocalTagRegister() { }
+  private final HashMap<Long, Entry> tagToEntry = new HashMap<>();
+  private final HashMap<AUID, Entry> auidToEntry = new HashMap<>();
 
-    /**
-     * Instantiates a LocalTagRegister with an initial set of mappings from Local Tag values to AUID Keys
-     * @param entries Initial set of mappings
-     */
-    public LocalTagRegister(Map<Long, AUID> entries) {
-        this.entries.putAll(entries);
+  Long nextLocalTag = 0x8000L;
+
+  /**
+   * Instantiates an empty LocalTagRegister
+   */
+  public LocalTagRegister() {
+  }
+
+  /**
+   * Instantiates a LocalTagRegister with an initial set of mappings from Local
+   * Tag values to AUID Keys
+   *
+   * @param entries Initial set of mappings
+   */
+  public LocalTagRegister(Collection<Entry> entries) {
+    for (Entry entry : entries) {
+      this.add(entry.localTag(), entry.auid());
     }
+  }
 
-    /**
-     * Returns the Key corresponding to a Local Tag
-     * @param localtag Local Tag
-     * @return Key, or null if no Key exists for the Local Tag
-     */
-    public AUID get(long localtag) {
-        return entries.get(localtag);
+  /**
+   * Returns the AUID corresponding to a Local Tag
+   *
+   * @param localtag Local Tag
+   * @return Key, or null if no Key exists for the Local Tag
+   */
+  public AUID getAUID(long localtag) {
+    return tagToEntry.get(localtag).auid();
+  }
+
+  /**
+   * Returns the Local Tag corresponding to a AUID
+   *
+   * @param auid AUID
+   * @return Local tag, or null if no Local Tag is associated with the AUID
+   */
+  public long getLocalTag(AUID auid) {
+    return auidToEntry.get(auid).localTag();
+  }
+
+  /**
+   * Returns the Local Tag corresponding to a AUID, potentially allocating a
+   * dynamic Local Tag if no Local Tag exists
+   *
+   * @param auid
+   * @return Local tag
+   */
+  public long getOrMakeLocalTag(AUID auid) {
+    Entry e = auidToEntry.get(auid);
+    if (e != null) {
+      return e.localTag();
     }
+    this.add(this.nextLocalTag, auid);
+    return this.nextLocalTag++;
+  }
 
-    /**
-     * Adds a Local Tag to the registry.
-     * @param localtag Local Tag
-     * @param key Key with which the Local Tag is associated
-     * @return The Key is the Local Tag was already present in the registry, or null otherwise.
-     */
-    public AUID add(long localtag, AUID key) {
-        return entries.put(localtag, key);
-    }
+  /**
+   * Adds a Local Tag to the registry.
+   *
+   * @param localtag Local Tag
+   * @param key      Key with which the Local Tag is associated
+   * @return True if the Local Tag was not present in the registry, or false
+   *         otherwise.
+   */
+  public boolean add(long localtag, AUID key) {
+    Entry e = new Entry(localtag, key);
+    tagToEntry.put(localtag, e);
+    return auidToEntry.put(key, e) == null;
+  }
 
+  /**
+   * Returns the number of entries in the registry
+   *
+   * @return Number of entries in the registry
+   */
+  public int size() {
+    return tagToEntry.size();
+  }
 
-    /**
-     * Returns the number of entries in the registry
-     * @return Number of entries in the registry
-     */
-    public int size() {
-        return entries.size();
-    }
-
-    /**
-     * Returns the entries in the registry
-     * @return Entries in the registry
-     */
-    public Set<Entry<Long, AUID>> getEntries() {
-        return entries.entrySet();
-    }
+  /**
+   * Returns the entries in the registry
+   * 
+   * @return Entries in the registry
+   */
+  public Collection<Entry> getEntries() {
+    return tagToEntry.values();
+  }
 
 }

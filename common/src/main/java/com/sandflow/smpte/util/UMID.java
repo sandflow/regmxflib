@@ -132,12 +132,12 @@ public class UMID {
   }
 
   /**
-   * Generate a UMID using the generation method of UUID/UL and a Class 4 random
-   * UUID
-   * 
+   * Create a UMID using a UUID and the generation method of UUID/UL
+   *
+   * @param uuid UUID to use
    * @return UMID with a generation method of UUID/UL
    */
-  public static UMID usingUUID() {
+  public static UMID fromUUID(UUID uuid) {
     byte[] umid = new byte[32];
 
     /* prefix per SMPTE ST 2067-2 */
@@ -145,20 +145,12 @@ public class UMID {
         0x06, 0x0A, 0x2B, 0x34, 0x01, 0x01, 0x01, 0x05,
         0x01, 0x01, 0x0F, 0x20, 0x13, 0x00, 0x00, 0x00
     };
-
     System.arraycopy(prefix, 0, umid, 0, 16);
 
-
     /* UUID part */
-    SecureRandom random = new SecureRandom();
-    byte[] uuid = new byte[16];
-    random.nextBytes(uuid);
-    uuid[6] = (byte) ((uuid[6] & 0x0f) | 0x4f);
-    uuid[8] = (byte) ((uuid[8] & 0x3f) | 0x7f);
+    System.arraycopy(uuid.getValue(), 0, umid, 16, 16);
 
-    System.arraycopy(uuid, 0, umid, 16, 16);
-
-    return new UMID(uuid);
+    return new UMID(umid);
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Sandflow Consulting, LLC
+ * Copyright (c) Pierre-Anthony Lemieux <pal@sandflow.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,18 +23,19 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-/**
-* @author Pierre-Anthony Lemieux
-*/
-
 package com.sandflow.smpte.mxf;
 
-import com.sandflow.smpte.util.AUID;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 
-public class StaticLocalTagsInitializer {
-  static {
-{{#.}}
-    StaticLocalTags.add(AUID.fromURN("{{getIdentification}}"), {{getLocalIdentification}});{{/.}}
+import org.junit.jupiter.api.Test;
+
+class StreamingWriterTest {
+
+  @Test
+  void testSmoke() throws Exception {
+    OutputStream os = new FileOutputStream("hello.mxf");
+    StreamingWriter sw = new StreamingWriter(os);
   }
+
 }

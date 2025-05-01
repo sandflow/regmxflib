@@ -184,7 +184,7 @@ public class KLVOutputStream extends OutputStream implements DataOutput {
 
   @Override
   public void close() throws IOException {
-    dos.close();
+    /* do nothink */
   }
 
   protected static final void swap(byte[] array, int i, int j) {

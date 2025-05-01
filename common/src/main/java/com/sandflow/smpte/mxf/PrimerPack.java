@@ -25,6 +25,10 @@
  */
 package com.sandflow.smpte.mxf;
 
+import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
+import java.io.IOException;
+
 import com.sandflow.smpte.klv.LocalTagRegister;
 import com.sandflow.smpte.klv.MemoryTriplet;
 import com.sandflow.smpte.klv.Triplet;
@@ -32,90 +36,80 @@ import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 
-import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
-import java.io.IOException;
-import java.util.HashMap;
-
 /**
  * Represents a MXF Primer Pack (see SMPTE ST 377-1)
  */
 public class PrimerPack {
 
-    private static final UL KEY = new UL(new byte[]{0x06, 0x0e, 0x2b, 0x34, 0x02, 0x05, 0x01, 0x01, 0x0d, 0x01, 0x02, 0x01, 0x01, 0x05, 0x01, 0x00});
+  private static final UL KEY = new UL(new byte[] { 0x06, 0x0e, 0x2b, 0x34, 0x02, 0x05, 0x01, 0x01, 0x0d, 0x01, 0x02,
+      0x01, 0x01, 0x05, 0x01, 0x00 });
 
+  /**
+   * Creates a LocalTagRegister from a PrimerPack
+   *
+   * @param triplet Triplet representation of the Primer Pack
+   * @return LocalTagRegister or null if the Triplet is not a Primer Pack
+   * @throws KLVException
+   */
+  public static LocalTagRegister createLocalTagRegister(Triplet triplet) throws KLVException {
 
-
-    /**
-     * Creates a LocalTagRegister from a PrimerPack
-     *
-     * @param triplet Triplet representation of the Primer Pack
-     * @return LocalTagRegister or null if the Triplet is not a Primer Pack
-     * @throws KLVException
-     */
-    public static LocalTagRegister createLocalTagRegister(Triplet triplet) throws KLVException {
-
-        if (!PrimerPack.KEY.equalsIgnoreVersion(triplet.getKey())) {
-            return null;
-        }
-
-        HashMap<Long, AUID> reg = new HashMap<>();
-
-        MXFInputStream kis = new MXFInputStream(triplet.getValueAsStream());
-
-        try {
-
-            long itemcount = kis.readUnsignedInt();
-
-            @SuppressWarnings("unused")
-            long itemlength = kis.readUnsignedInt();
-
-            for (int i = 0; i < itemcount; i++) {
-
-                reg.put((long) kis.readUnsignedShort(), kis.readAUID());
-            }
-
-        } catch (IOException e) {
-            throw new KLVException(e);
-        }
-
-        return new LocalTagRegister(reg);
+    if (!PrimerPack.KEY.equalsIgnoreVersion(triplet.getKey())) {
+      return null;
     }
 
-    /**
-     * Creates a Primer Pack from a LocalTagRegister
-     *
-     * @param reg LocalTagRegister
-     * @return Primer Pack Triplet
-     * @throws IOException 
-     * @throws EOFException 
-     */
-    public static Triplet createTriplet(LocalTagRegister reg) throws IOException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        MXFOutputStream os = new MXFOutputStream(bos);
+    LocalTagRegister reg = new LocalTagRegister();
 
-        os.writeUnsignedInt(reg.size()); // itemlength
-        os.writeUnsignedInt(18); // itemcount
+    MXFInputStream kis = new MXFInputStream(triplet.getValueAsStream());
 
-        for (var entry : reg.getEntries()) {
-            if (entry.getKey() != null && entry.getValue() != null) {
-                os.writeUnsignedShort((int) entry.getKey().longValue());
-                os.writeAUID(entry.getValue());
-            } else {
-                throw new IllegalArgumentException("Local Tag and AUID must not be null");
-            }
-        }
+    try {
 
-        os.close();
-        return new MemoryTriplet(new AUID(KEY), bos.toByteArray());
+      long itemcount = kis.readUnsignedInt();
+
+      @SuppressWarnings("unused")
+      long itemlength = kis.readUnsignedInt();
+
+      for (int i = 0; i < itemcount; i++) {
+
+        reg.add((long) kis.readUnsignedShort(), kis.readAUID());
+      }
+
+    } catch (IOException e) {
+      throw new KLVException(e);
     }
 
-    /**
-     * Returns the Primer Pack Key
-     *
-     * @return Key
-     */
-    public static UL getKey() {
-        return KEY;
+    return reg;
+  }
+
+  /**
+   * Creates a Primer Pack from a LocalTagRegister
+   *
+   * @param reg LocalTagRegister
+   * @return Primer Pack Triplet
+   * @throws IOException
+   * @throws EOFException
+   */
+  public static Triplet createTriplet(LocalTagRegister reg) throws IOException {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    MXFOutputStream os = new MXFOutputStream(bos);
+
+    os.writeUnsignedInt(reg.size()); // itemlength
+    os.writeUnsignedInt(18); // itemcount
+
+    for (var entry : reg.getEntries()) {
+      os.writeUnsignedShort((int) entry.localTag().longValue());
+      os.writeAUID(entry.auid());
     }
+
+    os.close();
+    return new MemoryTriplet(new AUID(KEY), bos.toByteArray());
+  }
+
+  /**
+   * Returns the Primer Pack Key
+   *
+   * @return Key
+   */
+  public static UL getKey() {
+    return KEY;
+  }
 }

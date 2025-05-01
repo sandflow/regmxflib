@@ -25,12 +25,15 @@
  */
 package com.sandflow.smpte.klv;
 
+import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.klv.exceptions.TripletLengthException;
+import com.sandflow.smpte.mxf.MXFOutputStream;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.CountingInputStream;
 import com.sandflow.smpte.util.UL;
@@ -39,6 +42,71 @@ import com.sandflow.smpte.util.UL;
  * LocalSet implements a Local Set as specified in SMPTE ST 336.
  */
 public class Set implements Group {
+
+  enum ItemLengthEncoding {
+    BER(0x00),
+    ONE_BYTE(0x20),
+    TWO_BYTE(0x40),
+    FOUR_BYTE(0x60);
+
+    final int bitmask;
+
+    ItemLengthEncoding(int bitmask) {
+      this.bitmask = bitmask;
+    }
+
+  }
+
+  enum ItemLocalTagEncoding {
+    ONE_BYTE(0x03),
+    BER(0x0B),
+    TWO_BYTE(0x13),
+    FOUR_BYTE(0x1B);
+
+    final int bitmask;
+
+    ItemLocalTagEncoding(int bitmask) {
+      this.bitmask = bitmask;
+    }
+
+  }
+
+  public static void toStreamAsLocalSet(Group g, LocalTagRegister reg, MXFOutputStream mos)
+      throws EOFException, IOException {
+    boolean isBERLocalLength = false;
+    for (Triplet t : g.getItems()) {
+      if (t.getLength() > 65535) {
+        isBERLocalLength = true;
+        break;
+      }
+    }
+
+    /* write the value of the local set */
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    MXFOutputStream mbos = new MXFOutputStream(bos);
+
+    for (Triplet t : g.getItems()) {
+      mbos.writeUnsignedShort(0);
+      if (isBERLocalLength) {
+        mbos.writeBERLength(t.getLength());
+      } else {
+        mbos.writeUnsignedShort((int) t.getLength());
+      }
+      mbos.write(t.getValue());
+    }
+    mbos.close();
+
+    /* write the local set */
+    /* TODO: confirm that the group is a group */
+    byte[] lsKey = g.getKey().getValue().clone();
+    lsKey[UL.REGISTRY_DESIGNATOR_BYTE] = (byte) ((isBERLocalLength ? ItemLengthEncoding.BER.bitmask
+        : ItemLengthEncoding.TWO_BYTE.bitmask)
+        | ItemLocalTagEncoding.TWO_BYTE.bitmask);
+
+    mos.writeUL(new UL(lsKey));
+    mos.writeBERLength(bos.size());
+    bos.writeTo(mos);
+  }
 
   /**
    * Creates a Group from a Local Set using a LocalTagRegister to map Local Tags
@@ -126,11 +194,11 @@ public class Set implements Group {
 
         kis.readFully(localval);
 
-        if (reg.get(localtag) == null) {
+        if (reg.getAUID(localtag) == null) {
           throw new KLVException("Local tag not found: " + localtag + " in Local Set " + localset.getKey());
         }
 
-        set.addItem(new MemoryTriplet(reg.get(localtag), localval));
+        set.addItem(new MemoryTriplet(reg.getAUID(localtag), localval));
 
       }
 

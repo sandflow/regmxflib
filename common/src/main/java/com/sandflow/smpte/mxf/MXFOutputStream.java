@@ -28,6 +28,7 @@ package com.sandflow.smpte.mxf;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
@@ -132,7 +133,7 @@ public class MXFOutputStream extends KLVOutputStream {
    * @throws KLVException
    * @throws IOException
    */
-  public <T> void writeBatch(List<T> items, long itemLength, Function<T, byte[]> converter)
+  public <T> void writeBatch(Collection<T> items, long itemLength, Function<T, byte[]> converter)
       throws KLVException, IOException {
     writeUnsignedInt(items.size());
     if (itemLength > Integer.MAX_VALUE) {
@@ -140,22 +141,10 @@ public class MXFOutputStream extends KLVOutputStream {
     }
     writeUnsignedInt(itemLength);
 
-    for (int i = 0; i < items.size(); i++) {
-      byte[] value = converter.apply(items.get(i));
+    for (T item : items) {
+      byte[] value = converter.apply(item);
       write(value);
     }
-  }
-
-  public void writeLocalSetKeyWithBERLength(UL key) throws IOException {
-    /* TODO: check if ul is local set key */
-    /* TODO: move to UL maybe */
-  
-    byte v[] = key.getValue().clone();
-
-    /* BER length and 2-byte local tags */
-    v[5] = 0x13;
-
-    writeUL(new UL(v));
   }
 
   public void writeTriplet(Triplet triplet) throws IOException {
