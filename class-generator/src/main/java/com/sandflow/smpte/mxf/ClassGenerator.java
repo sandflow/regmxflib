@@ -42,6 +42,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 
 import org.apache.commons.numbers.fraction.Fraction;
 
@@ -217,22 +218,17 @@ public class ClassGenerator {
       final UL ROOT_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.03000000");
       final AUID INTERCHANGE_OBJECT_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.01010100");
 
+      LinkedList<ClassDefinition> ch = new LinkedList<>();
+      ClassDefinition c = def;
+      while (true) {
+        ch.addFirst(c);
+        if (c.getParentClass() == null) {
+          break;
+        }
+        c = (ClassDefinition) resolver.getDefinition(c.getParentClass());
+      }
       /* skip non-header-classes */
-
-      boolean isHeaderClass = false;
-      ClassDefinition parent = def;
-      do {
-        if (INTERCHANGE_OBJECT_AUID.equals(parent.getIdentification())) {
-          isHeaderClass = true;
-          break;
-        }
-        if (parent.getParentClass() == null) {
-          break;
-        }
-        parent = (ClassDefinition) resolver.getDefinition(parent.getParentClass());
-      } while (parent != null);
-
-      if (!isHeaderClass) {
+      if (! INTERCHANGE_OBJECT_AUID.equals(ch.getFirst().getIdentification())) {
         /* TODO: do not throw an exception here */
         throw new VisitorException("Skipping non header classes");
       }
@@ -257,6 +253,7 @@ public class ClassGenerator {
         data.put("isAbstract", "1");
       }
       data.put("description", def.getDescription());
+      data.put("classHierarchy", ch);
 
       AUID parentClassID = def.getParentClass();
       if (parentClassID != null) {
@@ -280,13 +277,13 @@ public class ClassGenerator {
         Definition typeDef = findBaseDefinition(resolver.getDefinition(propertyDef.getType()));
 
         try {
-
           TypeMaker t = getTypeInformation(typeDef);
 
           var member = new HashMap<String, String>();
           member.put("identification", propertyDef.getIdentification().toString());
           member.put("description", propertyDef.getDescription());
           member.put("type", propertyDef.getType().toString());
+          member.put("typeDefinition", typeDef.getSymbol());
           member.put("typeName", t.getTypeName());
           if (PrimaryPackage_UL.equalsIgnoreVersion(propertyAUID)) {
             member.put("adapterName", PrimaryPackageAdapter.class.getName());
@@ -295,7 +292,9 @@ public class ClassGenerator {
           }
           member.put("symbol", propertyDef.getSymbol());
           member.put("localIdentification", Integer.toString(propertyDef.getLocalIdentification()));
-          member.put("isOptional", propertyDef.isOptional() ? "true" : "false");
+          if (propertyDef.isOptional()) {
+            member.put("isOptional", "true");
+          }
 
           members.add(member);
 
@@ -306,8 +305,9 @@ public class ClassGenerator {
       }
       data.put("members", members);
 
-      classList.add(def);
       generateSource(classTemplate, TYPE_PACKAGE_NAME, def.getSymbol(), data);
+
+      classList.add(def);
 
       this.typeName = TYPE_PACKAGE_NAME + "." + def.getSymbol();
       this.adapterName = this.typeName;

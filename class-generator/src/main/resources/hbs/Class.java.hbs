@@ -44,7 +44,9 @@ import com.sandflow.smpte.mxf.MXFOutputStream;
 import com.sandflow.smpte.klv.Set;
 
 /**
-  * {{description}}
+  * {{#if isAbstract}}<<abstract>> {{/if}}{{className}}
+  *{{#each members}}
+  *   - {{symbol}} : {{typeDefinition}}{{#if isOptional}} [0..1]{{/if}}{{/each}}
   */
 public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassName}} extends {{parentClassName}}{{/if}} {
   private static final UL KEY = UL.fromURN("{{identification}}");
@@ -53,7 +55,7 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
   private static final AUID {{symbol}}_AUID = AUID.fromURN("{{identification}}");{{/each}}
 {{#each members}}
   /**
-    * {{description}}
+    * {{{description}}}
     */
   public {{typeName}} {{symbol}};
 {{/each}}
