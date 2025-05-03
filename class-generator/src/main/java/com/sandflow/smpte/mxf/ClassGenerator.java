@@ -140,11 +140,11 @@ public class ClassGenerator {
   Definition findBaseDefinition(Definition definition) {
 
     while (definition instanceof RenameTypeDefinition) {
-        definition = resolver.getDefinition(((RenameTypeDefinition) definition).getRenamedType());
+      definition = resolver.getDefinition(((RenameTypeDefinition) definition).getRenamedType());
     }
 
     return definition;
-}
+  }
 
   class TypeMaker extends NullDefinitionVisitor {
     /* TODO: handle byte ordering */
@@ -169,10 +169,17 @@ public class ClassGenerator {
     private static final UL PrimaryPackage_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010104.06010104.01080000");
     private static final UL LinkedGenerationID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.05200701.08000000");
     private static final UL GenerationID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.05200701.01000000");
-    private static final AUID UINT16_AUID= AUID.fromURN("urn:smpte:ul:060e2b34.01040101.01010200.00000000");
+    private static final AUID UINT16_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.01010200.00000000");
     private static final UL ApplicationProductID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.05200701.07000000");
     private static final AUID AUID_AUID = new AUID(UL.fromDotValue("06.0E.2B.34.01.04.01.01.01.03.01.00.00.00.00.00"));
     private static final AUID UUID_AUID = new AUID(UL.fromDotValue("06.0E.2B.34.01.04.01.01.01.03.03.00.00.00.00.00"));
+    private static final UL METADEFINITIONS_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.02000000");
+    private static final UL MXFFILESTRUCTURESETSANDPACKS_UL = UL
+        .fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.01000000");
+    private static final UL ROOT_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.03000000");
+    private static final AUID INTERCHANGE_OBJECT_AUID = AUID
+        .fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.01010100");
+
     private static final AUID DateStruct_AUID = new AUID(
         UL.fromDotValue("06.0E.2B.34.01.04.01.01.03.01.05.00.00.00.00.00"));
     private static final AUID PackageID_AUID = new AUID(
@@ -185,8 +192,8 @@ public class ClassGenerator {
         UL.fromDotValue("06.0E.2B.34.01.04.01.01.03.01.07.00.00.00.00.00"));
     private static final AUID VersionType_AUID = new AUID(
         UL.fromDotValue("06.0E.2B.34.01.04.01.01.03.01.03.00.00.00.00.00"));
-    private static final AUID ObjectClass_AUID = new AUID(
-        UL.fromDotValue("06.0E.2B.34.01.01.01.02.06.01.01.04.01.01.00.00"));
+    private static final UL ObjectClass_AUID = 
+        UL.fromDotValue("06.0E.2B.34.01.01.01.02.06.01.01.04.01.01.00.00");
     private static final AUID ByteOrder_AUID = new AUID(
         UL.fromDotValue("06.0E.2B.34.01.01.01.01.03.01.02.01.02.00.00.00"));
     private static final AUID InstanceID_AUID = new AUID(
@@ -213,33 +220,13 @@ public class ClassGenerator {
 
       /* TODO: how to prevent circular references */
 
-      final UL METADEFINITIONS_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.02000000");
-      final UL MXFFILESTRUCTURESETSANDPACKS_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.01000000");
-      final UL ROOT_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.03000000");
-      final AUID INTERCHANGE_OBJECT_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.01010100");
-
-      LinkedList<ClassDefinition> ch = new LinkedList<>();
-      ClassDefinition c = def;
-      while (true) {
-        ch.addFirst(c);
-        if (c.getParentClass() == null) {
-          break;
-        }
-        c = (ClassDefinition) resolver.getDefinition(c.getParentClass());
-      }
-      /* skip non-header-classes */
-      if (! INTERCHANGE_OBJECT_AUID.equals(ch.getFirst().getIdentification())) {
-        /* TODO: do not throw an exception here */
-        throw new VisitorException("Skipping non header classes");
-      }
-
       /* skip definition classes */
       if (METADEFINITIONS_UL.equalsWithMask(def.getIdentification(), 0b1111_1010_1111_1000))
         throw new VisitorException("Skipping definition classes");
 
       /* skip root */
       if (ROOT_UL.equalsWithMask(def.getIdentification(), 0b1111_1010_1111_1000))
-      throw new VisitorException("Skipping packs");
+        throw new VisitorException("Skipping packs");
 
       /* skip packs */
       if (MXFFILESTRUCTURESETSANDPACKS_UL.equalsWithMask(def.getIdentification(), 0b1111_1010_1111_1000))
@@ -253,7 +240,6 @@ public class ClassGenerator {
         data.put("isAbstract", "1");
       }
       data.put("description", def.getDescription());
-      data.put("classHierarchy", ch);
 
       AUID parentClassID = def.getParentClass();
       if (parentClassID != null) {
@@ -262,46 +248,64 @@ public class ClassGenerator {
         data.put("parentClassName", parentClass.getSymbol());
       }
 
-      var members = new ArrayList<HashMap<String, String>>();
+      var members = new LinkedList<HashMap<String, String>>();
 
-      for (var propertyAUID : resolver.getMembersOf(def)) {
-        PropertyDefinition propertyDef = (PropertyDefinition) resolver.getDefinition(propertyAUID);
-        if (propertyDef == null) {
-          throw new RuntimeException("Failed to find property definition for " + propertyAUID);
-        }
-
-        /* ignore definitions */
-        if (ObjectClass_AUID.equals(propertyAUID))
-          continue;
-
-        Definition typeDef = findBaseDefinition(resolver.getDefinition(propertyDef.getType()));
-
-        try {
-          TypeMaker t = getTypeInformation(typeDef);
-
-          var member = new HashMap<String, String>();
-          member.put("identification", propertyDef.getIdentification().toString());
-          member.put("description", propertyDef.getDescription());
-          member.put("type", propertyDef.getType().toString());
-          member.put("typeDefinition", typeDef.getSymbol());
-          member.put("typeName", t.getTypeName());
-          if (PrimaryPackage_UL.equalsIgnoreVersion(propertyAUID)) {
-            member.put("adapterName", PrimaryPackageAdapter.class.getName());
-          } else {
-            member.put("adapterName", t.getAdapterName());
-          }
-          member.put("symbol", propertyDef.getSymbol());
-          member.put("localIdentification", Integer.toString(propertyDef.getLocalIdentification()));
-          if (propertyDef.isOptional()) {
-            member.put("isOptional", "true");
+      ClassDefinition c = def;
+      while (true) {
+        for (var propertyAUID : resolver.getMembersOf(c)) {
+          PropertyDefinition propertyDef = (PropertyDefinition) resolver.getDefinition(propertyAUID);
+          if (propertyDef == null) {
+            throw new RuntimeException("Failed to find property definition for " + propertyAUID);
           }
 
-          members.add(member);
+          /* ignore definitions */
+          if (ObjectClass_AUID.equalsIgnoreVersion(propertyAUID))
+            continue;
 
-        } catch (Exception e) {
-          System.out.println("Skipping %s because of %s".formatted(propertyDef.getSymbol(), e.getMessage()));
-          continue;
+          try {
+            Definition typeDef = findBaseDefinition(resolver.getDefinition(propertyDef.getType()));
+
+            var member = new HashMap<String, String>();
+            member.put("identification", propertyDef.getIdentification().toString());
+            member.put("description", propertyDef.getDescription());
+            member.put("type", propertyDef.getType().toString());
+            member.put("typeDefinition", typeDef.getSymbol());
+            member.put("symbol", propertyDef.getSymbol());
+            member.put("localIdentification", Integer.toString(propertyDef.getLocalIdentification()));
+            if (propertyDef.isOptional()) {
+              member.put("isOptional", "true");
+            }
+
+            /* TODO: this is pretty ugly */
+            if (c == def) {
+              TypeMaker t = getTypeInformation(typeDef);
+              member.put("typeName", t.getTypeName());
+              if (PrimaryPackage_UL.equalsIgnoreVersion(propertyAUID)) {
+                member.put("adapterName", PrimaryPackageAdapter.class.getName());
+              } else {
+                member.put("adapterName", t.getAdapterName());
+              }
+            } else {
+              member.put("isInherited", "true");
+            }
+
+            members.addFirst(member);
+
+          } catch (Exception e) {
+            System.out.println("Skipping %s because of %s".formatted(propertyDef.getSymbol(), e.getMessage()));
+            continue;
+          }
         }
+
+        /* skip non-header-classes */
+        if (c.getParentClass() == null) {
+          if (!INTERCHANGE_OBJECT_AUID.equals(c.getIdentification())) {
+            /* TODO: do not throw an exception here */
+            throw new VisitorException("Skipping non Header Metadata classes");
+          }
+          break;
+        }
+        c = (ClassDefinition) resolver.getDefinition(c.getParentClass());
       }
       data.put("members", members);
 
@@ -399,11 +403,12 @@ public class ClassGenerator {
         return;
       }
 
-
       TypeMaker tm;
       if (ProductReleaseType_UL.equalsIgnoreVersion(def.getIdentification())) {
-        /* EXCEPTION: ProductReleaseType_UL is listed as
-        a UInt8 enum but encoded as a UInt16 */
+        /*
+         * EXCEPTION: ProductReleaseType_UL is listed as
+         * a UInt8 enum but encoded as a UInt16
+         */
         tm = getTypeInformation(resolver.getDefinition(UINT16_AUID));
       } else {
         tm = getTypeInformation(findBaseDefinition(resolver.getDefinition(def.getElementType())));
@@ -532,7 +537,7 @@ public class ClassGenerator {
         generateSource(recordTemplate, TYPE_PACKAGE_NAME, def.getSymbol(), templateData);
 
         this.typeName = TYPE_PACKAGE_NAME + "." + def.getSymbol();
-        this.adapterName =  this.typeName;
+        this.adapterName = this.typeName;
       }
     }
 
@@ -716,8 +721,7 @@ public class ClassGenerator {
         try {
           if (def instanceof ClassDefinition) {
             g.getTypeInformation(def);
-          }
-          else if (def instanceof PropertyDefinition) {
+          } else if (def instanceof PropertyDefinition) {
             var propDef = (PropertyDefinition) def;
             if (propDef.getLocalIdentification() != 0) {
               propList.add(propDef);
@@ -737,11 +741,10 @@ public class ClassGenerator {
 
     /* generate labels */
     g.generateSource(
-      labelsTemplate,
-      "com.sandflow.smpte.mxf",
-      "Labels",
-      lr.getEntries().stream().filter(e -> e.getKind() == Kind.LEAF).toArray()
-    );
+        labelsTemplate,
+        "com.sandflow.smpte.mxf",
+        "Labels",
+        lr.getEntries().stream().filter(e -> e.getKind() == Kind.LEAF).toArray());
   }
 
   private void generateSource(Template template, String packageName, String symbol, Object data) {

@@ -50,6 +50,14 @@ public class {{name}} {
     return r;
   }
 
+  public {{name}}() {
+  }
+
+  public {{name}}({{#each members}}{{memberTypeName}} {{memberName}}{{#unless @last}}, {{/unless}}{{/each}}) {
+{{#each members}}
+    this.{{memberName}} = {{memberName}};{{/each}}
+  }
+
   public static void toStream({{name}} value, MXFOutputStream os, MXFOutputContext ctx)  throws IOException {
 {{#each members}}
     {{memberAdapterName}}.toStream(value.{{memberName}}, os, ctx);{{/each}}

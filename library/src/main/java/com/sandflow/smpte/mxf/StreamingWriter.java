@@ -17,6 +17,7 @@ import com.sandflow.smpte.mxf.types.ContentStorage;
 import com.sandflow.smpte.mxf.types.EssenceData;
 import com.sandflow.smpte.mxf.types.EssenceDataStrongReferenceSet;
 import com.sandflow.smpte.mxf.types.FileDescriptor;
+import com.sandflow.smpte.mxf.types.IdentificationStrongReferenceVector;
 import com.sandflow.smpte.mxf.types.PackageStrongReferenceSet;
 import com.sandflow.smpte.mxf.types.Preface;
 import com.sandflow.smpte.mxf.types.Sequence;
@@ -90,12 +91,15 @@ public class StreamingWriter {
     /* preface */
     Preface p = new Preface();
     p.InstanceID = UUID.fromRandom();
+    p.IdentificationList = new IdentificationStrongReferenceVector();
+    p.IdentificationList.add(IdentificationHelper.makeIdentification());
 
     /* TODO: return better error when InstanceID is null */
 
     /* Content Storage Object */
     p.ContentStorageObject = new ContentStorage();
     p.ContentStorageObject.InstanceID = UUID.fromRandom();
+
 
     p.ContentStorageObject.Packages = new PackageStrongReferenceSet();
     p.ContentStorageObject.Packages.add(sp);

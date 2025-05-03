@@ -51,14 +51,14 @@ import com.sandflow.smpte.klv.Set;
 public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassName}} extends {{parentClassName}}{{/if}} {
   private static final UL KEY = UL.fromURN("{{identification}}");
   public static final int ITEM_LENGTH = 16;
-{{#each members}}
-  private static final AUID {{symbol}}_AUID = AUID.fromURN("{{identification}}");{{/each}}
-{{#each members}}
+{{#each members}}{{#unless isInherited}}
+  private static final AUID {{symbol}}_AUID = AUID.fromURN("{{identification}}");{{/unless}}{{/each}}
+{{#each members}}{{#unless isInherited}}
   /**
     * {{{description}}}
     */
   public {{typeName}} {{symbol}};
-{{/each}}
+{{/unless}}{{/each}}
 
   void readFromSet(Set s, MXFInputContext ctx) throws IOException {
 {{#if parentClassName}}
@@ -66,11 +66,11 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
 {{/if}}
 {{#if members}}
     Triplet t;
-{{#each members}}
+{{#each members}}{{#unless isInherited}}
     if ((t = s.getItem({{symbol}}_AUID)) != null) {
       this.{{symbol}} = {{adapterName}}.fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
     }
-{{/each}}
+{{/unless}}{{/each}}
 {{/if}}
   }
   public static {{className}} fromSet(Set s, MXFInputContext ctx) {
@@ -109,9 +109,8 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
   void writeToSet(Set s, MXFOutputContext ctx) throws IOException {
 {{#if parentClassName}}
     super.writeToSet(s, ctx);{{/if}}
-{{#each members}}
-    LocalSetItemAdapter.toSetItem(this.{{symbol}}, {{symbol}}_AUID, {{adapterName}}::toStream, s, ctx);
-{{/each}}
+{{#each members}}{{#unless isInherited}}
+    LocalSetItemAdapter.toSetItem(this.{{symbol}}, {{symbol}}_AUID, {{adapterName}}::toStream, s, ctx);{{/unless}}{{/each}}
   }
 
   public void serialize(MXFOutputContext ctx) throws IOException {
