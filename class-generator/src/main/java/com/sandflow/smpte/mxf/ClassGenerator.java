@@ -148,31 +148,16 @@ public class ClassGenerator {
 
   class TypeMaker extends NullDefinitionVisitor {
     /* TODO: handle byte ordering */
-
     /* TODO: normalize to UL or AUID */
-    private static final UL INSTANCE_UID_ITEM_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010101.01011502.00000000");
-    private static final UL AUID_UL = UL.fromDotValue("06.0E.2B.34.01.04.01.01.01.03.01.00.00.00.00.00");
     private static final UL UUID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01030300.00000000");
-    private static final UL DateStruct_UL = UL.fromDotValue("06.0E.2B.34.01.04.01.01.03.01.05.00.00.00.00.00");
-    private static final UL PackageID_UL = UL.fromDotValue("06.0E.2B.34.01.04.01.01.01.03.02.00.00.00.00.00");
-    private static final UL Rational_UL = UL.fromDotValue("06.0E.2B.34.01.04.01.01.03.01.01.00.00.00.00.00");
-    private static final UL TimeStruct_UL = UL.fromDotValue("06.0E.2B.34.01.04.01.01.03.01.06.00.00.00.00.00");
-    private static final UL TimeStamp_UL = UL.fromDotValue("06.0E.2B.34.01.04.01.01.03.01.07.00.00.00.00.00");
-    private static final UL VersionType_UL = UL.fromDotValue("06.0E.2B.34.01.04.01.01.03.01.03.00.00.00.00.00");
-    private static final UL ByteOrder_UL = UL.fromDotValue("06.0E.2B.34.01.01.01.01.03.01.02.01.02.00.00.00");
     private static final UL J2KExtendedCapabilities_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.03010d00.00000000");
     private static final UL Character_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01100100.00000000");
     private static final UL Char_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01100300.00000000");
     private static final UL UTF8Character_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01100500.00000000");
     private static final UL ProductReleaseType_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.02010101.00000000");
-    private static final UL Boolean_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01040100.00000000");
     private static final UL PrimaryPackage_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010104.06010104.01080000");
-    private static final UL LinkedGenerationID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.05200701.08000000");
-    private static final UL GenerationID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.05200701.01000000");
     private static final AUID UINT16_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.01010200.00000000");
-    private static final UL ApplicationProductID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.05200701.07000000");
     private static final AUID AUID_AUID = new AUID(UL.fromDotValue("06.0E.2B.34.01.04.01.01.01.03.01.00.00.00.00.00"));
-    private static final AUID UUID_AUID = new AUID(UL.fromDotValue("06.0E.2B.34.01.04.01.01.01.03.03.00.00.00.00.00"));
     private static final UL METADEFINITIONS_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.02000000");
     private static final UL MXFFILESTRUCTURESETSANDPACKS_UL = UL
         .fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.01000000");
@@ -194,10 +179,6 @@ public class ClassGenerator {
         UL.fromDotValue("06.0E.2B.34.01.04.01.01.03.01.03.00.00.00.00.00"));
     private static final UL ObjectClass_AUID = 
         UL.fromDotValue("06.0E.2B.34.01.01.01.02.06.01.01.04.01.01.00.00");
-    private static final AUID ByteOrder_AUID = new AUID(
-        UL.fromDotValue("06.0E.2B.34.01.01.01.01.03.01.02.01.02.00.00.00"));
-    private static final AUID InstanceID_AUID = new AUID(
-        UL.fromURN("urn:smpte:ul:060e2b34.01010101.01011502.00000000"));
 
     String typeName;
     String adapterName;
@@ -253,6 +234,8 @@ public class ClassGenerator {
       ClassDefinition c = def;
       while (true) {
         for (var propertyAUID : resolver.getMembersOf(c)) {
+          /* TODO: separate members into inherited and owned */
+
           PropertyDefinition propertyDef = (PropertyDefinition) resolver.getDefinition(propertyAUID);
           if (propertyDef == null) {
             throw new RuntimeException("Failed to find property definition for " + propertyAUID);

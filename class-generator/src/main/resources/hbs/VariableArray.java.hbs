@@ -47,6 +47,7 @@ public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
 
   public static {{adapterName}} fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
     int itemcount = (int) (is.readInt() & 0xfffffffL);
+    @SuppressWarnings("unused")
     int itemlength = (int) (is.readInt() & 0xfffffffL);
 
     var items = new {{adapterName}}();

@@ -40,9 +40,6 @@ public class UUID {
 
     private byte[] value;
 
-    private UUID() {
-    }
-
     /**
      * Instantiates a UUID from a sequence of 16 bytes
      *

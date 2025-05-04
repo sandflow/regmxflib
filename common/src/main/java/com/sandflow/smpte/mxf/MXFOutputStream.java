@@ -37,9 +37,13 @@ import com.sandflow.smpte.klv.KLVOutputStream;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.util.IDAU;
-import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UMID;
 import com.sandflow.smpte.util.UUID;
+
+/*
+ * TODO: shouldn't this be a stream filter?
+ * TODO: retrieve the underlying stream
+ */
 
 /**
  * MXFOutputStream allows MXF data structures to be write from an OutputStream

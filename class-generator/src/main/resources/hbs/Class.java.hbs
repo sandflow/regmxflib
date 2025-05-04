@@ -33,12 +33,12 @@ package com.sandflow.smpte.mxf.types;
 import java.io.IOException;
 
 {{#if members}}import com.sandflow.smpte.klv.Triplet;
-import com.sandflow.smpte.util.AUID;{{/if}}
+import com.sandflow.smpte.util.AUID;
+import com.sandflow.smpte.mxf.LocalSetItemAdapter;{{/if}}
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.mxf.ClassFactory;
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
-import com.sandflow.smpte.mxf.LocalSetItemAdapter;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.MXFOutputStream;
 import com.sandflow.smpte.klv.Set;
