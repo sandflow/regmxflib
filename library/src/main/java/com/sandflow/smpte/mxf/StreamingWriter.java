@@ -12,12 +12,14 @@ import org.apache.commons.numbers.fraction.Fraction;
 import com.sandflow.smpte.klv.LocalTagRegister;
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.exceptions.KLVException;
+import com.sandflow.smpte.mxf.types.AUIDSet;
 import com.sandflow.smpte.mxf.types.ComponentStrongReferenceVector;
 import com.sandflow.smpte.mxf.types.ContentStorage;
 import com.sandflow.smpte.mxf.types.EssenceData;
 import com.sandflow.smpte.mxf.types.EssenceDataStrongReferenceSet;
 import com.sandflow.smpte.mxf.types.FileDescriptor;
 import com.sandflow.smpte.mxf.types.IdentificationStrongReferenceVector;
+import com.sandflow.smpte.mxf.types.MaterialPackage;
 import com.sandflow.smpte.mxf.types.PackageStrongReferenceSet;
 import com.sandflow.smpte.mxf.types.Preface;
 import com.sandflow.smpte.mxf.types.Sequence;
@@ -25,6 +27,8 @@ import com.sandflow.smpte.mxf.types.SoundDescriptor;
 import com.sandflow.smpte.mxf.types.SourceClip;
 import com.sandflow.smpte.mxf.types.SourcePackage;
 import com.sandflow.smpte.mxf.types.TimelineTrack;
+import com.sandflow.smpte.mxf.types.TrackStrongReferenceVector;
+import com.sandflow.smpte.mxf.types.Version;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UMID;
@@ -54,66 +58,58 @@ public class StreamingWriter {
     desc.QuantizationBits = 16L;
     desc.ContainerFormat = Labels.MXFGCClipWrappedBroadcastWaveAudioData;
 
-        /* File Package */
+    /* File Package */
 
     SourcePackage sp = new SourcePackage();
-    sp.InstanceID = UUID.fromRandom();
-    sp.PackageID = UMID.fromUUID(sp.InstanceID);
     sp.EssenceDescription = desc;
-    sp.CreationTime = LocalDateTime.of(2025, 1, 1, 1, 0);
-    sp.PackageLastModified = LocalDateTime.now();
+    PackageHelper.initSingleTrackPackage(sp, Fraction.of(48000, 1), null, UMID.NULL_UMID, 1L);
 
-    /* Source Clip */
 
-    SourceClip clip = new SourceClip();
-    clip.InstanceID = UUID.fromRandom();
-    clip.StartPosition = 0L;
-    clip.SourcePackageID = sp.PackageID;
+    /* Material Package */
 
-    /* Segment */
-
-    Sequence seq = new Sequence();
-    seq.InstanceID = UUID.fromRandom();
-    seq.ComponentObjects = new ComponentStrongReferenceVector();
-    seq.ComponentLength = 48000L;
-    seq.ComponentObjects.add(clip);
-
-    /* Track */
-
-    TimelineTrack track = new TimelineTrack();
-    track.InstanceID = UUID.fromRandom();
-    track.Origin = 0L;
-    track.TrackID = 1L;
-    track.EditRate = Fraction.of(48000, 1);
-    track.TrackSegment = seq;
-    track.TrackName = "Audio Track 1";
-
-    /* preface */
-    Preface p = new Preface();
-    p.InstanceID = UUID.fromRandom();
-    p.IdentificationList = new IdentificationStrongReferenceVector();
-    p.IdentificationList.add(IdentificationHelper.makeIdentification());
+    var mp = new MaterialPackage();
+    PackageHelper.initSingleTrackPackage(mp, Fraction.of(48000, 1), null, sp.PackageID, null);
 
     /* TODO: return better error when InstanceID is null */
 
+    /* EssenceDataObject */
+    var edo = new EssenceData();
+    edo.InstanceID = UUID.fromRandom();
+    edo.EssenceStreamID = 1L;
+
     /* Content Storage Object */
-    p.ContentStorageObject = new ContentStorage();
-    p.ContentStorageObject.InstanceID = UUID.fromRandom();
+    var cs = new ContentStorage();
+    cs.InstanceID = UUID.fromRandom();
+    cs.Packages = new PackageStrongReferenceSet();
+    cs.Packages.add(mp);
+    cs.Packages.add(sp);
+    cs.EssenceDataObjects = new EssenceDataStrongReferenceSet();
+    cs.EssenceDataObjects.add(edo);
 
+    /* EssenceContainers */
+    var ecs = new AUIDSet();
+    ecs.add(Labels.MXFGCClipWrappedBroadcastWaveAudioData);
 
-    p.ContentStorageObject.Packages = new PackageStrongReferenceSet();
-    p.ContentStorageObject.Packages.add(sp);
+    /* Identification */
+    var idList = new IdentificationStrongReferenceVector();
+    idList.add(IdentificationHelper.makeIdentification());
 
-    p.ContentStorageObject.EssenceDataObjects = new EssenceDataStrongReferenceSet();
-    p.ContentStorageObject.EssenceDataObjects.add(new EssenceData());
-    p.ContentStorageObject.EssenceDataObjects.get(0).InstanceID = UUID.fromRandom();;
-    p.ContentStorageObject.EssenceDataObjects.get(0).EssenceStreamID = 1L;
-
-
-    ArrayList<Set> sets = new ArrayList<>();
-    LocalTagRegister reg = new LocalTagRegister(StaticLocalTags.entries());
+     /* preface */
+    Preface p = new Preface();
+    p.InstanceID = UUID.fromRandom();
+    p.FormatVersion = new Version(1, 3);
+    p.ObjectModelVersion = 1L;
+    p.PrimaryPackage = sp.PackageID;
+    p.FileLastModified = LocalDateTime.now();
+    p.EssenceContainers = ecs;
+    p.IsRIPPresent = true;
+    p.OperationalPattern = Labels.MXFOP1aSingleItemSinglePackageUniTrackStreamInternal;
+    p.IdentificationList = idList;
+    p.ContentStorageObject = cs;
 
     /* write  */
+    ArrayList<Set> sets = new ArrayList<>();
+    LocalTagRegister reg = new LocalTagRegister(StaticLocalTags.entries());
     MXFOutputContext ctx = new MXFOutputContext() {
 
       @Override
@@ -150,8 +146,7 @@ public class StreamingWriter {
 
     PartitionPack pp = new PartitionPack();
     pp.setOperationalPattern(Labels.MXFOPAtom1Track1SourceClip.asUL());
-    UL[] ecs = new UL[] {Labels.MXFGCFrameWrappedAES3AudioData.asUL()};
-    pp.setEssenceContainers(Arrays.asList(ecs));
+    pp.setEssenceContainers(Arrays.asList(new UL[] {Labels.MXFGCFrameWrappedAES3AudioData.asUL()}));
     pp.setHeaderByteCount(headerbos.size());
     mos.writeTriplet(PartitionPack.toTriplet(pp, PartitionPack.Kind.HEADER, PartitionPack.Status.CLOSED_COMPLETE));
     headerbos.writeTo(mos);

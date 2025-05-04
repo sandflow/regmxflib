@@ -25,7 +25,6 @@
  */
 package com.sandflow.smpte.util;
 
-import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
@@ -35,6 +34,8 @@ import java.util.regex.Pattern;
 public class UMID {
 
   private final static Pattern URN_PATTERN = Pattern.compile("urn:smpte:umid:[a-fA-F0-9]{8}(?:\\.[a-fA-F0-9]{8}){7}");
+
+  public static final UMID NULL_UMID = new UMID();
 
   /**
    * Creates a UMID from a URN
