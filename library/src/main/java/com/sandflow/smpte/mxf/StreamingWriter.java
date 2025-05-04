@@ -120,6 +120,7 @@ public class StreamingWriter {
 
       @Override
       public void putSet(Set set) {
+        /* makes the preface set the first in the list as required by ST 377-1 */
         if (Preface.getKey().equalsIgnoreVersionAndGroupCoding(set.getKey())) {
           sets.addFirst(set);
         } else {
@@ -157,8 +158,9 @@ public class StreamingWriter {
     pp.setHeaderByteCount(headerbos.size() + ppbos.size());
 
     /* write the partition */
+    /* TODO: is this really open and incomplete? */
     MXFOutputStream mos = new MXFOutputStream(os);
-    mos.writeTriplet(PartitionPack.toTriplet(pp, PartitionPack.Kind.HEADER, PartitionPack.Status.CLOSED_COMPLETE));
+    mos.writeTriplet(PartitionPack.toTriplet(pp, PartitionPack.Kind.HEADER, PartitionPack.Status.OPEN_INCOMPLETE));
     ppbos.writeTo(mos);
     headerbos.writeTo(mos);
     mos.close();
