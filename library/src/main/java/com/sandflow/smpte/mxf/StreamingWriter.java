@@ -4,8 +4,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 
 import org.apache.commons.numbers.fraction.Fraction;
 
@@ -13,7 +13,6 @@ import com.sandflow.smpte.klv.LocalTagRegister;
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.types.AUIDSet;
-import com.sandflow.smpte.mxf.types.ComponentStrongReferenceVector;
 import com.sandflow.smpte.mxf.types.ContentStorage;
 import com.sandflow.smpte.mxf.types.EssenceData;
 import com.sandflow.smpte.mxf.types.EssenceDataStrongReferenceSet;
@@ -22,12 +21,8 @@ import com.sandflow.smpte.mxf.types.IdentificationStrongReferenceVector;
 import com.sandflow.smpte.mxf.types.MaterialPackage;
 import com.sandflow.smpte.mxf.types.PackageStrongReferenceSet;
 import com.sandflow.smpte.mxf.types.Preface;
-import com.sandflow.smpte.mxf.types.Sequence;
 import com.sandflow.smpte.mxf.types.SoundDescriptor;
-import com.sandflow.smpte.mxf.types.SourceClip;
 import com.sandflow.smpte.mxf.types.SourcePackage;
-import com.sandflow.smpte.mxf.types.TimelineTrack;
-import com.sandflow.smpte.mxf.types.TrackStrongReferenceVector;
 import com.sandflow.smpte.mxf.types.Version;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
@@ -108,7 +103,7 @@ public class StreamingWriter {
     p.ContentStorageObject = cs;
 
     /* write  */
-    ArrayList<Set> sets = new ArrayList<>();
+    LinkedList<Set> sets = new LinkedList<>();
     LocalTagRegister reg = new LocalTagRegister(StaticLocalTags.entries());
     MXFOutputContext ctx = new MXFOutputContext() {
 
@@ -119,12 +114,17 @@ public class StreamingWriter {
 
       @Override
       public int getLocalTag(AUID auid) {
+        /* TODO: not used */
         return (int) reg.getOrMakeLocalTag(auid);
       }
 
       @Override
       public void putSet(Set set) {
-        sets.add(set);
+        if (Preface.getKey().equalsIgnoreVersionAndGroupCoding(set.getKey())) {
+          sets.addFirst(set);
+        } else {
+          sets.add(set);
+        }
       }
 
     };
@@ -151,7 +151,6 @@ public class StreamingWriter {
     ppmos.close();
 
     /* partition pack */
-
     PartitionPack pp = new PartitionPack();
     pp.setOperationalPattern(Labels.MXFOPAtom1Track1SourceClip.asUL());
     pp.setEssenceContainers(Arrays.asList(new UL[] {Labels.MXFGCFrameWrappedAES3AudioData.asUL()}));
