@@ -135,20 +135,32 @@ public class StreamingWriter {
     /* write the header metadata */
     ByteArrayOutputStream headerbos = new ByteArrayOutputStream();
     MXFOutputStream headermos = new MXFOutputStream(headerbos);
-    headermos.writeTriplet(PrimerPack.createTriplet(reg));
     for (Set set : sets) {
       Set.toStreamAsLocalSet(set, reg, headermos);
     }
     headermos.close();
 
-    /* write the partition */
-    MXFOutputStream mos = new MXFOutputStream(os);
+    /* 
+     * write primer pack
+     * the primer pack is written after the header metadata since dynamically
+     * allocated local tags are assigned then the header metadata is written
+     */
+    ByteArrayOutputStream ppbos = new ByteArrayOutputStream();
+    MXFOutputStream ppmos = new MXFOutputStream(ppbos);
+    ppmos.writeTriplet(PrimerPack.createTriplet(reg));
+    ppmos.close();
+
+    /* partition pack */
 
     PartitionPack pp = new PartitionPack();
     pp.setOperationalPattern(Labels.MXFOPAtom1Track1SourceClip.asUL());
     pp.setEssenceContainers(Arrays.asList(new UL[] {Labels.MXFGCFrameWrappedAES3AudioData.asUL()}));
-    pp.setHeaderByteCount(headerbos.size());
+    pp.setHeaderByteCount(headerbos.size() + ppbos.size());
+
+    /* write the partition */
+    MXFOutputStream mos = new MXFOutputStream(os);
     mos.writeTriplet(PartitionPack.toTriplet(pp, PartitionPack.Kind.HEADER, PartitionPack.Status.CLOSED_COMPLETE));
+    ppbos.writeTo(mos);
     headerbos.writeTo(mos);
     mos.close();
   }

@@ -93,6 +93,11 @@ public class LocalTagRegister {
     if (e != null) {
       return e.localTag();
     }
+    /* EXCEPTION: some register entries have local tags above 0x8000 */
+    /* look for the next available dynamic tag */
+    while (this.tagToEntry.containsKey(this.nextLocalTag)) {
+      this.nextLocalTag++;
+    }
     this.add(this.nextLocalTag, auid);
     return this.nextLocalTag++;
   }

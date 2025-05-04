@@ -92,8 +92,8 @@ public class PrimerPack {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     MXFOutputStream os = new MXFOutputStream(bos);
 
-    os.writeUnsignedInt(reg.size()); // itemlength
-    os.writeUnsignedInt(18); // itemcount
+    os.writeUnsignedInt(reg.size()); // itemcount
+    os.writeUnsignedInt(18); // itemlength
 
     for (var entry : reg.getEntries()) {
       os.writeUnsignedShort((int) entry.localTag().longValue());
