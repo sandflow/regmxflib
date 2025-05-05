@@ -28,14 +28,29 @@ package com.sandflow.smpte.mxf;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
+import org.apache.commons.numbers.fraction.Fraction;
 import org.junit.jupiter.api.Test;
+
+import com.sandflow.smpte.mxf.StreamingWriter.ElementSize;
+import com.sandflow.smpte.mxf.StreamingWriter.EssenceWrapping;
+import com.sandflow.smpte.mxf.types.SoundDescriptor;
 
 class StreamingWriterTest {
 
   @Test
   void testSmoke() throws Exception {
     OutputStream os = new FileOutputStream("hello.mxf");
-    StreamingWriter sw = new StreamingWriter(os);
+    SoundDescriptor descriptor = new SoundDescriptor();
+    StreamingWriter.EssenceInfo ei = new StreamingWriter.EssenceInfo(
+      Labels.AAFAIFFAIFCAudioContainer.asUL(),
+      Labels.MXFGCClipWrappedAES3AudioData.asUL(),
+      descriptor,
+      EssenceWrapping.CLIP,
+      ElementSize.CBE,
+      Fraction.of(48000),
+      null
+      );
+    StreamingWriter sw = new StreamingWriter(os, ei);
   }
 
 }

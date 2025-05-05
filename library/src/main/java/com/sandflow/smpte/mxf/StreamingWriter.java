@@ -35,15 +35,37 @@ public class StreamingWriter {
     CLIP, FRAME;
   }
 
-  public record EssenceContainerInfo(
-      FileDescriptor[] descriptors,
-      EssenceWrapping wrapping) {
+  public enum ElementSize {
+    CBE, /* constant */
+    VBE, /* variable */ 
+    CBF /* constant but first */;
   }
 
-  public record Configuration(EssenceContainerInfo[] containers) {
+  public record EssenceInfo(
+      UL essenceKey,
+      UL essenceContainerKey,
+      FileDescriptor descriptor,
+      EssenceWrapping wrapping,
+      ElementSize elementSize,
+      Fraction editRate,
+      Integer partitionDuration) {
   }
 
-  StreamingWriter(OutputStream os) throws IOException, KLVException {
+  /* TODO: warn if clip wrapping and partition duration is not null */
+
+  private PartitionPack makePartitionPack() {
+    /* partition pack */
+    PartitionPack pp = new PartitionPack();
+    pp.setOperationalPattern(Labels.MXFOPAtom1Track1SourceClip.asUL());
+    pp.setEssenceContainers(Arrays.asList(new UL[] {this.essenceInfo.essenceContainerKey}));
+    return pp;
+  }
+
+  private final EssenceInfo essenceInfo;
+  private final MXFOutputStream mos;
+
+  StreamingWriter(OutputStream os, EssenceInfo essence) throws IOException, KLVException {
+    this.essenceInfo = essence;
     /* Essence Descriptor */
 
     SoundDescriptor desc = new SoundDescriptor();
@@ -152,19 +174,36 @@ public class StreamingWriter {
     ppmos.close();
 
     /* partition pack */
-    PartitionPack pp = new PartitionPack();
-    pp.setOperationalPattern(Labels.MXFOPAtom1Track1SourceClip.asUL());
-    pp.setEssenceContainers(Arrays.asList(new UL[] {Labels.MXFGCFrameWrappedAES3AudioData.asUL()}));
+    PartitionPack pp = makePartitionPack();
     pp.setHeaderByteCount(headerbos.size() + ppbos.size());
 
     /* write the partition */
     /* TODO: is this really open and incomplete? */
-    MXFOutputStream mos = new MXFOutputStream(os);
+    this.mos = new MXFOutputStream(os);
     mos.writeTriplet(PartitionPack.toTriplet(pp, PartitionPack.Kind.HEADER, PartitionPack.Status.OPEN_INCOMPLETE));
     ppbos.writeTo(mos);
     headerbos.writeTo(mos);
-    mos.close();
+    this.mos.flush();
+    /* TODO: need to add 8K fill per st 2067-5 */
   }
 
+  enum State {
+    START_PARTITON,
+    IN_PARTITION,
+    DONE
+  }
 
+  int curOffset = 0;
+  State state = State.START_PARTITON;
+  long previousPartitionOffet = 0;
+  long bodyOffset = 0;
+
+  public void nextUnit() throws IOException, KLVException {
+    if (state == State.START_PARTITON) {
+      var pp = makePartitionPack();
+      pp.setBodyOffset(bodyOffset);
+      pp.setPreviousPartition(previousPartitionOffet);
+      mos.writeTriplet(PartitionPack.toTriplet(pp, PartitionPack.Kind.BODY, PartitionPack.Status.CLOSED_COMPLETE));
+    }
+  }
 }
