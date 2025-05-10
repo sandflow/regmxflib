@@ -182,14 +182,14 @@ public class StreamingWriter {
     /* serialize the header metadata sets */
     this.preface.serialize(ctx);
 
-    /* serialize the header  */
+    /* serialize the header */
     MXFOutputStream mos = new MXFOutputStream(new ByteArrayOutputStream());
     mos.writeTriplet(PrimerPack.createTriplet(reg));
     for (Set set : sets) {
       Set.toStreamAsLocalSet(set, reg, mos);
     }
 
-   return ((ByteArrayOutputStream) mos.stream()).toByteArray();
+    return ((ByteArrayOutputStream) mos.stream()).toByteArray();
   }
 
   enum State {
@@ -199,7 +199,7 @@ public class StreamingWriter {
   }
 
   /**
-   *  temportal offset (in Edit Units) of the current unit
+   * temportal offset (in Edit Units) of the current unit
    */
   long unitOffset = 0;
   long nextUnitOffset = 0;
@@ -238,8 +238,9 @@ public class StreamingWriter {
     this.fos.writeTriplet(PartitionPack.toTriplet(pp, PartitionPack.Kind.BODY, PartitionPack.Status.CLOSED_COMPLETE));
 
     /* initialize the index table */
-
-    this.unitOffsets = new ArrayList<>();
+    if (this.essenceInfo.elementSize() == ElementSize.VBE) {
+      this.unitOffsets = new ArrayList<>();
+    }
   }
 
   private void writeIndexPartition() throws IOException, KLVException {
@@ -256,7 +257,7 @@ public class StreamingWriter {
     }
 
     if (this.essenceInfo.elementSize() == ElementSize.CBE) {
-      if (this.state == State.START) {
+      if (this.nextUnitOffset == 0) {
         this.unitSize = unitSize;
       } else if (this.unitSize != unitSize) {
         throw new RuntimeException("Unit size mismatch");
@@ -267,39 +268,33 @@ public class StreamingWriter {
       throw new RuntimeException("Only one Edit Unit can be written at a time");
     }
 
-    if (state == State.START) {
-      this.startBodyPartition();
-      state = State.RUNNING;
-    } else {
-      this.unitOffset = this.nextUnitOffset;
-      this.nextUnitOffset += unitCount;
-      /*
-       * a new partition is created:
-       * * at every call, for clip-wrapped essence
-       * * when the partition duration is exceeded, for frame-wrapped essence and if
-       * the partition duration is specified
-       * TODO: how to signal no partitioning
-       */
-      if (this.essenceInfo.wrapping() == EssenceWrapping.CLIP ||
-          (this.essenceInfo.partitionDuration() > 0
-              && this.unitOffset % this.essenceInfo.partitionDuration() == 0)) {
+    /* do we need to start a new body partition */
+    if (this.nextUnitOffset % this.essenceInfo.partitionDuration() == 0
+        || this.essenceInfo.wrapping() == EssenceWrapping.CLIP) {
+
+      if (this.nextUnitOffset != 0) {
+        /* do not create an index partition on the initial call */
         this.writeIndexPartition();
-        this.startBodyPartition();
-        if (this.essenceInfo.wrapping() == EssenceWrapping.CLIP) {
-          this.essenceStream.writeUL(this.essenceInfo.essenceKey);
-          this.essenceStream.writeBERLength(unitSize * unitCount);
-        }
       }
 
+      this.startBodyPartition();
 
+      /* start the essence element if clip-wrapping */
+      if (this.essenceInfo.wrapping() == EssenceWrapping.CLIP) {
+        this.essenceStream.writeUL(this.essenceInfo.essenceKey);
+        this.essenceStream.writeBERLength(unitSize * unitCount);
+      }
     }
+
+    this.unitOffset = this.nextUnitOffset;
+    this.nextUnitOffset += unitCount;
 
     /* add an entry to the index table if we have VBE essence */
     if (this.essenceInfo.elementSize() == ElementSize.VBE) {
       this.unitOffsets.add(this.essenceStream.written());
     }
 
-    /*  */
+    /* start the essence element if frame-wrapping */
     if (this.essenceInfo.wrapping() == EssenceWrapping.FRAME) {
       this.essenceStream.writeUL(this.essenceInfo.essenceKey);
       this.essenceStream.writeBERLength(unitSize * unitCount);

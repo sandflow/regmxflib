@@ -159,6 +159,7 @@ public class ClassGenerator {
     private static final AUID UINT16_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.01010200.00000000");
     private static final AUID AUID_AUID = new AUID(UL.fromDotValue("06.0E.2B.34.01.04.01.01.01.03.01.00.00.00.00.00"));
     private static final UL METADEFINITIONS_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.02000000");
+    private static final UL IndexTableSegment_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.01100100");
     private static final UL MXFFILESTRUCTURESETSANDPACKS_UL = UL
         .fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.01000000");
     private static final UL ROOT_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.03000000");
@@ -210,7 +211,8 @@ public class ClassGenerator {
         throw new VisitorException("Skipping packs");
 
       /* skip packs */
-      if (MXFFILESTRUCTURESETSANDPACKS_UL.equalsWithMask(def.getIdentification(), 0b1111_1010_1111_1000))
+      if (!IndexTableSegment_UL.equals(def.getIdentification())
+          && MXFFILESTRUCTURESETSANDPACKS_UL.equalsWithMask(def.getIdentification(), 0b1111_1010_1111_1000))
         throw new VisitorException("Skipping packs");
 
       var data = new HashMap<String, Object>();
