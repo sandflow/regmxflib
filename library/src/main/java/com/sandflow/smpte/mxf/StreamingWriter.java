@@ -69,6 +69,8 @@ public class StreamingWriter {
 
   StreamingWriter(OutputStream os, EssenceInfo essence) throws IOException, KLVException {
     this.fos = new MXFOutputStream(os);
+    /* TODO: document single container */
+    this.essenceStream = new MXFOutputStream(fos);
     this.essenceInfo = essence;
 
     /* Essence Descriptor */
@@ -139,8 +141,6 @@ public class StreamingWriter {
         PartitionPack.toTriplet(curPartition, PartitionPack.Kind.HEADER, PartitionPack.Status.OPEN_INCOMPLETE));
     mos.write(headerbytes);
     mos.flush();
-
-    this.essenceStream = new MXFOutputStream(fos);
 
     this.state = State.START;
     /* TODO: need to add 8K fill per st 2067-5 */
@@ -281,23 +281,28 @@ public class StreamingWriter {
        * TODO: how to signal no partitioning
        */
       if (this.essenceInfo.wrapping() == EssenceWrapping.CLIP ||
-          (this.unitOffset % this.essenceInfo.partitionDuration() > 0
+          (this.essenceInfo.partitionDuration() > 0
               && this.unitOffset % this.essenceInfo.partitionDuration() == 0)) {
         this.writeIndexPartition();
         this.startBodyPartition();
+        if (this.essenceInfo.wrapping() == EssenceWrapping.CLIP) {
+          this.essenceStream.writeUL(this.essenceInfo.essenceKey);
+          this.essenceStream.writeBERLength(unitSize * unitCount);
+        }
       }
+
+
     }
 
-    if (this.essenceInfo.elementSize() != ElementSize.CBE) {
+    /* add an entry to the index table if we have VBE essence */
+    if (this.essenceInfo.elementSize() == ElementSize.VBE) {
       this.unitOffsets.add(this.essenceStream.written());
     }
 
-    /* start essence element */
-    this.essenceStream.writeUL(this.essenceInfo.essenceKey);
-    this.essenceStream .writeBERLength(unitSize * unitCount);
-
-    if (this.essenceInfo.wrapping() == EssenceWrapping.CLIP) {
-      this.unitOffsets.add(this.essenceStream.written());
+    /*  */
+    if (this.essenceInfo.wrapping() == EssenceWrapping.FRAME) {
+      this.essenceStream.writeUL(this.essenceInfo.essenceKey);
+      this.essenceStream.writeBERLength(unitSize * unitCount);
     }
 
     return this.essenceStream;
