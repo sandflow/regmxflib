@@ -25,6 +25,7 @@
  */
 package com.sandflow.smpte.mxf;
 
+import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
@@ -51,6 +52,29 @@ class StreamingWriterTest {
       null
       );
     StreamingWriter sw = new StreamingWriter(os, ei);
+  }
+
+  @Test
+  void testCBE() throws Exception {
+    OutputStream os = new FileOutputStream("hello.mxf");
+    SoundDescriptor descriptor = new SoundDescriptor();
+    StreamingWriter.EssenceInfo ei = new StreamingWriter.EssenceInfo(
+      Labels.AAFAIFFAIFCAudioContainer.asUL(),
+      Labels.MXFGCClipWrappedAES3AudioData.asUL(),
+      descriptor,
+      EssenceWrapping.CLIP,
+      ElementSize.CBE,
+      Fraction.of(48000),
+      null
+      );
+    StreamingWriter sw = new StreamingWriter(os, ei);
+
+    DataOutputStream dos = new DataOutputStream(sw.nextUnits(48000 * 4, 4));
+    for (int i = 0; i < 96000; i++) {
+      dos.writeInt(i);
+    }
+    sw.finish();
+
   }
 
 }
