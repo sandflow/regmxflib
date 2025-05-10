@@ -206,15 +206,6 @@ public class ClassGenerator {
       if (METADEFINITIONS_UL.equalsWithMask(def.getIdentification(), 0b1111_1010_1111_1000))
         throw new VisitorException("Skipping definition classes");
 
-      /* skip root */
-      if (ROOT_UL.equalsWithMask(def.getIdentification(), 0b1111_1010_1111_1000))
-        throw new VisitorException("Skipping packs");
-
-      /* skip packs */
-      if (!IndexTableSegment_UL.equals(def.getIdentification())
-          && MXFFILESTRUCTURESETSANDPACKS_UL.equalsWithMask(def.getIdentification(), 0b1111_1010_1111_1000))
-        throw new VisitorException("Skipping packs");
-
       var data = new HashMap<String, Object>();
 
       data.put("className", def.getSymbol());
@@ -588,6 +579,9 @@ public class ClassGenerator {
       }
     }
 
+    private static final UL IndexEntryArray_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.04020700.00000000");
+    private static final UL DeltaEntryArray_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.04020800.00000000");
+
     @Override
     public void visit(VariableArrayTypeDefinition def) throws VisitorException {
       Definition itemDef = findBaseDefinition(resolver.getDefinition(def.getElementType()));
@@ -596,18 +590,26 @@ public class ClassGenerator {
         throw new VisitorException("StringArray not supported: " + def.getIdentification());
       }
 
-      var templateData = new HashMap<String, Object>();
+      if (DeltaEntryArray_UL.equalsIgnoreVersion(def.getIdentification())) {
+        this.adapterName = "com.sandflow.smpte.mxf.types.DeltaEntryArray";
+        this.typeName = "com.sandflow.smpte.mxf.types.DeltaEntryArray";
+      } else if (IndexEntryArray_UL.equalsIgnoreVersion(def.getIdentification())) {
+        this.adapterName = "com.sandflow.smpte.mxf.types.IndexEntryArray";
+        this.typeName = "com.sandflow.smpte.mxf.types.IndexEntryArray";
+      } else {
+        var templateData = new HashMap<String, Object>();
 
-      templateData.put("adapterName", def.getSymbol());
+        templateData.put("adapterName", def.getSymbol());
 
-      TypeMaker tm = getTypeInformation(itemDef);
-      templateData.put("itemTypeName", tm.getTypeName());
-      templateData.put("itemAdapterName", tm.getAdapterName());
+        TypeMaker tm = getTypeInformation(itemDef);
+        templateData.put("itemTypeName", tm.getTypeName());
+        templateData.put("itemAdapterName", tm.getAdapterName());
 
-      generateSource(variableArrayTemplate, TYPE_PACKAGE_NAME, def.getSymbol(), templateData);
+        generateSource(variableArrayTemplate, TYPE_PACKAGE_NAME, def.getSymbol(), templateData);
 
-      this.adapterName = TYPE_PACKAGE_NAME + "." + def.getSymbol();
-      this.typeName = this.adapterName;
+        this.adapterName = TYPE_PACKAGE_NAME + "." + def.getSymbol();
+        this.typeName = this.adapterName;
+      }
     }
 
     @Override

@@ -1,3 +1,4 @@
+package com.sandflow.smpte.mxf.types;
 /*
  * Copyright (c) Sandflow Consulting, LLC
  * All rights reserved.
@@ -28,8 +29,6 @@
 * @author Pierre-Anthony Lemieux
 */
 
-package com.sandflow.smpte.mxf.adapters;
-
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -39,32 +38,32 @@ import com.sandflow.smpte.mxf.MXFOutputStream;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 
 
-public class IndexEntryArrayAdapter extends ArrayList<com.sandflow.smpte.mxf.types.DataValue> {
+public class DeltaEntryArray extends ArrayList<DeltaEntry> {
 
-  public IndexEntryArrayAdapter() {
+  public DeltaEntryArray() {
     super();
   }
 
-  public static IndexEntryArrayAdapter fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
+  public static DeltaEntryArray fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
     int itemcount = (int) (is.readInt() & 0xfffffffL);
     @SuppressWarnings("unused")
     int itemlength = (int) (is.readInt() & 0xfffffffL);
 
-    var items = new IndexEntryArrayAdapter();
+    var items = new DeltaEntryArray();
 
     for (int i = 0; i < itemcount; i++) {
-      items.add(com.sandflow.smpte.mxf.types.DataValue.fromStream(is, ctx));
+      items.add(DeltaEntry.fromStream(is, ctx));
     }
 
     return items;
   }
 
-  public static void toStream(IndexEntryArrayAdapter v, MXFOutputStream os, MXFOutputContext ctx)  throws IOException {
+  public static void toStream(DeltaEntryArray v, MXFOutputStream os, MXFOutputContext ctx)  throws IOException {
     os.writeUnsignedInt(v.size());
-    os.writeUnsignedInt(com.sandflow.smpte.mxf.types.DataValue.ITEM_LENGTH);
+    os.writeUnsignedInt(com.sandflow.smpte.mxf.types.Package.ITEM_LENGTH);
 
     for (int i = 0; i < v.size(); i++) {
-      com.sandflow.smpte.mxf.types.DataValue.toStream(v.get(i), os, ctx);
+      DeltaEntry.toStream(v.get(i), os, ctx);
     }
   }
 
