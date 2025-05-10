@@ -175,7 +175,7 @@ public class IndexTableSegment {
     }
 
     if ((t = s.getItem(DeltaEntryArray_AUID)) != null) {
-      this.DeltaEntryArray = DeltaEntryArray.fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
+      this.DeltaEntryArray = com.sandflow.smpte.mxf.types.DeltaEntryArray.fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
     }
 
     if ((t = s.getItem(VBEByteCount_AUID)) != null) {
