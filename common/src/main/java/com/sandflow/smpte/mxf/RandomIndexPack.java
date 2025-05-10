@@ -25,105 +25,134 @@
  */
 package com.sandflow.smpte.mxf;
 
+import com.sandflow.smpte.klv.MemoryTriplet;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.util.UL;
+
+import java.io.EOFException;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents a MXF Partition Pack Item (see SMPTE ST 377-1)
  */
 public class RandomIndexPack {
 
-    private static final UL KEY = UL.fromURN("urn:smpte:ul:060e2b34.02050101.0d010201.01110100");
+  private static final UL KEY = UL.fromURN("urn:smpte:ul:060e2b34.02050101.0d010201.01110100");
 
-    /**
-     * Returns the Pack Key
-     * @return Key
-     */
-    public static UL getKey() {
-        return KEY;
-    }
-    
-    /**
-     * Creates a Random Index Pack (RIP) from a Triplet
-     * @param triplet Triplet from which to create the RIP
-     * @return Random Index Pack or null if the Triplet is not a Random Index Pack
-     * @throws KLVException 
-     */
-    public static RandomIndexPack fromTriplet(Triplet triplet) throws KLVException {
-        RandomIndexPack pp = new RandomIndexPack();
-        
-        if (!KEY.equals(triplet.getKey())) {
-            return null;
-        }
-        
-        /* does the length make sense? */
-        
-        if ((triplet.getLength() - 4) % 12 != 0) {
-            return null;
-        }
-        
-        long count = (triplet.getLength() - 4)/12;
-                
-        try {
-            MXFInputStream kis = new MXFInputStream(triplet.getValueAsStream());
+  /**
+   * Returns the Pack Key
+   * 
+   * @return Key
+   */
+  public static UL getKey() {
+    return KEY;
+  }
 
-            
-            for(int i = 0; i < count; i++) {
-                
-                long bodySID = kis.readUnsignedInt();
-                long offset = kis.readLong();
-                
-                PartitionOffset po = new PartitionOffset(bodySID, offset);
-                
-                pp.offsets.add(po);
-            }
-            
-        } catch (IOException e) {
-            throw new KLVException(e);
-        }
-        
-        return pp;
+  /**
+   * Creates a Random Index Pack (RIP) from a Triplet
+   * 
+   * @param triplet Triplet from which to create the RIP
+   * @return Random Index Pack or null if the Triplet is not a Random Index Pack
+   * @throws KLVException
+   */
+  public static RandomIndexPack fromTriplet(Triplet triplet) throws KLVException {
+    RandomIndexPack pp = new RandomIndexPack();
+
+    if (!KEY.equals(triplet.getKey())) {
+      return null;
     }
 
-    /**
-     * @return Ordered array containing the offsets stored in the RIP
-     */
-    public ArrayList<PartitionOffset> getOffsets() {
-        return offsets;
+    /* does the length make sense? */
+
+    if ((triplet.getLength() - 4) % 12 != 0) {
+      return null;
     }
-    
-    private final ArrayList<PartitionOffset> offsets = new ArrayList<>();
+
+    long count = (triplet.getLength() - 4) / 12;
+
+    try {
+      MXFInputStream kis = new MXFInputStream(triplet.getValueAsStream());
+
+      for (int i = 0; i < count; i++) {
+
+        long bodySID = kis.readUnsignedInt();
+        long offset = kis.readLong();
+
+        PartitionOffset po = new PartitionOffset(bodySID, offset);
+
+        pp.offsets.add(po);
+      }
+
+    } catch (IOException e) {
+      throw new KLVException(e);
+    }
+
+    return pp;
+  }
+
+  /**
+   * Creates a Triplet
+   * 
+   * @return triplet RIP as a triplet
+   * @throws KLVException
+   * @throws IOException
+   */
+  public void toStream(OutputStream os) throws KLVException, IOException {
+    MXFOutputStream mos = new MXFOutputStream(os);
+    mos.writeUL(KEY);
+    mos.writeBERLength(12 * this.offsets.size() + 4);
+    for (PartitionOffset offset : this.offsets) {
+      mos.writeUnsignedInt(offset.getBodySID());
+      mos.writeLong(offset.getOffset());
+    }
+    long ripSize = mos.written() + 4;
+    mos.writeUnsignedInt(ripSize);
+  }
+
+  /**
+   * @return Ordered array containing the offsets stored in the RIP
+   */
+  public List<PartitionOffset> getOffsets() {
+    return offsets;
+  }
+
+  public void addOffset(PartitionOffset offset) {
+    this.offsets.add(offset);
+  }
+
+  private final ArrayList<PartitionOffset> offsets = new ArrayList<>();
+
+  /**
+   * Represents one partition offset entry stored in the RIP
+   */
+  static public class PartitionOffset {
+    private final long bodySID;
+    private final long offset;
+
+    public PartitionOffset(long bodySID, long offset) {
+      this.bodySID = bodySID;
+      this.offset = offset;
+    }
 
     /**
-     * Represents one partition offset entry stored in the RIP
+     *
+     * @return Identifies the partition
      */
-    static public class PartitionOffset {
-       private final long bodySID;
-       private final long offset;
+    public long getBodySID() {
+      return bodySID;
+    }
 
-        public PartitionOffset(long bodySID, long offset) {
-            this.bodySID = bodySID;
-            this.offset = offset;
-        }
+    /**
+     *
+     * @return Offset (in bytes) of the partition
+     */
+    public long getOffset() {
+      return offset;
+    }
 
-        /**
-         *
-         * @return Identifies the partition
-         */
-        public long getBodySID() {
-            return bodySID;
-        }
-
-        /**
-         *
-         * @return Offset (in bytes) of the partition
-         */
-        public long getOffset() {
-            return offset;
-        }
-       
-   }
+  }
 }

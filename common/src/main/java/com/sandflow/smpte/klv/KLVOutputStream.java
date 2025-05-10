@@ -118,10 +118,11 @@ public class KLVOutputStream extends CountingOutputStream {
     }
 
     /* short form */
-    if (l < 0x80) {
-      this.write((int) l);
-      return;
-    }
+    /* TODO: should be enabled unless ASDCPLib does not support it */
+    // if (l < 0x80) {
+    //   this.write((int) l);
+    //   return;
+    // }
 
     /* long form */
     int n = 0;

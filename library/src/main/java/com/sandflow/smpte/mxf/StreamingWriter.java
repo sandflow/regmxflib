@@ -14,6 +14,7 @@ import org.apache.commons.numbers.fraction.Fraction;
 import com.sandflow.smpte.klv.LocalTagRegister;
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.exceptions.KLVException;
+import com.sandflow.smpte.mxf.RandomIndexPack.PartitionOffset;
 import com.sandflow.smpte.mxf.types.AUIDSet;
 import com.sandflow.smpte.mxf.types.ContentStorage;
 import com.sandflow.smpte.mxf.types.EssenceData;
@@ -86,6 +87,7 @@ public class StreamingWriter {
   State state;
   MXFOutputStream essenceStream;
   MXFOutputStream partitionStream;
+  RandomIndexPack rip = new RandomIndexPack();
 
   /**
    * size in bytes of the VBE units within the current partition
@@ -238,7 +240,6 @@ public class StreamingWriter {
   /* TODO: warn if clip wrapping and partition duration is not null */
 
   private void startPartition(long bodySID, long indexSID, long headerSize, long indexSize, PartitionPack.Kind kind,  PartitionPack.Status status) throws IOException, KLVException {
-
     PartitionPack pp = new PartitionPack();
     pp.setBodySID(bodySID);
     pp.setIndexSID(indexSID);
@@ -252,6 +253,8 @@ public class StreamingWriter {
       pp.setPreviousPartition(this.curPartition.getThisPartition());
     }
     this.fos.writeTriplet(PartitionPack.toTriplet(pp, kind, status));
+
+    this.rip.addOffset(new PartitionOffset(bodySID, pp.getThisPartition()));
 
     this.curPartition = pp;
   }
@@ -423,6 +426,9 @@ public class StreamingWriter {
     /* write the footer partition */
     startPartition(0, 0, headerbytes.length, 0, PartitionPack.Kind.FOOTER, PartitionPack.Status.CLOSED_COMPLETE);
     fos.write(headerbytes);
+
+    /* write the RIP */
+    this.rip.toStream(fos);
 
     this.state = State.DONE;
   }
