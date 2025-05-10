@@ -156,4 +156,9 @@ public class MXFOutputStream extends KLVOutputStream {
     writeBERLength(triplet.getLength());
     write(triplet.getValue());
   }
+
+  @Override
+  public void close() throws IOException {
+    /* Do nothing */
+  }
 }

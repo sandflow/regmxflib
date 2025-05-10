@@ -20,6 +20,8 @@ public interface LocalSetItemAdapter<T> {
     MXFOutputStream imos = new MXFOutputStream(ibos);
     a.apply(itemValue, imos, ctx);
 
+    ctx.getLocalTag(itemKey);
+
     s.addItem(new MemoryTriplet(itemKey, ibos.toByteArray()));
   }
 }

@@ -25,8 +25,6 @@
  */
 package com.sandflow.smpte.klv;
 
-import java.io.DataOutput;
-import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -34,15 +32,16 @@ import java.io.OutputStream;
 import com.sandflow.smpte.klv.KLVInputStream.ByteOrder;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.util.AUID;
+import com.sandflow.smpte.util.CountingOutputStream;
 import com.sandflow.smpte.util.UL;
 
 /**
  * KLVOutputStream allows KLV data structures to be write to an OutputStream
+ * 
+ * TODO: documentation
  */
-public class KLVOutputStream extends OutputStream implements DataOutput {
+public class KLVOutputStream extends CountingOutputStream {
 
-  private OutputStream os;
-  private DataOutputStream dos;
   private ByteOrder byteorder;
 
   /**
@@ -62,19 +61,15 @@ public class KLVOutputStream extends OutputStream implements DataOutput {
    */
   public KLVOutputStream(OutputStream os, ByteOrder byteorder) {
 
-    if (os == null)
-      throw new NullPointerException();
-
-    this.os = os;
-    dos = new DataOutputStream(os);
+    super(os);
     this.byteorder = byteorder;
   }
 
   /**
    * @return The underlying output stream
    */
-  OutputStream stream() {
-    return this.os;
+  public OutputStream stream() {
+    return this.out;
   }
 
   /**
@@ -94,7 +89,7 @@ public class KLVOutputStream extends OutputStream implements DataOutput {
    * @throws EOFException
    */
   public void writeUL(UL ul) throws IOException, EOFException {
-    dos.write(ul.getValue());
+    this.write(ul.getValue());
   }
 
   /**
@@ -105,7 +100,7 @@ public class KLVOutputStream extends OutputStream implements DataOutput {
    * @throws EOFException
    */
   public void writeAUID(AUID auid) throws IOException, EOFException {
-    dos.write(auid.getValue());
+    this.write(auid.getValue());
   }
 
   /**
@@ -124,7 +119,7 @@ public class KLVOutputStream extends OutputStream implements DataOutput {
 
     /* short form */
     if (l < 0x80) {
-      dos.write((int) l);
+      this.write((int) l);
       return;
     }
 
@@ -135,7 +130,7 @@ public class KLVOutputStream extends OutputStream implements DataOutput {
       tmp >>= 8;
       n++;
     }
-    dos.write(0x80 | n);
+    this.write(0x80 | n);
     for (int i = n - 1; i >= 0; i--) {
       write((int) (l >> (i << 3)) & 0xFF);
     }
@@ -150,41 +145,9 @@ public class KLVOutputStream extends OutputStream implements DataOutput {
    * @throws KLVException
    */
   public void writeTriplet(Triplet t) throws IOException, EOFException, KLVException {
-    writeAUID(t.getKey());
-    writeBERLength(t.getLength());
-    write(t.getValue());
-  }
-
-  @Override
-  public final void write(byte[] bytes) throws IOException {
-    dos.write(bytes);
-  }
-
-  @Override
-  public final void write(byte[] bytes, int i, int i1) throws IOException {
-    dos.write(bytes, i, i1);
-  }
-
-  @Override
-  public final void writeBoolean(boolean b) throws IOException {
-    dos.writeBoolean(b);
-  }
-
-  public void writeUnsignedByte(short v) throws IOException, EOFException {
-    write((byte) (v & 0xFF));
-  }
-
-  public void writeUnsignedShort(int v) throws IOException, EOFException {
-    writeShort((short) (v & 0xFFFF));
-  }
-
-  public void writeUnsignedInt(long v) throws IOException, EOFException {
-    writeInt((int) (v & 0xFFFFFFFF));
-  }
-
-  @Override
-  public void close() throws IOException {
-    /* do nothink */
+    this.writeAUID(t.getKey());
+    this.writeBERLength(t.getLength());
+    this.write(t.getValue());
   }
 
   protected static final void swap(byte[] array, int i, int j) {
@@ -206,50 +169,21 @@ public class KLVOutputStream extends OutputStream implements DataOutput {
 
   }
 
-  @Override
-  public void flush() throws IOException {
-    dos.flush();
+  public void writeUnsignedByte(short v) throws IOException, EOFException {
+    this.write((byte) (v & 0xFF));
   }
 
-  @Override
-  public void write(int b) throws IOException {
-    dos.write(b);
-  }
-
-  @Override
   public void writeByte(int v) throws IOException {
-    dos.writeByte(v);
+    this.write(v);
   }
 
-  @Override
-  public void writeBytes(String s) throws IOException {
-    dos.writeBytes(s);
+  public void writeUnsignedInt(long v) throws IOException, EOFException {
+    this.writeInt((int) (v & 0xFFFFFFFF));
   }
 
-  @Override
-  public void writeChar(int v) throws IOException {
-    dos.writeChar(v);
-  }
-
-  @Override
-  public void writeChars(String s) throws IOException {
-    dos.writeChars(s);
-  }
-
-  @Override
-  public void writeDouble(double v) throws IOException {
-    dos.writeDouble(v);
-  }
-
-  @Override
-  public void writeFloat(float v) throws IOException {
-    dos.writeFloat(v);
-  }
-
-  @Override
   public void writeInt(int v) throws IOException {
     if (byteorder == ByteOrder.BIG_ENDIAN) {
-      dos.writeInt(v);
+      this.writeInt(v);
     } else {
       writeByte((short) (v & 0xFF));
       writeByte((short) ((v >> 8) & 0xFF));
@@ -258,10 +192,9 @@ public class KLVOutputStream extends OutputStream implements DataOutput {
     }
   }
 
-  @Override
   public void writeLong(long v) throws IOException {
     if (byteorder == ByteOrder.BIG_ENDIAN) {
-      dos.writeLong(v);
+      this.writeLong(v);
     } else {
       writeByte((short) (v & 0xFF));
       writeByte((short) ((v >> 8) & 0xFF));
@@ -274,19 +207,22 @@ public class KLVOutputStream extends OutputStream implements DataOutput {
     }
   }
 
-  @Override
+  public void writeUnsignedShort(int v) throws IOException, EOFException {
+    this.writeShort((short) (v & 0xFFFF));
+  }
+
   public void writeShort(int v) throws IOException {
     if (byteorder == ByteOrder.BIG_ENDIAN) {
-      dos.writeShort(v);
+      this.writeShort(v);
     } else {
-      dos.writeByte(v & 0xFF);
-      dos.writeByte((v >> 8) & 0xFF);
+      this.writeByte(v & 0xFF);
+      this.writeByte((v >> 8) & 0xFF);
     }
   }
 
   @Override
-  public void writeUTF(String s) throws IOException {
-    dos.writeUTF(s);
+  public void close() throws IOException {
+    /* Do nothing */
   }
 
 }
