@@ -339,7 +339,7 @@ public class StreamingWriter {
 
     byte[] itsBytes = ((ByteArrayOutputStream) mos.stream()).toByteArray();
 
-    startPartition(0, INDEX_SID, 0, 0, PartitionPack.Kind.BODY, PartitionPack.Status.CLOSED_COMPLETE);
+    startPartition(0, INDEX_SID, 0, itsBytes.length, PartitionPack.Kind.BODY, PartitionPack.Status.CLOSED_COMPLETE);
     fos.write(itsBytes);
   }
 

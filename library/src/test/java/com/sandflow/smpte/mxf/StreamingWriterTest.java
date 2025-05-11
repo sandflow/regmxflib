@@ -69,8 +69,9 @@ class StreamingWriterTest {
       );
     StreamingWriter sw = new StreamingWriter(os, ei);
 
-    DataOutputStream dos = new DataOutputStream(sw.nextUnits(48000 * 4, 4));
-    for (int i = 0; i < 96000; i++) {
+    final int unitCount = 48000 * 4;
+    DataOutputStream dos = new DataOutputStream(sw.nextUnits(unitCount, 4));
+    for (int i = 0; i < unitCount; i++) {
       dos.writeInt(i);
     }
     sw.finish();
