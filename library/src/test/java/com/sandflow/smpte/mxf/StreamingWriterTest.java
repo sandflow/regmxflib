@@ -34,7 +34,13 @@ import org.junit.jupiter.api.Test;
 
 import com.sandflow.smpte.mxf.StreamingWriter.ElementSize;
 import com.sandflow.smpte.mxf.StreamingWriter.EssenceWrapping;
+import com.sandflow.smpte.mxf.types.AudioChannelLabelSubDescriptor;
 import com.sandflow.smpte.mxf.types.SoundDescriptor;
+import com.sandflow.smpte.mxf.types.SoundfieldGroupLabelSubDescriptor;
+import com.sandflow.smpte.mxf.types.SubDescriptorStrongReferenceVector;
+import com.sandflow.smpte.mxf.types.WAVEPCMDescriptor;
+import com.sandflow.smpte.util.UL;
+import com.sandflow.smpte.util.UUID;
 
 class StreamingWriterTest {
 
@@ -56,12 +62,65 @@ class StreamingWriterTest {
 
   @Test
   void testCBE() throws Exception {
+
+    final int sampleCount = 48000;
+    final Fraction sampleRate = Fraction.of(48000);
+    final Fraction editRate = Fraction.of(48000);
+
+    WAVEPCMDescriptor d = new WAVEPCMDescriptor();
+    d.InstanceID = UUID.fromRandom();
+    d.SampleRate = sampleRate;
+    d.AudioSampleRate = sampleRate;
+    d.Locked = false;
+    d.ChannelCount = 2L;
+    d.QuantizationBits = 24L;
+    d.BlockAlign = 6;
+    d.AverageBytesPerSecond = 288000L;
+    d.ChannelAssignment = Labels.SMPTEST20672ApplicationOfTheMXFMultichannelAudioFramework;
+    d.SubDescriptors = new SubDescriptorStrongReferenceVector();
+
+    SoundfieldGroupLabelSubDescriptor sg = new SoundfieldGroupLabelSubDescriptor();
+    sg.InstanceID = UUID.fromRandom();
+    sg.MCALabelDictionaryID = Labels.SMPTEST20678StandardStereo;
+    sg.MCALinkID = UUID.fromRandom();
+    sg.MCATagSymbol = "sgST";
+    sg.MCATagName = "Standard Stereo";
+    sg.MCAChannelID = 1L;
+    sg.RFC5646SpokenLanguage = "en-us";
+    sg.MCATitle = "1s tone";
+    sg.MCAAudioContentKind = "PRM";
+    sg.MCAAudioElementKind = "FCMP";
+
+    AudioChannelLabelSubDescriptor chL = new AudioChannelLabelSubDescriptor();
+    chL.InstanceID = UUID.fromRandom();
+    chL.MCALabelDictionaryID = Labels.LeftAudioChannel;
+    chL.MCALinkID = UUID.fromRandom();
+    chL.MCATagSymbol = "chL";
+    chL.MCATagName = "Left";
+    chL.MCAChannelID = 1L;
+    chL.RFC5646SpokenLanguage = "en-us";
+    chL.SoundfieldGroupLinkID = sg.MCALinkID;
+
+    AudioChannelLabelSubDescriptor chR = new AudioChannelLabelSubDescriptor();
+    chR.InstanceID = UUID.fromRandom();
+    chR.MCALabelDictionaryID = Labels.RightAudioChannel;
+    chR.MCALinkID = UUID.fromRandom();
+    chR.MCATagSymbol = "chR";
+    chR.MCATagName = "Right";
+    chR.MCAChannelID = 2L;
+    chR.RFC5646SpokenLanguage = "en-us";
+    chR.SoundfieldGroupLinkID = sg.MCALinkID;
+
+
+
+    /* start writing file */
+
     OutputStream os = new FileOutputStream("hello.mxf");
-    SoundDescriptor descriptor = new SoundDescriptor();
+
     StreamingWriter.EssenceInfo ei = new StreamingWriter.EssenceInfo(
       Labels.AAFAIFFAIFCAudioContainer.asUL(),
       Labels.MXFGCClipWrappedAES3AudioData.asUL(),
-      descriptor,
+      d,
       EssenceWrapping.CLIP,
       ElementSize.CBE,
       Fraction.of(48000),
@@ -69,7 +128,7 @@ class StreamingWriterTest {
       );
     StreamingWriter sw = new StreamingWriter(os, ei);
 
-    final int unitCount = 48000 * 4;
+    final int unitCount = 48000 * 1;
     DataOutputStream dos = new DataOutputStream(sw.nextUnits(unitCount, 4));
     for (int i = 0; i < unitCount; i++) {
       dos.writeInt(i);

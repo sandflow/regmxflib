@@ -118,28 +118,27 @@ public class StreamingWriter {
     }
 
     /* Essence Descriptor */
-    SoundDescriptor desc = new SoundDescriptor();
-    desc.InstanceID = UUID.fromRandom();
-    desc.ChannelCount = 2L;
-    desc.SampleRate = Fraction.of(48000, 1);
-    desc.QuantizationBits = 16L;
-    desc.ContainerFormat = Labels.MXFGCClipWrappedBroadcastWaveAudioData;
+    /* TODO: need to allow cloning */
+    FileDescriptor desc = essence.descriptor();
+    desc.ContainerFormat = new AUID(essence.essenceContainerKey());
+    desc.EssenceLength = null;
+    desc.LinkedTrackID = null;
 
     /* File Package */
     SourcePackage sp = new SourcePackage();
     sp.EssenceDescription = desc;
-    PackageHelper.initSingleTrackPackage(sp, Fraction.of(48000, 1), null, UMID.NULL_UMID, 1L);
+    PackageHelper.initSingleTrackPackage(sp, essence.editRate(), null, UMID.NULL_UMID, 1L);
 
     /* Material Package */
     var mp = new MaterialPackage();
-    PackageHelper.initSingleTrackPackage(mp, Fraction.of(48000, 1), null, sp.PackageID, null);
+    PackageHelper.initSingleTrackPackage(mp, essence.editRate(), null, sp.PackageID, null);
 
     /* TODO: return better error when InstanceID is null */
     /* EssenceDataObject */
     var edo = new EssenceData();
     edo.InstanceID = UUID.fromRandom();
-    edo.EssenceStreamID = 1L;
-    edo.IndexStreamID = 1L;
+    edo.EssenceStreamID = BODY_SID;
+    edo.IndexStreamID = INDEX_SID;
 
     /* Content Storage Object */
     var cs = new ContentStorage();
