@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.numbers.fraction.Fraction;
+import org.openjdk.nashorn.internal.runtime.Source;
 
 import com.sandflow.smpte.klv.LocalTagRegister;
 import com.sandflow.smpte.klv.Set;
@@ -126,11 +127,17 @@ public class StreamingWriter {
 
     /* File Package */
     SourcePackage sp = new SourcePackage();
+    sp.PackageName = "Top-level File Package";
     sp.EssenceDescription = desc;
-    PackageHelper.initSingleTrackPackage(sp, essence.editRate(), null, UMID.NULL_UMID, 1L);
+    long trackNum = (this.essenceInfo.essenceKey.getValueOctet(12) << 24) +
+                    (this.essenceInfo.essenceKey.getValueOctet(13) << 16) +
+                    (this.essenceInfo.essenceKey.getValueOctet(14) << 8) +
+                    this.essenceInfo.essenceKey.getValueOctet(15);
+    PackageHelper.initSingleTrackPackage(sp, essence.editRate(), null, UMID.NULL_UMID, trackNum);
 
     /* Material Package */
     var mp = new MaterialPackage();
+    mp.PackageName = "Material Package";
     PackageHelper.initSingleTrackPackage(mp, essence.editRate(), null, sp.PackageID, null);
 
     /* TODO: return better error when InstanceID is null */
@@ -151,7 +158,7 @@ public class StreamingWriter {
 
     /* EssenceContainers */
     var ecs = new AUIDSet();
-    ecs.add(Labels.MXFGCClipWrappedBroadcastWaveAudioData);
+    ecs.add(new AUID(this.essenceInfo.essenceContainerKey()));
 
     /* Identification */
     var idList = new IdentificationStrongReferenceVector();
@@ -418,6 +425,12 @@ public class StreamingWriter {
     this.writeIndexPartition();
 
     /* update header metadata */
+
+    for (var p : this.preface.ContentStorageObject.Packages) {
+      for (var t : p.PackageTracks) {
+        t.TrackSegment.ComponentLength = this.tPos;
+      }
+    }
 
     /* header metadata */
     byte[] headerbytes = serializeHeaderMetadata();

@@ -53,6 +53,7 @@ public class ASCIIStringAdapter {
   public static void toStream(String s, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
     var osw = new OutputStreamWriter(os, StandardCharsets.US_ASCII);
     osw.write(s);
+    osw.flush();
   }
 
 }

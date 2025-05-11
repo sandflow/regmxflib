@@ -67,19 +67,7 @@ class StreamingWriterTest {
     final Fraction sampleRate = Fraction.of(48000);
     final Fraction editRate = Fraction.of(48000);
 
-    WAVEPCMDescriptor d = new WAVEPCMDescriptor();
-    d.InstanceID = UUID.fromRandom();
-    d.SampleRate = sampleRate;
-    d.AudioSampleRate = sampleRate;
-    d.Locked = false;
-    d.ChannelCount = 2L;
-    d.QuantizationBits = 24L;
-    d.BlockAlign = 6;
-    d.AverageBytesPerSecond = 288000L;
-    d.ChannelAssignment = Labels.SMPTEST20672ApplicationOfTheMXFMultichannelAudioFramework;
-    d.SubDescriptors = new SubDescriptorStrongReferenceVector();
-
-    SoundfieldGroupLabelSubDescriptor sg = new SoundfieldGroupLabelSubDescriptor();
+        SoundfieldGroupLabelSubDescriptor sg = new SoundfieldGroupLabelSubDescriptor();
     sg.InstanceID = UUID.fromRandom();
     sg.MCALabelDictionaryID = Labels.SMPTEST20678StandardStereo;
     sg.MCALinkID = UUID.fromRandom();
@@ -111,27 +99,48 @@ class StreamingWriterTest {
     chR.RFC5646SpokenLanguage = "en-us";
     chR.SoundfieldGroupLinkID = sg.MCALinkID;
 
-
+    WAVEPCMDescriptor d = new WAVEPCMDescriptor();
+    d.InstanceID = UUID.fromRandom();
+    d.SampleRate = sampleRate;
+    d.AudioSampleRate = sampleRate;
+    d.Locked = false;
+    d.ChannelCount = 2L;
+    d.QuantizationBits = 24L;
+    d.BlockAlign = 6;
+    d.AverageBytesPerSecond = 288000L;
+    d.ChannelAssignment = Labels.SMPTEST20672ApplicationOfTheMXFMultichannelAudioFramework;
+    d.SubDescriptors = new SubDescriptorStrongReferenceVector();
+    d.SubDescriptors.add(chL);
+    d.SubDescriptors.add(chR);
+    d.SubDescriptors.add(sg);
 
     /* start writing file */
 
     OutputStream os = new FileOutputStream("hello.mxf");
 
+    UL essenceKey = UL.fromURN("urn:smpte:ul:060e2b34.01020101.0d010301.16010200");
+
     StreamingWriter.EssenceInfo ei = new StreamingWriter.EssenceInfo(
-      Labels.AAFAIFFAIFCAudioContainer.asUL(),
-      Labels.MXFGCClipWrappedAES3AudioData.asUL(),
+      essenceKey,
+      Labels.MXFGCClipWrappedBroadcastWaveAudioData.asUL(),
       d,
       EssenceWrapping.CLIP,
       ElementSize.CBE,
-      Fraction.of(48000),
+      editRate,
       null
       );
     StreamingWriter sw = new StreamingWriter(os, ei);
 
-    final int unitCount = 48000 * 1;
-    DataOutputStream dos = new DataOutputStream(sw.nextUnits(unitCount, 4));
-    for (int i = 0; i < unitCount; i++) {
-      dos.writeInt(i);
+    DataOutputStream dos = new DataOutputStream(sw.nextUnits(sampleCount, 6));
+    byte[] samples = new byte[6];
+    for (int i = 0; i < sampleCount; i++) {
+      samples[0] = (sampleCount >> 16) & 0xFF;
+      samples[1] = (byte) ((sampleCount >> 8) & 0xFF);
+      samples[2] = (byte) (sampleCount & 0xFF);
+      samples[3] = samples[0];
+      samples[4] = samples[1];
+      samples[5] = samples[2];
+      dos.write(samples);
     }
     sw.finish();
 

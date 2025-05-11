@@ -55,6 +55,7 @@ public class UTF16StringAdapter {
     var osw = new OutputStreamWriter(os,
         os.getByteOrder() == ByteOrder.BIG_ENDIAN ? StandardCharsets.UTF_16BE : StandardCharsets.UTF_16LE);
     osw.write(s);
+    osw.flush();
   }
 
 }

@@ -54,6 +54,7 @@ public class UTF8StringAdapter {
   public static void toStream(String s, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
     var osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
     osw.write(s);
+    osw.flush();
   }
 
 }
