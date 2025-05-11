@@ -49,6 +49,9 @@ public class IndexEntry {
   public long[] SliceOffset;
   public Fraction[] PosTable;
 
+  public static int getLength(short nsl, short npe) {
+    return 11 + 4 * nsl + 8 * npe;
+  }
 
   public static IndexEntry fromStream(MXFInputStream is, MXFInputContext ctx, short nsl, short npe)  throws IOException {
     var r = new IndexEntry();

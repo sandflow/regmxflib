@@ -60,7 +60,7 @@ public class DeltaEntryArray extends ArrayList<DeltaEntry> {
 
   public static void toStream(DeltaEntryArray v, MXFOutputStream os, MXFOutputContext ctx)  throws IOException {
     os.writeUnsignedInt(v.size());
-    os.writeUnsignedInt(com.sandflow.smpte.mxf.types.Package.ITEM_LENGTH);
+    os.writeUnsignedInt(DeltaEntry.ITEM_LENGTH);
 
     for (int i = 0; i < v.size(); i++) {
       DeltaEntry.toStream(v.get(i), os, ctx);

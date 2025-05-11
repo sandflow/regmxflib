@@ -30,8 +30,10 @@
 
 package com.sandflow.smpte.mxf.types;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import com.sandflow.smpte.klv.MemoryTriplet;
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.mxf.ClassFactory;
@@ -285,7 +287,13 @@ public class IndexTableSegment {
     LocalSetItemAdapter.toSetItem(this.SingleEssenceLocation, SingleEssenceLocation_AUID, com.sandflow.smpte.mxf.adapters.BooleanAdapter::toStream, s, ctx);
     LocalSetItemAdapter.toSetItem(this.SingleIndexLocation, SingleIndexLocation_AUID, com.sandflow.smpte.mxf.adapters.BooleanAdapter::toStream, s, ctx);
     LocalSetItemAdapter.toSetItem(this.ExtStartOffset, ExtStartOffset_AUID, com.sandflow.smpte.mxf.adapters.UInt64Adapter::toStream, s, ctx);
-    LocalSetItemAdapter.toSetItem(this.IndexEntryArray, IndexEntryArray_AUID, com.sandflow.smpte.mxf.types.IndexEntryArray::toStream, s, ctx);
+    if (this.IndexEntryArray != null) {
+      ByteArrayOutputStream ibos = new ByteArrayOutputStream();
+      MXFOutputStream imos = new MXFOutputStream(ibos);
+      com.sandflow.smpte.mxf.types.IndexEntryArray.toStream(this.IndexEntryArray, imos, ctx, this.SliceCount, this.PositionTableCount);
+      ctx.getLocalTag(IndexEntryArray_AUID);
+      s.addItem(new MemoryTriplet(IndexEntryArray_AUID, ibos.toByteArray()));
+    }    
     LocalSetItemAdapter.toSetItem(this.EditUnitByteCount, EditUnitByteCount_AUID, com.sandflow.smpte.mxf.adapters.UInt32Adapter::toStream, s, ctx);
     LocalSetItemAdapter.toSetItem(this.EssenceStreamID, EssenceStreamID_AUID, com.sandflow.smpte.mxf.adapters.UInt32Adapter::toStream, s, ctx);
   }

@@ -58,9 +58,9 @@ public class IndexEntryArray extends ArrayList<IndexEntry> {
     return items;
   }
 
-  public static void toStream(IndexEntryArray v, MXFOutputStream os, MXFOutputContext ctx)  throws IOException {
+  public static void toStream(IndexEntryArray v, MXFOutputStream os, MXFOutputContext ctx, short nsl, short npe)  throws IOException {
     os.writeUnsignedInt(v.size());
-    os.writeUnsignedInt(com.sandflow.smpte.mxf.types.Package.ITEM_LENGTH);
+    os.writeUnsignedInt(com.sandflow.smpte.mxf.types.IndexEntry.getLength(nsl, npe));
 
     for (int i = 0; i < v.size(); i++) {
       IndexEntry.toStream(v.get(i), os, ctx);
