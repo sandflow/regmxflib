@@ -290,7 +290,12 @@ public class IndexTableSegment {
     if (this.IndexEntryArray != null) {
       ByteArrayOutputStream ibos = new ByteArrayOutputStream();
       MXFOutputStream imos = new MXFOutputStream(ibos);
-      com.sandflow.smpte.mxf.types.IndexEntryArray.toStream(this.IndexEntryArray, imos, ctx, this.SliceCount, this.PositionTableCount);
+      com.sandflow.smpte.mxf.types.IndexEntryArray.toStream(
+        this.IndexEntryArray,
+        imos,
+        ctx,
+        this.SliceCount != null ? this.SliceCount : 0,
+        this.PositionTableCount != null ? this.PositionTableCount : 0);
       ctx.getLocalTag(IndexEntryArray_AUID);
       s.addItem(new MemoryTriplet(IndexEntryArray_AUID, ibos.toByteArray()));
     }    

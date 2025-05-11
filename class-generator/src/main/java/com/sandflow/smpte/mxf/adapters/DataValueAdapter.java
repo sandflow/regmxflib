@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Sandflow Consulting, LLC
+ * Copyright (c) 2014, Pierre-Anthony Lemieux (pal@sandflow.com)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,12 +24,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
-* @author Pierre-Anthony Lemieux
-*/
+package com.sandflow.smpte.mxf.adapters;
 
-package com.sandflow.smpte.mxf.types;
-
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
@@ -37,41 +34,20 @@ import com.sandflow.smpte.mxf.MXFInputStream;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.MXFOutputStream;
 
-public class DeltaEntry {
-  public static final int ITEM_LENGTH = 16;
+public class DataValueAdapter {
 
-  public Byte PosTableIndex;
-  public Short Slice;
-  public Long ElementDelta;
-
-
-  public static DeltaEntry fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
-    var r = new DeltaEntry();
-
-    r.PosTableIndex = is.readByte();
-    r.Slice = (short) is.readUnsignedByte();
-    r.ElementDelta = is.readUnsignedInt();
-
-    return r;
+  public static byte[] fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+    ByteArrayOutputStream value = new ByteArrayOutputStream();
+    byte[] buffer = new byte[32];
+    int r;
+    while ((r = is.read(buffer)) != -1) {
+      value.write(buffer, 0, r);
+    }
+    return value.toByteArray();    
   }
 
-  public DeltaEntry() {
-  }
-
-
-
-  public DeltaEntry(Byte posTableIndex, Short slice, Long elementDelta) {
-    PosTableIndex = posTableIndex;
-    Slice = slice;
-    ElementDelta = elementDelta;
-  }
-
-  public static void toStream(DeltaEntry value, MXFOutputStream os, MXFOutputContext ctx)  throws IOException {
-
-    os.writeByte(value.PosTableIndex);
-    os.writeUnsignedByte(value.Slice);
-    os.writeUnsignedInt(value.ElementDelta);
-
+  public static void toStream(byte[] value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+    os.write(value);
   }
 
 }

@@ -299,6 +299,8 @@ public class StreamingWriter {
         e.TemporalOffset = 0;
         e.Flags = (byte) 0x80;
         e.StreamOffset = offset;
+        e.KeyFrameOffset = 0;
+        e.TemporalOffset = 0;
         its.IndexEntryArray.add(e);
       }
       /* its.VBEByteCount = this.vbeBytePositions.get(this.vbeBytePositions.size() - 1);*/
@@ -373,7 +375,7 @@ public class StreamingWriter {
 
     /* do we need to start a new essence partition */
     if (this.nextTPos == 0 ||
-        this.nextTPos % this.essenceInfo.partitionDuration() == 0 ||
+        (this.essenceInfo.partitionDuration() != null && this.nextTPos % this.essenceInfo.partitionDuration() == 0) ||
         this.essenceInfo.wrapping() == EssenceWrapping.CLIP) {
 
       if (this.nextTPos != 0) {

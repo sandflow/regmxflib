@@ -51,6 +51,7 @@ import com.github.jknack.handlebars.Template;
 import com.sandflow.smpte.mxf.adapters.ASCIIStringAdapter;
 import com.sandflow.smpte.mxf.adapters.AUIDAdapter;
 import com.sandflow.smpte.mxf.adapters.BooleanAdapter;
+import com.sandflow.smpte.mxf.adapters.DataValueAdapter;
 import com.sandflow.smpte.mxf.adapters.Int16Adapter;
 import com.sandflow.smpte.mxf.adapters.Int32Adapter;
 import com.sandflow.smpte.mxf.adapters.Int64Adapter;
@@ -577,6 +578,7 @@ public class ClassGenerator {
 
     private static final UL IndexEntryArray_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.04020700.00000000");
     private static final UL DeltaEntryArray_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.04020800.00000000");
+    private static final UL DataValue_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.04100100.00000000");
 
     @Override
     public void visit(VariableArrayTypeDefinition def) throws VisitorException {
@@ -592,6 +594,9 @@ public class ClassGenerator {
       } else if (IndexEntryArray_UL.equalsIgnoreVersion(def.getIdentification())) {
         this.adapterName = "com.sandflow.smpte.mxf.types.IndexEntryArray";
         this.typeName = "com.sandflow.smpte.mxf.types.IndexEntryArray";
+      } else if (DataValue_UL.equalsIgnoreVersion(def.getIdentification())) {
+        this.adapterName = DataValueAdapter.class.getName();
+        this.typeName = "byte[]";
       } else {
         var templateData = new HashMap<String, Object>();
 
