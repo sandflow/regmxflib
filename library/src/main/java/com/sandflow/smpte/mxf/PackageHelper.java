@@ -15,13 +15,13 @@ import com.sandflow.smpte.util.UUID;
 
 public class PackageHelper {
   public static void initSingleTrackPackage(Package p, Fraction editRate, Long duration,
-      UMID sourcePackageID, Long essenceTrackNum) {
+      UMID sourcePackageID, Long essenceTrackNum, Long sourceTrackID) {
     var sc = new SourceClip();
     sc.InstanceID = UUID.fromRandom();
     sc.ComponentLength = duration == null ? -1L : duration;
     sc.ComponentDataDefinition = Labels.SoundEssenceTrack;
     sc.StartPosition = 0L;
-    sc.SourceTrackID = 1L;
+    sc.SourceTrackID = sourceTrackID == null ? 0 : sourceTrackID;
     sc.SourcePackageID = sourcePackageID;
 
     var seq = new Sequence();

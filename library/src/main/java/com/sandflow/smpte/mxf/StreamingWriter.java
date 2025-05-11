@@ -133,12 +133,12 @@ public class StreamingWriter {
                     (this.essenceInfo.essenceKey.getValueOctet(13) << 16) +
                     (this.essenceInfo.essenceKey.getValueOctet(14) << 8) +
                     this.essenceInfo.essenceKey.getValueOctet(15);
-    PackageHelper.initSingleTrackPackage(sp, essence.editRate(), null, UMID.NULL_UMID, trackNum);
+    PackageHelper.initSingleTrackPackage(sp, essence.editRate(), null, UMID.NULL_UMID, trackNum, null);
 
     /* Material Package */
     var mp = new MaterialPackage();
     mp.PackageName = "Material Package";
-    PackageHelper.initSingleTrackPackage(mp, essence.editRate(), null, sp.PackageID, null);
+    PackageHelper.initSingleTrackPackage(mp, essence.editRate(), null, sp.PackageID, null, 1L);
 
     /* TODO: return better error when InstanceID is null */
     /* EssenceDataObject */
