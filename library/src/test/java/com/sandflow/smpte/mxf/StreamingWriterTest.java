@@ -134,9 +134,9 @@ class StreamingWriterTest {
     DataOutputStream dos = new DataOutputStream(sw.nextUnits(sampleCount, 6));
     byte[] samples = new byte[6];
     for (int i = 0; i < sampleCount; i++) {
-      samples[0] = (sampleCount >> 16) & 0xFF;
-      samples[1] = (byte) ((sampleCount >> 8) & 0xFF);
-      samples[2] = (byte) (sampleCount & 0xFF);
+      samples[0] = (byte) ((i >> 16) & 0xFF);
+      samples[1] = (byte) ((i >> 8) & 0xFF);
+      samples[2] = (byte) (i & 0xFF);
       samples[3] = samples[0];
       samples[4] = samples[1];
       samples[5] = samples[2];

@@ -10,7 +10,6 @@ import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.numbers.fraction.Fraction;
-import org.openjdk.nashorn.internal.runtime.Source;
 
 import com.sandflow.smpte.klv.LocalTagRegister;
 import com.sandflow.smpte.klv.Set;
@@ -28,7 +27,6 @@ import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.mxf.types.MaterialPackage;
 import com.sandflow.smpte.mxf.types.PackageStrongReferenceSet;
 import com.sandflow.smpte.mxf.types.Preface;
-import com.sandflow.smpte.mxf.types.SoundDescriptor;
 import com.sandflow.smpte.mxf.types.SourcePackage;
 import com.sandflow.smpte.mxf.types.Version;
 import com.sandflow.smpte.util.AUID;
@@ -87,7 +85,6 @@ public class StreamingWriter {
 
   State state;
   MXFOutputStream essenceStream;
-  MXFOutputStream partitionStream;
   RandomIndexPack rip = new RandomIndexPack();
 
   /**
