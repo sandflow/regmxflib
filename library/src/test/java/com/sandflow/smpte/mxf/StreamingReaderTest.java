@@ -28,9 +28,11 @@ package com.sandflow.smpte.mxf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.Writer;
+import java.net.URISyntaxException;
 
 import org.apache.commons.numbers.fraction.Fraction;
 import org.junit.jupiter.api.Test;
@@ -38,6 +40,12 @@ import org.junit.jupiter.api.Test;
 import com.sandflow.smpte.util.UL;
 
 class StreamingReaderTest {
+
+  @org.junit.jupiter.api.BeforeAll
+  static void makeBuildDirectory() throws URISyntaxException {
+    File dir = new File("target/test-output");
+    dir.mkdirs();
+  }
 
   @Test
   void testGetUnitTrackInfo() throws Exception {
@@ -78,7 +86,7 @@ class StreamingReaderTest {
 
     StreamingReader sr = new StreamingReader(is, null);
 
-    Writer w = new FileWriter("out.json");
+    Writer w = new FileWriter("target/test-output/out.json");
     JSONSerializer.serialize(sr.getPreface(), w);
     w.close();
 

@@ -26,9 +26,11 @@
 package com.sandflow.smpte.mxf;
 
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URISyntaxException;
 import java.util.HexFormat;
 
 import org.apache.commons.numbers.fraction.Fraction;
@@ -58,21 +60,26 @@ import com.sandflow.smpte.util.UUID;
 
 class StreamingWriterTest {
 
+  @org.junit.jupiter.api.BeforeAll
+  static void makeBuildDirectory() throws URISyntaxException {
+    File dir = new File("target/test-output");
+    dir.mkdirs();
+  }
+
   @Test
   void testSmoke() throws Exception {
-    OutputStream os = new FileOutputStream("hello.mxf");
+    OutputStream os = new FileOutputStream("target/test-output/hello.mxf");
     SoundDescriptor descriptor = new SoundDescriptor();
     descriptor.InstanceID = UUID.fromRandom();
     StreamingWriter.EssenceInfo ei = new StreamingWriter.EssenceInfo(
-      Labels.AAFAIFFAIFCAudioContainer.asUL(),
-      Labels.MXFGCClipWrappedAES3AudioData.asUL(),
-      descriptor,
-      EssenceWrapping.CLIP,
-      ElementSize.CBE,
-      Fraction.of(48000),
-      null,
-      null
-      );
+        Labels.AAFAIFFAIFCAudioContainer.asUL(),
+        Labels.MXFGCClipWrappedAES3AudioData.asUL(),
+        descriptor,
+        EssenceWrapping.CLIP,
+        ElementSize.CBE,
+        Fraction.of(48000),
+        null,
+        null);
     StreamingWriter sw = new StreamingWriter(os, ei);
   }
 
@@ -83,7 +90,7 @@ class StreamingWriterTest {
     final Fraction sampleRate = Fraction.of(48000);
     final Fraction editRate = Fraction.of(48000);
 
-        SoundfieldGroupLabelSubDescriptor sg = new SoundfieldGroupLabelSubDescriptor();
+    SoundfieldGroupLabelSubDescriptor sg = new SoundfieldGroupLabelSubDescriptor();
     sg.InstanceID = UUID.fromRandom();
     sg.MCALabelDictionaryID = Labels.SMPTEST20678StandardStereo;
     sg.MCALinkID = UUID.fromRandom();
@@ -132,20 +139,19 @@ class StreamingWriterTest {
 
     /* start writing file */
 
-    OutputStream os = new FileOutputStream("hello.mxf");
+    OutputStream os = new FileOutputStream("target/test-output/hello.mxf");
 
     UL essenceKey = UL.fromURN("urn:smpte:ul:060e2b34.01020101.0d010301.16010200");
 
     StreamingWriter.EssenceInfo ei = new StreamingWriter.EssenceInfo(
-      essenceKey,
-      Labels.MXFGCClipWrappedBroadcastWaveAudioData.asUL(),
-      d,
-      EssenceWrapping.CLIP,
-      ElementSize.CBE,
-      editRate,
-      null,
-      null
-      );
+        essenceKey,
+        Labels.MXFGCClipWrappedBroadcastWaveAudioData.asUL(),
+        d,
+        EssenceWrapping.CLIP,
+        ElementSize.CBE,
+        editRate,
+        null,
+        null);
     StreamingWriter sw = new StreamingWriter(os, ei);
 
     DataOutputStream dos = new DataOutputStream(sw.nextUnits(sampleCount, 6));
@@ -346,24 +352,22 @@ class StreamingWriterTest {
     sd.QuantizationDefault = HexFormat.of().parseHex("20909898a09898a09898a0989898909098");
     sd.J2CLayout = d.PixelLayout;
 
-
     d.SubDescriptors.add(sd);
     /* start writing file */
 
-    OutputStream os = new FileOutputStream("video-test.mxf");
+    OutputStream os = new FileOutputStream("target/test-output/video-test.mxf");
 
     UL essenceKey = UL.fromURN("urn:smpte:ul:060e2b34.01020101.0d010301.16010200");
 
     StreamingWriter.EssenceInfo ei = new StreamingWriter.EssenceInfo(
-      essenceKey,
-      Labels.MXFGCP1FrameWrappedPictureElement.asUL(),
-      d,
-      EssenceWrapping.FRAME,
-      ElementSize.VBE,
-      editRate,
-      null,
-      null
-      );
+        essenceKey,
+        Labels.MXFGCP1FrameWrappedPictureElement.asUL(),
+        d,
+        EssenceWrapping.FRAME,
+        ElementSize.VBE,
+        editRate,
+        null,
+        null);
     StreamingWriter sw = new StreamingWriter(os, ei);
 
     for (int i = 0; i < frameCount; i++) {
@@ -376,7 +380,7 @@ class StreamingWriterTest {
 
   }
 
-  /* 
+  /*
   <r0:IABEssenceDescriptor>
     <r1:InstanceID>urn:uuid:8b34fae4-33d1-430f-9b78-8b58c2b698cd</r1:InstanceID>
     <r1:SubDescriptors>
@@ -399,7 +403,7 @@ class StreamingWriterTest {
     <r1:QuantizationBits>24</r1:QuantizationBits>
     <r1:SoundCompression>urn:smpte:ul:060e2b34.04010105.0e090604.00000000<!--ImmersiveAudioCoding--></r1:SoundCompression>
   </r0:IABEssenceDescriptor>
-  */
+   */
 
   @Test
   void testClipVBE() throws Exception {
@@ -438,18 +442,17 @@ class StreamingWriterTest {
     /* start writing file */
 
     StreamingWriter.EssenceInfo ei = new StreamingWriter.EssenceInfo(
-      EssenceKeys.IMF_IABEssenceClipWrappedElement.asUL(),
-      Labels.IMF_IABEssenceClipWrappedContainer.asUL(),
-      d,
-      EssenceWrapping.CLIP,
-      ElementSize.VBE,
-      editRate,
-      null,
-      java.util.Set.of(Labels.IMF_IABEssenceClipWrappedContainer)
-      );
+        EssenceKeys.IMF_IABEssenceClipWrappedElement.asUL(),
+        Labels.IMF_IABEssenceClipWrappedContainer.asUL(),
+        d,
+        EssenceWrapping.CLIP,
+        ElementSize.VBE,
+        editRate,
+        null,
+        java.util.Set.of(Labels.IMF_IABEssenceClipWrappedContainer));
 
     /* Initialize the streaming writer */
-    OutputStream os = new FileOutputStream("iab-test.mxf");
+    OutputStream os = new FileOutputStream("target/test-output/iab-test.mxf");
     StreamingWriter sw = new StreamingWriter(os, ei);
 
     /* write @frameCount copies of the same IA Frame */
