@@ -61,7 +61,8 @@ public class StreamingWriter {
       EssenceWrapping wrapping,
       ElementSize elementSize,
       Fraction editRate,
-      Integer partitionDuration) {
+      Integer partitionDuration,
+      java.util.Set<AUID> conformsToSpecifications) {
   }
 
   private final EssenceInfo essenceInfo;
@@ -173,6 +174,10 @@ public class StreamingWriter {
     this.preface.OperationalPattern = Labels.MXFOP1aSingleItemSinglePackageUniTrackStreamInternal;
     this.preface.IdentificationList = idList;
     this.preface.ContentStorageObject = cs;
+    if (this.essenceInfo.conformsToSpecifications != null) {
+      this.preface.ConformsToSpecifications = new AUIDSet();
+      this.preface.ConformsToSpecifications.addAll(this.essenceInfo.conformsToSpecifications);
+    }
 
     /* local tag register */
 
@@ -248,7 +253,7 @@ public class StreamingWriter {
     pp.setIndexSID(indexSID);
     pp.setIndexByteCount(indexSize);
     pp.setHeaderByteCount(headerSize);
-    pp.setOperationalPattern(Labels.MXFOPAtom1Track1SourceClip.asUL());
+    pp.setOperationalPattern(Labels.MXFOP1aSingleItemSinglePackageUniTrackStreamInternal.asUL());
     pp.setEssenceContainers(Arrays.asList(new UL[] { this.essenceInfo.essenceContainerKey }));
     pp.setThisPartition(this.fos.written());
     pp.setBodyOffset(this.essenceStream.written());

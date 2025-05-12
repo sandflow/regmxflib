@@ -27,6 +27,7 @@ package com.sandflow.smpte.mxf;
 
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HexFormat;
 
@@ -36,6 +37,8 @@ import org.junit.jupiter.api.Test;
 import com.sandflow.smpte.mxf.StreamingWriter.ElementSize;
 import com.sandflow.smpte.mxf.StreamingWriter.EssenceWrapping;
 import com.sandflow.smpte.mxf.types.AudioChannelLabelSubDescriptor;
+import com.sandflow.smpte.mxf.types.IABEssenceDescriptor;
+import com.sandflow.smpte.mxf.types.IABSoundfieldLabelSubDescriptor;
 import com.sandflow.smpte.mxf.types.Int32Array;
 import com.sandflow.smpte.mxf.types.J2KComponentSizing;
 import com.sandflow.smpte.mxf.types.J2KComponentSizingArray;
@@ -66,6 +69,7 @@ class StreamingWriterTest {
       EssenceWrapping.CLIP,
       ElementSize.CBE,
       Fraction.of(48000),
+      null,
       null
       );
     StreamingWriter sw = new StreamingWriter(os, ei);
@@ -138,6 +142,7 @@ class StreamingWriterTest {
       EssenceWrapping.CLIP,
       ElementSize.CBE,
       editRate,
+      null,
       null
       );
     StreamingWriter sw = new StreamingWriter(os, ei);
@@ -355,6 +360,7 @@ class StreamingWriterTest {
       EssenceWrapping.FRAME,
       ElementSize.VBE,
       editRate,
+      null,
       null
       );
     StreamingWriter sw = new StreamingWriter(os, ei);
@@ -364,6 +370,91 @@ class StreamingWriterTest {
       for (int j = 0; j < frameSize; j++) {
         frameOS.write(j);
       }
+    }
+    sw.finish();
+
+  }
+
+  /* 
+  <r0:IABEssenceDescriptor>
+    <r1:InstanceID>urn:uuid:8b34fae4-33d1-430f-9b78-8b58c2b698cd</r1:InstanceID>
+    <r1:SubDescriptors>
+      <r0:IABSoundfieldLabelSubDescriptor>
+        <r1:InstanceID>urn:uuid:359dea8e-868c-4768-a750-a83620fd165e</r1:InstanceID>
+        <r1:MCALabelDictionaryID>urn:smpte:ul:060e2b34.0401010d.03020221.00000000<!--IABSoundfield--></r1:MCALabelDictionaryID>
+        <r1:MCALinkID>urn:uuid:6370bd8b-49cd-4e72-a151-cbbb90039d04</r1:MCALinkID>
+        <r1:MCATagSymbol>IAB</r1:MCATagSymbol>
+        <r1:MCATagName>IAB</r1:MCATagName>
+        <r1:RFC5646SpokenLanguage>en</r1:RFC5646SpokenLanguage>
+      </r0:IABSoundfieldLabelSubDescriptor>
+    </r1:SubDescriptors>
+    <r1:LinkedTrackID>2</r1:LinkedTrackID>
+    <r1:SampleRate>24/1</r1:SampleRate>
+    <r1:EssenceLength>2</r1:EssenceLength>
+    <r1:ContainerFormat>urn:smpte:ul:060e2b34.0401010d.0d010301.021d0101<!--IMF_IABEssenceClipWrappedContainer--></r1:ContainerFormat>
+    <r1:AudioSampleRate>48000/1</r1:AudioSampleRate>
+    <r1:Locked>False</r1:Locked>
+    <r1:ChannelCount>0</r1:ChannelCount>
+    <r1:QuantizationBits>24</r1:QuantizationBits>
+    <r1:SoundCompression>urn:smpte:ul:060e2b34.04010105.0e090604.00000000<!--ImmersiveAudioCoding--></r1:SoundCompression>
+  </r0:IABEssenceDescriptor>
+  */
+
+  @Test
+  void testClipVBE() throws Exception {
+
+    final int frameCount = 3;
+    final Fraction sampleRate = Fraction.of(48000);
+    final Fraction editRate = Fraction.of(24);
+
+    /* read IA frame */
+
+    InputStream is = ClassLoader.getSystemResourceAsStream("ia-frames/0.iab");
+    byte[] iaFrame = is.readAllBytes();
+    is.close();
+
+    /* create descriptors */
+
+    IABSoundfieldLabelSubDescriptor sd = new IABSoundfieldLabelSubDescriptor();
+    sd.InstanceID = UUID.fromRandom();
+    sd.MCALabelDictionaryID = Labels.IABSoundfield;
+    sd.MCALinkID = UUID.fromRandom();
+    sd.MCATagSymbol = "IAB";
+    sd.MCATagName = "IAB";
+    sd.RFC5646SpokenLanguage = "en-us";
+
+    IABEssenceDescriptor d = new IABEssenceDescriptor();
+    d.InstanceID = UUID.fromRandom();
+    d.SampleRate = editRate;
+    d.AudioSampleRate = sampleRate;
+    d.Locked = false;
+    d.ChannelCount = 0L;
+    d.QuantizationBits = 24L;
+    d.SoundCompression = Labels.ImmersiveAudioCoding;
+    d.SubDescriptors = new SubDescriptorStrongReferenceVector();
+    d.SubDescriptors.add(sd);
+
+    /* start writing file */
+
+    OutputStream os = new FileOutputStream("iab-test.mxf");
+
+    UL essenceKey = UL.fromURN("urn:smpte:ul:060e2b34.01020101.0d010301.16010200");
+
+    StreamingWriter.EssenceInfo ei = new StreamingWriter.EssenceInfo(
+      essenceKey,
+      Labels.IMF_IABEssenceClipWrappedContainer.asUL(),
+      d,
+      EssenceWrapping.CLIP,
+      ElementSize.VBE,
+      editRate,
+      null,
+      java.util.Set.of(Labels.IMF_IABEssenceClipWrappedContainer)
+      );
+    StreamingWriter sw = new StreamingWriter(os, ei);
+
+    for (int i = 0; i < frameCount; i++) {
+      OutputStream frameOS = sw.nextUnits(1, iaFrame.length);
+      frameOS.write(iaFrame);
     }
     sw.finish();
 
