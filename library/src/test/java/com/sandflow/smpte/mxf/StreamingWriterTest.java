@@ -62,6 +62,7 @@ class StreamingWriterTest {
   void testSmoke() throws Exception {
     OutputStream os = new FileOutputStream("hello.mxf");
     SoundDescriptor descriptor = new SoundDescriptor();
+    descriptor.InstanceID = UUID.fromRandom();
     StreamingWriter.EssenceInfo ei = new StreamingWriter.EssenceInfo(
       Labels.AAFAIFFAIFCAudioContainer.asUL(),
       Labels.MXFGCClipWrappedAES3AudioData.asUL(),
@@ -435,10 +436,9 @@ class StreamingWriterTest {
     d.SubDescriptors.add(sd);
 
     /* start writing file */
-    UL essenceKey = UL.fromURN("urn:smpte:ul:060E2B34.01020101.0D010301.16010D00");
 
     StreamingWriter.EssenceInfo ei = new StreamingWriter.EssenceInfo(
-      essenceKey,
+      EssenceKeys.IMF_IABEssenceClipWrappedElement.asUL(),
       Labels.IMF_IABEssenceClipWrappedContainer.asUL(),
       d,
       EssenceWrapping.CLIP,

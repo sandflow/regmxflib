@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Pierre-Anthony Lemieux <pal@sandflow.com>
+ * Copyright (c) 2016, Pierre-Anthony Lemieux (pal@sandflow.com)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,23 +23,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.sandflow.smpte.mxf;
 
-import java.io.File;
+/**
+ * Models the XML schema used by the catsup release of the SMPTE Metadata Registers.
+ */
+@XmlSchema(elementFormDefault=XmlNsForm.QUALIFIED)  
+package com.sandflow.smpte.register.st2088_2019;
 
-import org.junit.jupiter.api.Test;
 
-class ClassGeneratorTest {
+import jakarta.xml.bind.annotation.XmlNsForm;
+import jakarta.xml.bind.annotation.XmlSchema;
 
-  @Test
-  void testGenerate() throws Exception {
-
-    File dir = new File(ClassLoader.getSystemResource("regxml-dicts").toURI());
-    File labelsFile = new File(ClassLoader.getSystemResource("registers/Labels.xml").toURI());
-    File essenceKeysFile = new File(ClassLoader.getSystemResource("registers/Essence.xml").toURI());
-
-    ClassGenerator.main(new String[] { dir.getAbsolutePath(), "target/test-generated", labelsFile.getAbsolutePath(),
-        essenceKeysFile.getAbsolutePath() });
-  }
-
-}

@@ -117,6 +117,7 @@
                     <argument>${project.basedir}/src/main/resources/regxml-dicts</argument>
                     <argument>${project.build.directory}/generated-sources</argument>
                     <argument>${project.basedir}/src/main/resources/registers/Labels.xml</argument>
+                    <argument>${project.basedir}/src/main/resources/registers/Essence.xml</argument>
                     </arguments>
                 </configuration>
                 </execution>

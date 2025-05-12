@@ -72,6 +72,7 @@ import com.sandflow.smpte.mxf.adapters.UTF8StringAdapter;
 import com.sandflow.smpte.mxf.adapters.UUIDAdapter;
 import com.sandflow.smpte.mxf.adapters.VersionAdapter;
 import com.sandflow.smpte.mxf.types.Version;
+import com.sandflow.smpte.register.EssenceKeyRegister;
 import com.sandflow.smpte.register.LabelsRegister;
 import com.sandflow.smpte.register.LabelsRegister.Entry.Kind;
 import com.sandflow.smpte.register.exceptions.DuplicateEntryException;
@@ -119,6 +120,7 @@ public class ClassGenerator {
   static final Template fixedArrayTemplate;
   static final Template labelsTemplate;
   static final Template localTagsTemplate;
+  static final Template essenceKeysTemplate;
 
   static {
     try {
@@ -130,6 +132,7 @@ public class ClassGenerator {
       variableArrayTemplate = handlebars.compile("hbs/VariableArray.java");
       labelsTemplate = handlebars.compile("hbs/Labels.java");
       localTagsTemplate = handlebars.compile("hbs/StaticLocalTagsInitializer.java");
+      essenceKeysTemplate = handlebars.compile("hbs/EssenceKeys.java");
     } catch (Exception e) {
       throw new RuntimeException("Failed to load template", e);
     }
@@ -693,7 +696,7 @@ public class ClassGenerator {
     return props;
   }
 
-  public static void generate(MetaDictionaryCollection mds, LabelsRegister lr, File generatedSourcesDir)
+  public static void generate(MetaDictionaryCollection mds, LabelsRegister lr, EssenceKeyRegister ekr, File generatedSourcesDir)
       throws IOException, URISyntaxException, VisitorException {
 
     final ArrayList<PropertyDefinition> propList = new ArrayList<PropertyDefinition>();
@@ -733,6 +736,13 @@ public class ClassGenerator {
         "com.sandflow.smpte.mxf",
         "Labels",
         lr.getEntries().stream().filter(e -> e.getKind() == Kind.LEAF).toArray());
+
+    /* generate EssenceKeys */
+    g.generateSource(
+        essenceKeysTemplate,
+        "com.sandflow.smpte.mxf",
+        "EssenceKeys",
+        ekr.getEntries().stream().filter(e -> e.getKind() == EssenceKeyRegister.Entry.Kind.LEAF).toArray());
   }
 
   private void generateSource(Template template, String packageName, String symbol, Object data) {
@@ -785,14 +795,20 @@ public class ClassGenerator {
       deleteFile(generatedClassDir);
     }
 
-    /* labels register */
+    /* Labels register */
 
     final FileReader labelreader = new FileReader(args[2]);
     final LabelsRegister lr = LabelsRegister.fromXML(labelreader);
     labelreader.close();
 
+    /* Essence Keys register */
+
+    final FileReader ekrreader = new FileReader(args[3]);
+    final EssenceKeyRegister ekr = EssenceKeyRegister.fromXML(ekrreader);
+    ekrreader.close();
+
     /* generate the source files */
 
-    ClassGenerator.generate(mds, lr, generatedClassDir);
+    ClassGenerator.generate(mds, lr, ekr, generatedClassDir);
   }
 }

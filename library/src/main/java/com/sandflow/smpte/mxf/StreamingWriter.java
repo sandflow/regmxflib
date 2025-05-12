@@ -38,6 +38,8 @@ public class StreamingWriter {
 
   private static final long BODY_SID = 1L;
   private static final long INDEX_SID = 1L;
+  private static final int elementCount = 1;
+  private static final int elementId = 1;
 
   public enum EssenceWrapping {
     CLIP, /* clip-wrapped essence */
@@ -71,37 +73,42 @@ public class StreamingWriter {
   private final LocalTagRegister reg;
 
   /**
+   * Essence key for a single item essence element
+   */
+  private final UL elementOneKey;
+
+  /**
    * temporal position (in Edit Units) of the current unit
    */
-  long tPos = 0;
+  private long tPos = 0;
   /**
    * temporal position (in Edit Units) of the next unit
    */
-  long nextTPos = 0;
+  private long nextTPos = 0;
 
   /**
    * size (in bytes) of CBE units (only valid for clip-wrapped CBE essence)
    */
-  long cbeSize;
+  private long cbeSize;
 
-  State state;
-  MXFOutputStream essenceStream;
-  RandomIndexPack rip = new RandomIndexPack();
+  private State state;
+  private MXFOutputStream essenceStream;
+  private RandomIndexPack rip = new RandomIndexPack();
 
   /**
    * size in bytes of the VBE units within the current partition
    */
-  ArrayList<Long> vbeBytePositions;
+  private ArrayList<Long> vbeBytePositions;
 
   /**
    * current partition
    */
-  PartitionPack curPartition;
+  private PartitionPack curPartition;
 
   /**
    * temporal position (in Edit Units) of the first unit in this partition
    */
-  long indexStartPosition;
+  private long indexStartPosition;
 
 
   StreamingWriter(OutputStream os, EssenceInfo essence) throws IOException, KLVException {
@@ -111,6 +118,8 @@ public class StreamingWriter {
     this.essenceStream = new MXFOutputStream(fos);
     /* TODO: check for null */
     this.essenceInfo = essence;
+
+    this.elementOneKey = MXFFiles.makeEssenceElementKey(this.essenceInfo.essenceKey, (byte) 1, (byte) 0);
 
     if (this.essenceInfo.wrapping() == EssenceWrapping.FRAME && this.essenceInfo.elementSize() == ElementSize.CBE) {
       throw new RuntimeException("Frame wrapping must use VBE");
@@ -127,10 +136,7 @@ public class StreamingWriter {
     SourcePackage sp = new SourcePackage();
     sp.PackageName = "Top-level File Package";
     sp.EssenceDescription = desc;
-    long trackNum = (this.essenceInfo.essenceKey.getValueOctet(12) << 24) +
-                    (this.essenceInfo.essenceKey.getValueOctet(13) << 16) +
-                    (this.essenceInfo.essenceKey.getValueOctet(14) << 8) +
-                    this.essenceInfo.essenceKey.getValueOctet(15);
+    long trackNum = MXFFiles.getTrackNumber(this.elementOneKey);
     PackageHelper.initSingleTrackPackage(sp, essence.editRate(), null, UMID.NULL_UMID, trackNum, null);
 
     /* Material Package */
@@ -324,7 +330,7 @@ public class StreamingWriter {
 
       @Override
       public int getLocalTag(AUID auid) {
-        return (int) reg.getOrMakeLocalTag(auid);
+        return (int) reg.getLocalTag(auid);
       }
 
       @Override
@@ -392,7 +398,7 @@ public class StreamingWriter {
 
       /* start the essence element if clip-wrapping */
       if (this.essenceInfo.wrapping() == EssenceWrapping.CLIP) {
-        this.essenceStream.writeUL(this.essenceInfo.essenceKey);
+        this.essenceStream.writeUL(this.elementOneKey);
         this.essenceStream.writeBERLength(unitSize * unitCount);
       }
     }
@@ -404,7 +410,7 @@ public class StreamingWriter {
 
     /* start the essence element if frame-wrapping */
     if (this.essenceInfo.wrapping() == EssenceWrapping.FRAME) {
-      this.essenceStream.writeUL(this.essenceInfo.essenceKey);
+      this.essenceStream.writeUL(this.elementOneKey);
       this.essenceStream.writeBERLength(unitSize * unitCount);
     }
 

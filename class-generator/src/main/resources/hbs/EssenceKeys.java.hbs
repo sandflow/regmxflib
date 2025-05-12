@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Pierre-Anthony Lemieux <pal@sandflow.com>
+ * Copyright (c) Sandflow Consulting, LLC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,23 +23,20 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/**
+* @author Pierre-Anthony Lemieux
+*/
+
 package com.sandflow.smpte.mxf;
 
-import java.io.File;
+import com.sandflow.smpte.util.AUID;
 
-import org.junit.jupiter.api.Test;
-
-class ClassGeneratorTest {
-
-  @Test
-  void testGenerate() throws Exception {
-
-    File dir = new File(ClassLoader.getSystemResource("regxml-dicts").toURI());
-    File labelsFile = new File(ClassLoader.getSystemResource("registers/Labels.xml").toURI());
-    File essenceKeysFile = new File(ClassLoader.getSystemResource("registers/Essence.xml").toURI());
-
-    ClassGenerator.main(new String[] { dir.getAbsolutePath(), "target/test-generated", labelsFile.getAbsolutePath(),
-        essenceKeysFile.getAbsolutePath() });
-  }
-
+public class EssenceKeys {
+{{#.}}
+  /**
+   * {{getDefinition}}
+   */
+  public static final AUID {{getSymbol}} = AUID.fromURN("{{getUL}}");
+{{/.}}
 }

@@ -25,14 +25,10 @@
  */
 package com.sandflow.smpte.mxf;
 
-import com.sandflow.smpte.klv.Group;
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.util.AUID;
-import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UUID;
-import java.util.Collection;
-import java.util.HashMap;
 
 /**
  * Represents a MXF Set (see SMPTE ST 377-1)
