@@ -446,6 +446,8 @@ public class StreamingWriter {
     /* write the RIP */
     this.rip.toStream(fos);
 
+    fos.flush();
+
     this.state = State.DONE;
   }
 

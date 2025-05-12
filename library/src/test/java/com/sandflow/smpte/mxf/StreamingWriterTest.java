@@ -435,10 +435,7 @@ class StreamingWriterTest {
     d.SubDescriptors.add(sd);
 
     /* start writing file */
-
-    OutputStream os = new FileOutputStream("iab-test.mxf");
-
-    UL essenceKey = UL.fromURN("urn:smpte:ul:060e2b34.01020101.0d010301.16010200");
+    UL essenceKey = UL.fromURN("urn:smpte:ul:060E2B34.01020101.0D010301.16010D00");
 
     StreamingWriter.EssenceInfo ei = new StreamingWriter.EssenceInfo(
       essenceKey,
@@ -450,14 +447,20 @@ class StreamingWriterTest {
       null,
       java.util.Set.of(Labels.IMF_IABEssenceClipWrappedContainer)
       );
+
+    /* Initialize the streaming writer */
+    OutputStream os = new FileOutputStream("iab-test.mxf");
     StreamingWriter sw = new StreamingWriter(os, ei);
 
+    /* write @frameCount copies of the same IA Frame */
     for (int i = 0; i < frameCount; i++) {
       OutputStream frameOS = sw.nextUnits(1, iaFrame.length);
       frameOS.write(iaFrame);
     }
-    sw.finish();
 
+    /* complete the file */
+    sw.finish();
+    os.close();
   }
 
 }
