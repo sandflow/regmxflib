@@ -78,13 +78,19 @@ public class StreamingWriter {
   private final UL elementOneKey;
 
   /**
-   * temporal position (in Edit Units) of the current unit
+   * Temporal position (in Edit Units) of the current unit
    */
   private long tPos = 0;
+
   /**
-   * temporal position (in Edit Units) of the next unit
+   * Temporal position (in Edit Units) of the next unit
    */
   private long nextTPos = 0;
+
+  /**
+   * Expected position (in bytes) of the next unit in the Essence Container
+   */
+  private long nextBPos = 0;
 
   /**
    * size (in bytes) of CBE units (only valid for clip-wrapped CBE essence)
@@ -384,7 +390,13 @@ public class StreamingWriter {
       throw new RuntimeException("Only one Edit Unit can be written at a time");
     }
 
+    /* check if the previous unit landed where it was expected */
+    if (this.nextTPos != 0 && this.essenceStream.written() != this.nextBPos) {
+      throw new RuntimeException("Number of bytes written does not match the size of the unit.");
+    }
+
     /* do we need to start a new essence partition */
+    /* TODO: this should allow the partition to go slightly beyond its requested duration */
     if (this.nextTPos == 0 ||
         (this.essenceInfo.partitionDuration() != null && this.nextTPos % this.essenceInfo.partitionDuration() == 0) ||
         this.essenceInfo.wrapping() == EssenceWrapping.CLIP) {
@@ -414,6 +426,10 @@ public class StreamingWriter {
       this.essenceStream.writeBERLength(unitSize * unitCount);
     }
 
+    /* update the expected position of the next Unit */
+    this.nextBPos = this.essenceStream.written() + unitSize * unitCount;
+
+    /* update the temporal positions */
     this.tPos = this.nextTPos;
     this.nextTPos += unitCount;
 
