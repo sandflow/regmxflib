@@ -37,12 +37,9 @@ import java.net.URISyntaxException;
 import org.apache.commons.numbers.fraction.Fraction;
 import org.junit.jupiter.api.Test;
 
-import com.sandflow.smpte.util.UL;
-import com.sandflow.smpte.mxf.types.Package;
-import com.sandflow.smpte.mxf.types.SoundDescriptor;
-import com.sandflow.smpte.mxf.types.SourcePackage;
-import com.sandflow.smpte.mxf.types.WAVEDescriptor;
+import com.sandflow.smpte.mxf.types.RGBADescriptor;
 import com.sandflow.smpte.mxf.types.WAVEPCMDescriptor;
+import com.sandflow.smpte.util.UL;
 
 class StreamingReaderTest {
 
@@ -52,29 +49,19 @@ class StreamingReaderTest {
     dir.mkdirs();
   }
 
-  @Test
-  void testGetUnitTrackInfo() throws Exception {
-    InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/audio.mxf");
-    assertNotNull(is);
-
-    StreamingReader sr = new StreamingReader(is, null);
-
-    sr.nextUnit();
-
-    assertEquals(288000, sr.getUnitPayloadLength());
-
-    assert (UL.fromURN("urn:smpte:ul:060e2b34.04010101.0d010301.02060200")
-        .equalsIgnoreVersion(sr.getUnitTrackInfo().descriptor().ContainerFormat));
-  }
 
   @Test
-  void testNextUnit() throws Exception {
+  void testVBE() throws Exception {
     InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/video.mxf");
     assertNotNull(is);
 
     StreamingReader sr = new StreamingReader(is, null);
 
+    assertEquals(1, sr.getTrackCount());
     Fraction frameTime = sr.getTrack(0).descriptor().SampleRate.reciprocal();
+
+    RGBADescriptor d = (RGBADescriptor) sr.getTrack(0).descriptor();
+    assertEquals(640L, d.StoredWidth);
 
     int i = 0;
     while (sr.nextUnit()) {
@@ -90,7 +77,8 @@ class StreamingReaderTest {
     InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/audio.mxf");
 
     StreamingReader sr = new StreamingReader(is, null);
-    
+    assertEquals(1, sr.getTrackCount());
+
     int i = 0;
     while (sr.nextUnit()) {
       WAVEPCMDescriptor d = (WAVEPCMDescriptor) sr.getUnitTrackInfo().descriptor();
