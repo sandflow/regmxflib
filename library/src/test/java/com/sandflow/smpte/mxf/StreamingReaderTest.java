@@ -38,6 +38,11 @@ import org.apache.commons.numbers.fraction.Fraction;
 import org.junit.jupiter.api.Test;
 
 import com.sandflow.smpte.util.UL;
+import com.sandflow.smpte.mxf.types.Package;
+import com.sandflow.smpte.mxf.types.SoundDescriptor;
+import com.sandflow.smpte.mxf.types.SourcePackage;
+import com.sandflow.smpte.mxf.types.WAVEDescriptor;
+import com.sandflow.smpte.mxf.types.WAVEPCMDescriptor;
 
 class StreamingReaderTest {
 
@@ -78,6 +83,24 @@ class StreamingReaderTest {
     }
 
     assertEquals(24, i);
+  }
+
+  @Test
+  void testCBE() throws Exception {
+    InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/audio.mxf");
+
+    StreamingReader sr = new StreamingReader(is, null);
+    
+    int i = 0;
+    while (sr.nextUnit()) {
+      WAVEPCMDescriptor d = (WAVEPCMDescriptor) sr.getUnitTrackInfo().descriptor();
+      assertEquals(d.AverageBytesPerSecond, 288000);
+      i++;
+      assertEquals(288000, sr.getUnitPayloadLength());
+    }
+
+    assertEquals(1, i);
+
   }
 
   @Test

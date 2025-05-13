@@ -309,10 +309,7 @@ public class StreamingReader {
 
         /* we have reached an essence element */
         UL essenceKey = auid.asUL();
-        long trackNum = (essenceKey.getValueOctet(12) << 24) +
-            (essenceKey.getValueOctet(13) << 16) +
-            (essenceKey.getValueOctet(14) << 8) +
-            essenceKey.getValueOctet(15);
+        long trackNum = MXFFiles.getTrackNumber(essenceKey);
 
         /* find track info */
         this.currentTrackInfo = null;
