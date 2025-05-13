@@ -153,7 +153,8 @@ public class MXFOutputStream extends KLVOutputStream {
 
   public void writeTriplet(Triplet triplet) throws IOException {
     writeAUID(triplet.getKey());
-    writeBERLength(triplet.getLength());
+    /* TODO: super ugly for compatibility with ASDCPLib */
+    writeBER4Length(triplet.getLength());
     write(triplet.getValue());
   }
 

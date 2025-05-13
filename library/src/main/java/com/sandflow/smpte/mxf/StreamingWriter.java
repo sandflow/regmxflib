@@ -38,30 +38,38 @@ public class StreamingWriter {
 
   private static final long BODY_SID = 1L;
   private static final long INDEX_SID = 1L;
-  private static final int elementCount = 1;
-  private static final int elementId = 1;
+  private static final byte elementCount = 1;
+  private static final byte elementId = 1;
 
-  public enum EssenceWrapping {
+  private enum UnitWrapping {
     CLIP, /* clip-wrapped essence */
     FRAME, /* frame-wrapped essence */
   }
 
-  public enum ElementSize {
+  private enum UnitSizing {
     CBE, /* constant */
     VBE, /* variable */
   }
 
   private enum State {
-    RUNNING,
+    START,
+    CONTAINER,
     DONE
   }
+
+  UnitWrapping unitWrapping;
+  UnitSizing unitSizing;
+
+  /**
+   * size (in bytes) of CBE units (only valid for clip-wrapped CBE essence)
+   */
+  private long cbeUnitSize;
+
 
   public record EssenceInfo(
       UL essenceKey,
       UL essenceContainerKey,
       FileDescriptor descriptor,
-      EssenceWrapping wrapping,
-      ElementSize elementSize,
       Fraction editRate,
       Integer partitionDuration,
       java.util.Set<AUID> conformsToSpecifications) {
@@ -75,7 +83,7 @@ public class StreamingWriter {
   /**
    * Essence key for a single item essence element
    */
-  private final UL elementOneKey;
+  private final UL elementKey;
 
   /**
    * Temporal position (in Edit Units) of the current unit
@@ -92,10 +100,6 @@ public class StreamingWriter {
    */
   private long nextBPos = 0;
 
-  /**
-   * size (in bytes) of CBE units (only valid for clip-wrapped CBE essence)
-   */
-  private long cbeSize;
 
   private State state;
   private MXFOutputStream essenceStream;
@@ -116,7 +120,6 @@ public class StreamingWriter {
    */
   private long indexStartPosition;
 
-
   StreamingWriter(OutputStream os, EssenceInfo essence) throws IOException, KLVException {
     /* TOOD: check for null */
     this.fos = new MXFOutputStream(os);
@@ -125,11 +128,7 @@ public class StreamingWriter {
     /* TODO: check for null */
     this.essenceInfo = essence;
 
-    this.elementOneKey = MXFFiles.makeEssenceElementKey(this.essenceInfo.essenceKey, (byte) 1, (byte) 0);
-
-    if (this.essenceInfo.wrapping() == EssenceWrapping.FRAME && this.essenceInfo.elementSize() == ElementSize.CBE) {
-      throw new RuntimeException("Frame wrapping must use VBE");
-    }
+    this.elementKey = MXFFiles.makeEssenceElementKey(this.essenceInfo.essenceKey, elementCount, elementId);
 
     /* Essence Descriptor */
     /* TODO: need to allow cloning */
@@ -142,7 +141,7 @@ public class StreamingWriter {
     SourcePackage sp = new SourcePackage();
     sp.PackageName = "Top-level File Package";
     sp.EssenceDescription = desc;
-    long trackNum = MXFFiles.getTrackNumber(this.elementOneKey);
+    long trackNum = MXFFiles.getTrackNumber(this.elementKey);
     PackageHelper.initSingleTrackPackage(sp, essence.editRate(), null, UMID.NULL_UMID, trackNum, null);
 
     /* Material Package */
@@ -204,7 +203,7 @@ public class StreamingWriter {
 
     this.fos.write(headerbytes);
 
-    this.state = State.RUNNING;
+    this.state = State.START;
     /* TODO: need to add 8K fill per st 2067-5 */
     /* TODO: can clip-wrapped essence be partitioned */
   }
@@ -259,7 +258,8 @@ public class StreamingWriter {
 
   /* TODO: warn if clip wrapping and partition duration is not null */
 
-  private void startPartition(long bodySID, long indexSID, long headerSize, long indexSize, PartitionPack.Kind kind,  PartitionPack.Status status) throws IOException, KLVException {
+  private void startPartition(long bodySID, long indexSID, long headerSize, long indexSize, PartitionPack.Kind kind,
+      PartitionPack.Status status) throws IOException, KLVException {
     PartitionPack pp = new PartitionPack();
     pp.setBodySID(bodySID);
     pp.setIndexSID(indexSID);
@@ -279,7 +279,6 @@ public class StreamingWriter {
     this.curPartition = pp;
   }
 
-
   /*
    * TODO: clip wrapped essence containers can be partitioned, but probably should
    * be tested
@@ -290,7 +289,7 @@ public class StreamingWriter {
 
     /* initialize the index table */
     this.indexStartPosition = this.nextTPos;
-    if (this.essenceInfo.elementSize() == ElementSize.VBE) {
+    if (this.unitSizing == UnitSizing.VBE) {
       this.vbeBytePositions = new ArrayList<>();
     } else {
       this.vbeBytePositions = null;
@@ -305,13 +304,13 @@ public class StreamingWriter {
     its.IndexEditRate = this.essenceInfo.editRate();
     its.IndexStartPosition = this.indexStartPosition;
     its.IndexDuration = this.nextTPos - its.IndexStartPosition;
-    its.EditUnitByteCount = this.essenceInfo.elementSize() == ElementSize.CBE ? this.cbeSize : 0L;
     its.IndexStreamID = INDEX_SID;
     its.EssenceStreamID = BODY_SID;
 
-    if (this.essenceInfo.elementSize() == ElementSize.VBE) {
+    if (this.unitSizing == UnitSizing.VBE) {
+      its.EditUnitByteCount = 0L;
       its.IndexEntryArray = new IndexEntryArray();
-      for(var offset: this.vbeBytePositions) {
+      for (var offset : this.vbeBytePositions) {
         var e = new IndexEntry();
         e.TemporalOffset = 0;
         e.Flags = (byte) 0x80;
@@ -320,12 +319,18 @@ public class StreamingWriter {
         e.TemporalOffset = 0;
         its.IndexEntryArray.add(e);
       }
-      /* its.VBEByteCount = this.vbeBytePositions.get(this.vbeBytePositions.size() - 1);*/
+      /*
+       * TODO: VBEByteCount
+       */
+    } else {
+      its.EditUnitByteCount = this.cbeUnitSize;
     }
 
     /* serialize the index table segment */
-    /* the AtomicReference is necessary since the variable is initialized in the
-    inline MXFOutputContext */
+    /*
+     * the AtomicReference is necessary since the variable is initialized in the
+     * inline MXFOutputContext
+     */
     AtomicReference<Set> ars = new AtomicReference<>();
     MXFOutputContext ctx = new MXFOutputContext() {
 
@@ -369,25 +374,79 @@ public class StreamingWriter {
    * Client API
    */
 
-  /*
-   * For clip-wrapped essence, a new partition is created for every call
+
+
+  /**
+   * creates a clip-wrapped essence container with constant size units
+   * 
+   * @param unitCount Number of units in the essence container
+   * @param unitSize Size in bytes of each element
    */
-  public OutputStream nextUnits(int unitCount, long unitSize) throws IOException, KLVException {
-    if (this.state == State.DONE) {
+  public OutputStream createClipWrappedCBE(long unitCount, long unitSize) throws IOException, KLVException {
+    if (this.state != State.START) {
+      /* TODO: improve exception */
+      throw new RuntimeException("START");
+    }
+    this.unitWrapping = UnitWrapping.CLIP;
+    this.unitSizing = UnitSizing.CBE;
+    this.cbeUnitSize = unitSize;
+    this.state = State.CONTAINER;
+
+    this.startEssencePartition();
+    this.essenceStream.writeUL(this.elementKey);
+    this.essenceStream.writeBERLength(unitSize * unitCount);
+
+    return this.essenceStream;
+  }
+
+  /**
+   * Starts a frame-wrapped essence container
+   * @throws KLVException 
+   * @throws IOException 
+   */
+  public void startVBEFrameWrapped() throws IOException, KLVException {
+    if (this.state != State.START) {
+      /* TODO: improve exception */
+      throw new RuntimeException("START");
+    }
+    this.unitWrapping = UnitWrapping.FRAME;
+    this.unitSizing = UnitSizing.VBE;
+    this.state = State.CONTAINER;
+
+    this.startEssencePartition();
+  }
+
+  /**
+   * Starts a clip-wrapped essence container with variable size elements
+   * 
+   * @param totalSize Size in bytes of the essence container
+   */
+  public void startVBEClipWrapped(long totalSize) throws IOException, KLVException {
+    if (this.state != State.START) {
+      /* TODO: improve exception */
+      throw new RuntimeException("START");
+    }
+    this.unitWrapping = UnitWrapping.CLIP;
+    this.unitSizing = UnitSizing.VBE;
+    this.state = State.CONTAINER;
+
+    this.startEssencePartition();
+
+    this.essenceStream.writeUL(this.elementKey);
+    this.essenceStream.writeBERLength(totalSize);
+  }
+
+  /*
+   * Adds a single unit to a clip- and frame-wrapped VBE essence container
+   */
+  public OutputStream nextUnit(long unitSize) throws IOException, KLVException {
+    if (this.state != State.CONTAINER) {
       /* TODO: improve exception */
       throw new RuntimeException("DONE");
     }
 
-    if (this.essenceInfo.elementSize() == ElementSize.CBE) {
-      if (this.nextTPos == 0) {
-        this.cbeSize = unitSize;
-      } else if (this.cbeSize != unitSize) {
-        throw new RuntimeException("CBE edit unit size mismatch");
-      }
-    }
-
-    if (this.essenceInfo.wrapping() == EssenceWrapping.FRAME && unitCount != 1) {
-      throw new RuntimeException("Only one Edit Unit can be written at a time");
+    if (this.unitSizing == UnitSizing.CBE) {
+      throw new RuntimeException("Cannot be called for CBE units");
     }
 
     /* check if the previous unit landed where it was expected */
@@ -396,56 +455,42 @@ public class StreamingWriter {
     }
 
     /* do we need to start a new essence partition */
-    /* TODO: this should allow the partition to go slightly beyond its requested duration */
-    if (this.nextTPos == 0 ||
-        (this.essenceInfo.partitionDuration() != null && this.nextTPos % this.essenceInfo.partitionDuration() == 0) ||
-        this.essenceInfo.wrapping() == EssenceWrapping.CLIP) {
+    /*
+     * TODO: this should allow the partition to go slightly beyond its requested
+     * duration
+     */
+    if (this.unitWrapping == UnitWrapping.FRAME && this.nextTPos != 0 &&
+        (this.essenceInfo.partitionDuration() != null && this.nextTPos % this.essenceInfo.partitionDuration() == 0)) {
 
-      if (this.nextTPos != 0) {
-        /* do not create an index partition on the initial call */
-        this.writeIndexPartition();
-      }
-
+      this.writeIndexPartition();
       this.startEssencePartition();
 
-      /* start the essence element if clip-wrapping */
-      if (this.essenceInfo.wrapping() == EssenceWrapping.CLIP) {
-        this.essenceStream.writeUL(this.elementOneKey);
-        this.essenceStream.writeBERLength(unitSize * unitCount);
-      }
     }
 
     /* add an entry to the index table if we have VBE essence */
-    if (this.essenceInfo.elementSize() == ElementSize.VBE) {
-      this.vbeBytePositions.add(this.essenceStream.written());
-    }
+    this.vbeBytePositions.add(this.essenceStream.written());
+
 
     /* start the essence element if frame-wrapping */
-    if (this.essenceInfo.wrapping() == EssenceWrapping.FRAME) {
-      this.essenceStream.writeUL(this.elementOneKey);
-      this.essenceStream.writeBERLength(unitSize * unitCount);
+    if (this.unitWrapping == UnitWrapping.FRAME) {
+      this.essenceStream.writeUL(this.elementKey);
+      this.essenceStream.writeBERLength(unitSize);
     }
 
     /* update the expected position of the next Unit */
-    this.nextBPos = this.essenceStream.written() + unitSize * unitCount;
+    this.nextBPos = this.essenceStream.written() + unitSize;
 
     /* update the temporal positions */
     this.tPos = this.nextTPos;
-    this.nextTPos += unitCount;
+    this.nextTPos += 1;
 
     return this.essenceStream;
   }
 
   public void finish() throws IOException, KLVException {
-    if (this.state == State.DONE) {
+    if (this.state != State.CONTAINER) {
       /* TODO: improve exception */
       throw new RuntimeException("DONE");
-    }
-
-    /* have we written anything in the file? */
-    if (this.nextTPos == 0) {
-      /* TODO: improve exception */
-      throw new RuntimeException("START");
     }
 
     this.writeIndexPartition();

@@ -36,8 +36,6 @@ import java.util.HexFormat;
 import org.apache.commons.numbers.fraction.Fraction;
 import org.junit.jupiter.api.Test;
 
-import com.sandflow.smpte.mxf.StreamingWriter.ElementSize;
-import com.sandflow.smpte.mxf.StreamingWriter.EssenceWrapping;
 import com.sandflow.smpte.mxf.types.AudioChannelLabelSubDescriptor;
 import com.sandflow.smpte.mxf.types.IABEssenceDescriptor;
 import com.sandflow.smpte.mxf.types.IABSoundfieldLabelSubDescriptor;
@@ -75,8 +73,6 @@ class StreamingWriterTest {
         Labels.AAFAIFFAIFCAudioContainer.asUL(),
         Labels.MXFGCClipWrappedAES3AudioData.asUL(),
         descriptor,
-        EssenceWrapping.CLIP,
-        ElementSize.CBE,
         Fraction.of(48000),
         null,
         null);
@@ -147,14 +143,12 @@ class StreamingWriterTest {
         essenceKey,
         Labels.MXFGCClipWrappedBroadcastWaveAudioData.asUL(),
         d,
-        EssenceWrapping.CLIP,
-        ElementSize.CBE,
         editRate,
         null,
         null);
     StreamingWriter sw = new StreamingWriter(os, ei);
 
-    DataOutputStream dos = new DataOutputStream(sw.nextUnits(sampleCount, 6));
+    DataOutputStream dos = new DataOutputStream(sw.createClipWrappedCBE(sampleCount, 6));
     byte[] samples = new byte[6];
     for (int i = 0; i < sampleCount; i++) {
       samples[0] = (byte) ((i >> 16) & 0xFF);
@@ -363,15 +357,14 @@ class StreamingWriterTest {
         essenceKey,
         Labels.MXFGCP1FrameWrappedPictureElement.asUL(),
         d,
-        EssenceWrapping.FRAME,
-        ElementSize.VBE,
         editRate,
         null,
         null);
     StreamingWriter sw = new StreamingWriter(os, ei);
 
+    sw.startVBEFrameWrapped();
     for (int i = 0; i < frameCount; i++) {
-      OutputStream frameOS = sw.nextUnits(1, frameSize);
+      OutputStream frameOS = sw.nextUnit(frameSize);
       for (int j = 0; j < frameSize; j++) {
         frameOS.write(j);
       }
@@ -408,7 +401,7 @@ class StreamingWriterTest {
   @Test
   void testClipVBE() throws Exception {
 
-    final int frameCount = 3;
+    final int frameCount = 480;
     final Fraction sampleRate = Fraction.of(48000);
     final Fraction editRate = Fraction.of(24);
 
@@ -445,8 +438,6 @@ class StreamingWriterTest {
         EssenceKeys.IMF_IABEssenceClipWrappedElement.asUL(),
         Labels.IMF_IABEssenceClipWrappedContainer.asUL(),
         d,
-        EssenceWrapping.CLIP,
-        ElementSize.VBE,
         editRate,
         null,
         java.util.Set.of(Labels.IMF_IABEssenceClipWrappedContainer));
@@ -456,8 +447,9 @@ class StreamingWriterTest {
     StreamingWriter sw = new StreamingWriter(os, ei);
 
     /* write @frameCount copies of the same IA Frame */
+    sw.startVBEClipWrapped(frameCount * iaFrame.length);
     for (int i = 0; i < frameCount; i++) {
-      OutputStream frameOS = sw.nextUnits(1, iaFrame.length);
+      OutputStream frameOS = sw.nextUnit(iaFrame.length);
       frameOS.write(iaFrame);
     }
 

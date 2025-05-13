@@ -138,6 +138,28 @@ public class KLVOutputStream extends CountingOutputStream {
   }
 
   /**
+   * Writes a single 4-byte BER-encoded length.
+   * 
+   * @return Length
+   * @throws EOFException
+   * @throws IOException
+   * @throws KLVException
+   */
+  public void writeBER4Length(long l) throws IOException {
+    if (l < 0) {
+      throw new IllegalArgumentException("Length cannot be negative");
+    }
+
+    /* TODO: check max length */
+
+    int n = 3;
+    this.write(0x80 | n);
+    for (int i = n - 1; i >= 0; i--) {
+      write((int) (l >> (i << 3)) & 0xFF);
+    }
+  }
+
+  /**
    * Writes a single KLV triplet.
    * 
    * @return KLV Triplet
@@ -147,7 +169,8 @@ public class KLVOutputStream extends CountingOutputStream {
    */
   public void writeTriplet(Triplet t) throws IOException, EOFException, KLVException {
     this.writeAUID(t.getKey());
-    this.writeBERLength(t.getLength());
+    /* TODO: super ugly for compatibility with ASDCPLib */
+    this.writeBER4Length(t.getLength());
     this.write(t.getValue());
   }
 
