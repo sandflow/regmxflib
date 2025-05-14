@@ -291,6 +291,9 @@ public class StreamingWriter {
     pp.setOperationalPattern(Labels.MXFOP1aSingleItemSinglePackageUniTrackStreamInternal.asUL());
     pp.setEssenceContainers(Arrays.asList(new UL[] { this.essenceInfo.essenceContainerKey }));
     pp.setThisPartition(this.fos.written());
+    if (kind == PartitionPack.Kind.FOOTER) {
+      pp.setFooterPartition(pp.getThisPartition());
+    }
     pp.setBodyOffset(this.essenceStream.written());
     if (this.curPartition != null) {
       pp.setPreviousPartition(this.curPartition.getThisPartition());
