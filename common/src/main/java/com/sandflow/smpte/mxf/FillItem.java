@@ -25,6 +25,10 @@
  */
 package com.sandflow.smpte.mxf;
 
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.OutputStream;
+
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.util.UL;
@@ -51,6 +55,13 @@ public class FillItem {
         }
 
         return fi;
+    }
+
+    public static void toStream(OutputStream os, short size) throws IOException {
+        MXFOutputStream mos = new MXFOutputStream(os);
+        mos.writeUL(KEY);
+        mos.writeBER4Length(size);
+        mos.write(new byte[size]);
     }
     
     /**

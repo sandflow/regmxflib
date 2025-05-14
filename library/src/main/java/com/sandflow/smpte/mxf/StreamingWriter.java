@@ -27,6 +27,7 @@ import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.mxf.types.MaterialPackage;
 import com.sandflow.smpte.mxf.types.PackageStrongReferenceSet;
 import com.sandflow.smpte.mxf.types.Preface;
+import com.sandflow.smpte.mxf.types.Sequence;
 import com.sandflow.smpte.mxf.types.SourcePackage;
 import com.sandflow.smpte.mxf.types.Version;
 import com.sandflow.smpte.util.AUID;
@@ -207,14 +208,14 @@ public class StreamingWriter {
     byte[] headerbytes = serializeHeaderMetadata();
 
     /* write the partition */
-    /* TODO: is this really open and incomplete? */
     startPartition(0, 0, headerbytes.length, 0, PartitionPack.Kind.HEADER, PartitionPack.Status.OPEN_INCOMPLETE);
 
     this.fos.write(headerbytes);
 
+    /* required 8 KB fill item per ST 2067-5 */
+    FillItem.toStream(this.fos, (short) 8192);
+
     this.state = State.START;
-    /* TODO: need to add 8K fill per st 2067-5 */
-    /* TODO: can clip-wrapped essence be partitioned */
   }
 
   private byte[] serializeHeaderMetadata() throws IOException {
@@ -522,7 +523,19 @@ public class StreamingWriter {
 
     for (var p : this.preface.ContentStorageObject.Packages) {
       for (var t : p.PackageTracks) {
-        t.TrackSegment.ComponentLength = this.tPos;
+        Sequence s = (Sequence) t.TrackSegment;
+        s.ComponentLength = this.tPos;
+        for (var c : s.ComponentObjects) {
+          c.ComponentLength = this.tPos;
+        }
+      }
+
+      if (p instanceof SourcePackage) {
+        SourcePackage sp = (SourcePackage) p;
+        if (sp.EssenceDescription instanceof FileDescriptor) {
+          FileDescriptor fd = (FileDescriptor) sp.EssenceDescription;
+          fd.EssenceLength = this.tPos;
+        }
       }
     }
 
