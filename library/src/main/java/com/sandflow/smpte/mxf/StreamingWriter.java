@@ -201,7 +201,7 @@ public class StreamingWriter {
 
     /* local tag register */
 
-    this.reg = new LocalTagRegister(StaticLocalTags.entries());
+    this.reg = new LocalTagRegister();
 
     /* header metadata */
     byte[] headerbytes = serializeHeaderMetadata();
@@ -233,7 +233,19 @@ public class StreamingWriter {
 
       @Override
       public int getLocalTag(AUID auid) {
-        return (int) reg.getOrMakeLocalTag(auid);
+        Long localTag = reg.getLocalTag(auid);
+
+        if (localTag == null) {
+          localTag = StaticLocalTags.getLocalTag(auid);
+        }
+
+        if (localTag == null) {
+          localTag = reg.getOrMakeLocalTag(auid);
+        } else {
+          reg.add(localTag, auid);
+        }
+
+        return (int) (localTag & 0xFFFFFFFF);
       }
 
       @Override
@@ -352,7 +364,7 @@ public class StreamingWriter {
 
       @Override
       public int getLocalTag(AUID auid) {
-        return (int) reg.getLocalTag(auid);
+        return (int) (StaticLocalTags.getLocalTag(auid).longValue() & 0xFFFFFFF);
       }
 
       @Override

@@ -35,6 +35,6 @@ import com.sandflow.smpte.util.AUID;
 public class StaticLocalTagsInitializer {
   static {
 {{#.}}
-    StaticLocalTags.add(AUID.fromURN("{{getIdentification}}"), {{getLocalIdentification}});{{/.}}
+    StaticLocalTags.add({{getLocalIdentification}}, AUID.fromURN("{{getIdentification}}"));{{/.}}
   }
 }

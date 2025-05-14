@@ -68,7 +68,9 @@ public class LocalTagRegister {
    * @return Key, or null if no Key exists for the Local Tag
    */
   public AUID getAUID(long localtag) {
-    return tagToEntry.get(localtag).auid();
+    Entry e = tagToEntry.get(localtag);
+
+    return e != null ? e.auid() : null;
   }
 
   /**
@@ -77,8 +79,9 @@ public class LocalTagRegister {
    * @param auid AUID
    * @return Local tag, or null if no Local Tag is associated with the AUID
    */
-  public long getLocalTag(AUID auid) {
-    return auidToEntry.get(auid).localTag();
+  public Long getLocalTag(AUID auid) {
+    Entry e = auidToEntry.get(auid);
+    return e == null ? null : e.localTag();
   }
 
   /**

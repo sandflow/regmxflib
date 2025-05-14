@@ -1,13 +1,11 @@
 package com.sandflow.smpte.mxf;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.sandflow.smpte.klv.LocalTagRegister.Entry;
+import com.sandflow.smpte.klv.LocalTagRegister;
 import com.sandflow.smpte.util.AUID;
 
 public class StaticLocalTags {
-  static protected final ArrayList<Entry> entries = new ArrayList<Entry>();
+
+  private static final LocalTagRegister reg = new LocalTagRegister();
 
   static {
     try {
@@ -17,12 +15,21 @@ public class StaticLocalTags {
     }
   }
 
-  public static List<Entry> entries() {
-    return entries;
+  private StaticLocalTags() {
   }
 
-  protected static void add(AUID auid, int localTag) {
-    entries.add(new Entry((long) localTag, auid));
+  /**
+   * Returns the Local Tag corresponding to a AUID
+   *
+   * @param auid AUID
+   * @return Local tag, or null if no Local Tag is associated with the AUID
+   */
+  public static Long getLocalTag(AUID auid) {
+    return StaticLocalTags.reg.getLocalTag(auid);
+  }
+
+  protected static void add(long localTag, AUID auid) {
+    StaticLocalTags.reg.add(localTag, auid);
   }
 
 }
