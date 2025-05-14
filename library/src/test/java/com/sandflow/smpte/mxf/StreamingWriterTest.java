@@ -72,6 +72,7 @@ class StreamingWriterTest {
     StreamingWriter.EssenceInfo ei = new StreamingWriter.EssenceInfo(
         Labels.AAFAIFFAIFCAudioContainer.asUL(),
         Labels.MXFGCClipWrappedAES3AudioData.asUL(),
+        StreamingWriter.EssenceKind.AUDIO,
         descriptor,
         Fraction.of(48000),
         null,
@@ -142,6 +143,7 @@ class StreamingWriterTest {
     StreamingWriter.EssenceInfo ei = new StreamingWriter.EssenceInfo(
         essenceKey,
         Labels.MXFGCClipWrappedBroadcastWaveAudioData.asUL(),
+        StreamingWriter.EssenceKind.AUDIO,
         d,
         editRate,
         null,
@@ -293,10 +295,16 @@ class StreamingWriterTest {
   @Test
   void testVBE() throws Exception {
 
-    final int frameCount = 3;
-    final int frameSize = 1000;
+    final int frameCount = 24;
     final Fraction sampleRate = Fraction.of(24);
     final Fraction editRate = Fraction.of(24);
+
+    /* read J2C frame */
+
+    InputStream is = ClassLoader.getSystemResourceAsStream("j2c-frames/counter-00006.j2c");
+    byte[] j2cFrame = is.readAllBytes();
+    is.close();
+
 
     RGBADescriptor d = new RGBADescriptor();
     d.InstanceID = UUID.fromRandom();
@@ -307,7 +315,7 @@ class StreamingWriterTest {
     d.DisplayF2Offset = 0;
     d.ImageAspectRatio = Fraction.of(640, 360);
     d.TransferCharacteristic = Labels.TransferCharacteristic_ITU709.asUL();
-    d.PictureCompression = Labels.J2K_2KIMF_SingleMultiTileReversibleProfile_M6S0;
+    d.PictureCompression = Labels.JPEG2000BroadcastContributionSingleTileProfileLevel5;
     d.ColorPrimaries = Labels.ColorPrimaries_ITU709.asUL();
     d.VideoLineMap = new Int32Array();
     d.VideoLineMap.add(0);
@@ -351,11 +359,12 @@ class StreamingWriterTest {
 
     OutputStream os = new FileOutputStream("target/test-output/video-test.mxf");
 
-    UL essenceKey = UL.fromURN("urn:smpte:ul:060e2b34.01020101.0d010301.16010200");
+    UL essenceKey = EssenceKeys.FrameWrappedJPEG2000PictureElement.asUL();
 
     StreamingWriter.EssenceInfo ei = new StreamingWriter.EssenceInfo(
         essenceKey,
         Labels.MXFGCP1FrameWrappedPictureElement.asUL(),
+        StreamingWriter.EssenceKind.VIDEO,
         d,
         editRate,
         null,
@@ -364,10 +373,8 @@ class StreamingWriterTest {
 
     sw.startVBEFrameWrapped();
     for (int i = 0; i < frameCount; i++) {
-      OutputStream frameOS = sw.nextUnit(frameSize);
-      for (int j = 0; j < frameSize; j++) {
-        frameOS.write(j);
-      }
+      OutputStream frameOS = sw.nextUnit(j2cFrame.length);
+      frameOS.write(j2cFrame);
     }
     sw.finish();
 
@@ -403,7 +410,7 @@ class StreamingWriterTest {
 
     final int frameCount = 480;
     final Fraction sampleRate = Fraction.of(48000);
-    final Fraction editRate = Fraction.of(24);
+    final Fraction editRate = Fraction.of(24000, 1001);
 
     /* read IA frame */
 
@@ -437,10 +444,11 @@ class StreamingWriterTest {
     StreamingWriter.EssenceInfo ei = new StreamingWriter.EssenceInfo(
         EssenceKeys.IMF_IABEssenceClipWrappedElement.asUL(),
         Labels.IMF_IABEssenceClipWrappedContainer.asUL(),
+        StreamingWriter.EssenceKind.AUDIO,
         d,
         editRate,
         null,
-        java.util.Set.of(Labels.IMF_IABEssenceClipWrappedContainer));
+        java.util.Set.of(Labels.IMF_IABTrackFileLevel0));
 
     /* Initialize the streaming writer */
     OutputStream os = new FileOutputStream("target/test-output/iab-test.mxf");

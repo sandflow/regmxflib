@@ -66,9 +66,15 @@ public class StreamingWriter {
   private long cbeUnitSize;
 
 
+  public enum EssenceKind {
+    VIDEO,
+    AUDIO
+  }
+
   public record EssenceInfo(
       UL essenceKey,
       UL essenceContainerKey,
+      EssenceKind essenceKind,
       FileDescriptor descriptor,
       Fraction editRate,
       Integer partitionDuration,
@@ -128,13 +134,15 @@ public class StreamingWriter {
     /* TODO: check for null */
     this.essenceInfo = essence;
 
+    AUID dataDefinition = essence.essenceKind == EssenceKind.AUDIO ? Labels.SoundEssenceTrack : Labels.PictureEssenceTrack;
+
     this.elementKey = MXFFiles.makeEssenceElementKey(this.essenceInfo.essenceKey, elementCount, elementId);
 
     /* Essence Descriptor */
     /* TODO: need to allow cloning */
     FileDescriptor desc = essence.descriptor();
     desc.ContainerFormat = new AUID(essence.essenceContainerKey());
-    desc.EssenceLength = null;
+    desc.EssenceLength = /* 24L */ 0L;
     desc.LinkedTrackID = null;
 
     /* File Package */
@@ -142,12 +150,12 @@ public class StreamingWriter {
     sp.PackageName = "Top-level File Package";
     sp.EssenceDescription = desc;
     long trackNum = MXFFiles.getTrackNumber(this.elementKey);
-    PackageHelper.initSingleTrackPackage(sp, essence.editRate(), null, UMID.NULL_UMID, trackNum, null);
+    PackageHelper.initSingleTrackPackage(sp, essence.editRate(), /* 24L */ null, UMID.NULL_UMID, trackNum, null, dataDefinition);
 
     /* Material Package */
     var mp = new MaterialPackage();
     mp.PackageName = "Material Package";
-    PackageHelper.initSingleTrackPackage(mp, essence.editRate(), null, sp.PackageID, null, 1L);
+    PackageHelper.initSingleTrackPackage(mp, essence.editRate(), /* 24L */ null, sp.PackageID, null, 1L, dataDefinition);
 
     /* TODO: return better error when InstanceID is null */
     /* EssenceDataObject */
@@ -155,6 +163,7 @@ public class StreamingWriter {
     edo.InstanceID = UUID.fromRandom();
     edo.EssenceStreamID = BODY_SID;
     edo.IndexStreamID = INDEX_SID;
+    edo.LinkedPackageID = sp.PackageID;
 
     /* Content Storage Object */
     var cs = new ContentStorage();
@@ -261,6 +270,7 @@ public class StreamingWriter {
   private void startPartition(long bodySID, long indexSID, long headerSize, long indexSize, PartitionPack.Kind kind,
       PartitionPack.Status status) throws IOException, KLVException {
     PartitionPack pp = new PartitionPack();
+    pp.setKagSize(1L);
     pp.setBodySID(bodySID);
     pp.setIndexSID(indexSID);
     pp.setIndexByteCount(indexSize);
@@ -319,6 +329,7 @@ public class StreamingWriter {
         e.TemporalOffset = 0;
         its.IndexEntryArray.add(e);
       }
+      its.VBEByteCount = this.nextBPos - this.vbeBytePositions.get( this.vbeBytePositions.size() - 1);
       /*
        * TODO: VBEByteCount
        */
@@ -394,7 +405,7 @@ public class StreamingWriter {
 
     this.startEssencePartition();
     this.essenceStream.writeUL(this.elementKey);
-    this.essenceStream.writeBERLength(unitSize * unitCount);
+    this.essenceStream.writeBER4Length(unitSize * unitCount);
 
     return this.essenceStream;
   }
@@ -433,7 +444,7 @@ public class StreamingWriter {
     this.startEssencePartition();
 
     this.essenceStream.writeUL(this.elementKey);
-    this.essenceStream.writeBERLength(totalSize);
+    this.essenceStream.writeBER4Length(totalSize);
   }
 
   /*
@@ -474,7 +485,7 @@ public class StreamingWriter {
     /* start the essence element if frame-wrapping */
     if (this.unitWrapping == UnitWrapping.FRAME) {
       this.essenceStream.writeUL(this.elementKey);
-      this.essenceStream.writeBERLength(unitSize);
+      this.essenceStream.writeBER4Length(unitSize);
     }
 
     /* update the expected position of the next Unit */

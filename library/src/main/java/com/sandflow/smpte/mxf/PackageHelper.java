@@ -10,16 +10,17 @@ import com.sandflow.smpte.mxf.types.Sequence;
 import com.sandflow.smpte.mxf.types.SourceClip;
 import com.sandflow.smpte.mxf.types.TimelineTrack;
 import com.sandflow.smpte.mxf.types.TrackStrongReferenceVector;
+import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UMID;
 import com.sandflow.smpte.util.UUID;
 
 public class PackageHelper {
   public static void initSingleTrackPackage(Package p, Fraction editRate, Long duration,
-      UMID sourcePackageID, Long essenceTrackNum, Long sourceTrackID) {
+      UMID sourcePackageID, Long essenceTrackNum, Long sourceTrackID, AUID dataDefinition) {
     var sc = new SourceClip();
     sc.InstanceID = UUID.fromRandom();
     sc.ComponentLength = duration == null ? -1L : duration;
-    sc.ComponentDataDefinition = Labels.SoundEssenceTrack;
+    sc.ComponentDataDefinition = dataDefinition;
     sc.StartPosition = 0L;
     sc.SourceTrackID = sourceTrackID == null ? 0 : sourceTrackID;
     sc.SourcePackageID = sourcePackageID;

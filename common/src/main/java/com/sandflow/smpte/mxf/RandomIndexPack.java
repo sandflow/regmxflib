@@ -25,16 +25,14 @@
  */
 package com.sandflow.smpte.mxf;
 
-import com.sandflow.smpte.klv.MemoryTriplet;
-import com.sandflow.smpte.klv.Triplet;
-import com.sandflow.smpte.klv.exceptions.KLVException;
-import com.sandflow.smpte.util.UL;
-
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.sandflow.smpte.klv.Triplet;
+import com.sandflow.smpte.klv.exceptions.KLVException;
+import com.sandflow.smpte.util.UL;
 
 /**
  * Represents a MXF Partition Pack Item (see SMPTE ST 377-1)
@@ -104,7 +102,7 @@ public class RandomIndexPack {
   public void toStream(OutputStream os) throws KLVException, IOException {
     MXFOutputStream mos = new MXFOutputStream(os);
     mos.writeUL(KEY);
-    mos.writeBERLength(12 * this.offsets.size() + 4);
+    mos.writeBER4Length(12 * this.offsets.size() + 4);
     for (PartitionOffset offset : this.offsets) {
       mos.writeUnsignedInt(offset.getBodySID());
       mos.writeLong(offset.getOffset());

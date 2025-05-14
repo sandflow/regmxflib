@@ -88,7 +88,7 @@ public class Set implements Group {
     for (Triplet t : g.getItems()) {
       mbos.writeUnsignedShort((int) reg.getOrMakeLocalTag(t.getKey()));
       if (isBERLocalLength) {
-        mbos.writeBERLength(t.getLength());
+        mbos.writeBER4Length(t.getLength());
       } else {
         mbos.writeUnsignedShort((int) t.getLength());
       }
@@ -104,7 +104,7 @@ public class Set implements Group {
         | ItemLocalTagEncoding.TWO_BYTE.bitmask);
 
     mos.writeUL(new UL(lsKey));
-    mos.writeBERLength(bos.size());
+    mos.writeBER4Length(bos.size());
     bos.writeTo(mos);
   }
 
