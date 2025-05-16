@@ -252,7 +252,7 @@ public class StreamingReader {
    * @throws IOException  if an I/O error occurs.
    * @throws KLVException if a KLV reading error occurs.
    */
-  boolean nextUnit() throws KLVException, EOFException, IOException {
+  boolean nextUnit() throws KLVException, IOException {
 
     if (this.isDone) {
       return false;

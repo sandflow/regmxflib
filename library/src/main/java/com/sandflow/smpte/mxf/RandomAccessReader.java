@@ -28,18 +28,17 @@ package com.sandflow.smpte.mxf;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.TreeMap;
 
 import org.apache.commons.numbers.fraction.Fraction;
 
-import com.sandflow.smpte.klv.KLVInputStream;
+import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
-import com.sandflow.smpte.mxf.RandomIndexPack.PartitionOffset;
+import com.sandflow.smpte.mxf.types.IndexTableSegment;
+import com.sandflow.smpte.util.CountingInputStream;
+import com.sandflow.smpte.util.UUID;
 
 public class RandomAccessReader extends StreamingReader {
 
@@ -54,7 +53,7 @@ public class RandomAccessReader extends StreamingReader {
     private long startPos;
     private long length;
 
-    CBECLipIndex(long cbeSize, long startPos, long length) {
+    CBECLipIndex(long cbeSize, long length) {
       if (length <= 0) {
         throw new IllegalArgumentException();
       }
@@ -65,7 +64,6 @@ public class RandomAccessReader extends StreamingReader {
         throw new IllegalArgumentException();
       }
       this.cbeSize = cbeSize;
-      this.startPos = startPos;
       this.length = length;
     }
 
@@ -74,7 +72,7 @@ public class RandomAccessReader extends StreamingReader {
       if (editUnit >= this.length) {
         throw new IllegalArgumentException();
       }
-      return this.startPos + this.cbeSize * editUnit;
+      return this.cbeSize * editUnit;
     }
 
     @Override
@@ -86,7 +84,7 @@ public class RandomAccessReader extends StreamingReader {
   class VBEIndex implements Index {
     private ArrayList<Long> pos = new ArrayList<>();
 
-    void add(long pos) {
+    protected void add(long pos) {
       this.pos.add(pos);
     }
 
@@ -133,45 +131,16 @@ public class RandomAccessReader extends StreamingReader {
     }
   }
 
-  public abstract class RandomAccessInputSource extends InputStream {
-    /**
-     * Set the position (in bytes) from the beginning of the source.
-     *
-     * @param pos Position in bytes
-     */
-    public void position(long pos) {
-      throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Returns the size (in bytes) of the source.
-     * 
-     * @return Size in bytes
-     */
-    public long size() {
-      throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Returns the position (in bytes) from the beginning of the source.
-     * 
-     * @return Position in bytes
-     */
-    public long position() {
-      throw new UnsupportedOperationException();
-    }
-  }
 
   HashMap<Long, Index> indexBySID;
   RandomAccessInputSource fis;
-  MXFInputStream mis;
   RandomIndexPack rip;
 
   RandomAccessReader(RandomAccessInputSource raip) throws IOException, KLVException, MXFException {
     super(raip, null);
 
     this.fis = raip;
-    this.mis = new MXFInputStream(this.fis);
+    MXFInputStream mis = new MXFInputStream(this.fis);
 
     /* load RIP */
 
@@ -216,18 +185,85 @@ public class RandomAccessReader extends StreamingReader {
         headerMetadataPartition = pp;
       }
 
-      /* look for an index table */
-      if (pp.getIndexSID() > 0 && pp.getIndexByteCount() > 0) {
-        t = mis.readTriplet();
+      /* skip if there is no index table */
+      if (pp.getIndexSID() == 0 || pp.getIndexByteCount() == 0) {
+        continue;
       }
+
+      /* look for the the start of the index table */
+
+      long pos = this.fis.position();
+
+      t = mis.readTriplet();
+
+      FillItem fi = FillItem.fromTriplet(t);
+      if (fi != null) {
+        /* so we have skipped a Fill Item and are either at the start of the
+        header metadata or index table */
+        this.fis.position(this.fis.position() + pp.getHeaderByteCount());
+      } else {
+        /* no fill item, so we are either at the start of the header metadata or
+        index table */
+        this.fis.position(pos + pp.getHeaderByteCount());
+      }
+
+      CountingInputStream cis = new CountingInputStream(this.fis);
+      /* Reset MXF Input stream */
+      /* TODO: include counting in MXFInputStream */
+      mis = new MXFInputStream(cis);
+
+      /* read Index Segments until the IndexByteCount is exceeded */
+      while (cis.getCount() < pp.getIndexByteCount()) {
+        IndexTableSegment its = IndexTableSegment.fromSet(
+          Set.fromLocalSet(mis.readTriplet(), StaticLocalTags.register()),
+          new MXFInputContext() {
+            @Override
+            public Set getSet(UUID uuid) {
+              throw new UnsupportedOperationException("Unimplemented method 'getSet'");
+            }
+          }
+        );
+
+        if (its == null) {
+          continue;
+        }
+
+        if (its.EditUnitByteCount != null && its.EditUnitByteCount > 0) {
+          /* we have a CBE index table */
+
+          /* there can only be one CBE table per IndexSID, so if we already have
+          a CBE index table, we ignore its */
+          if (this.indexBySID.containsKey(pp.getIndexSID())) {
+            /* report error */
+            continue;
+          }
+
+          this.indexBySID.put(pp.getIndexSID(), new CBECLipIndex(its.EditUnitByteCount, its.IndexDuration));
+        } else {
+          VBEIndex vbeIndex;
+
+          Index index = this.indexBySID.get(pp.getIndexSID());
+          if (index == null) {
+            vbeIndex = new VBEIndex();
+          } else if (index instanceof VBEIndex) {
+            vbeIndex = (VBEIndex) index;
+          } else {
+            /* report error */
+            continue;
+          }
+
+          for (var e : its.IndexEntryArray) {
+            if (e.StreamOffset == null) {
+              throw new RuntimeException();
+            }
+            vbeIndex.add(e.StreamOffset);
+          }
+        }
+      }
+
     }
 
-    /* VBE */
-
-    /* CBE */
-
     /* Load header metadata */
-
   }
 
   public void seek(long editUnitOffset) {

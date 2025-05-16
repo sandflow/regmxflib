@@ -33,7 +33,7 @@ import com.sandflow.smpte.util.AUID;
 /**
  * LocalTagRegister maps Local Tags found in a Local Set to AUID Keys
  */
-public class LocalTagRegister {
+public class LocalTagRegister implements LocalTagResolver {
 
   public record Entry(Long localTag, AUID auid) {
   }
@@ -61,24 +61,14 @@ public class LocalTagRegister {
     }
   }
 
-  /**
-   * Returns the AUID corresponding to a Local Tag
-   *
-   * @param localtag Local Tag
-   * @return Key, or null if no Key exists for the Local Tag
-   */
+  @Override
   public AUID getAUID(long localtag) {
     Entry e = tagToEntry.get(localtag);
 
     return e != null ? e.auid() : null;
   }
 
-  /**
-   * Returns the Local Tag corresponding to a AUID
-   *
-   * @param auid AUID
-   * @return Local tag, or null if no Local Tag is associated with the AUID
-   */
+  @Override
   public Long getLocalTag(AUID auid) {
     Entry e = auidToEntry.get(auid);
     return e == null ? null : e.localTag();

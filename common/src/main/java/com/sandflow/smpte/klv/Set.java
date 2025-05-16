@@ -117,8 +117,12 @@ public class Set implements Group {
    * @return Local Set, or null if the input Triplet is not a Local Set
    * @throws KLVException
    */
-  public static Set fromLocalSet(Triplet localset, LocalTagRegister reg) throws KLVException {
+  public static Set fromLocalSet(Triplet localset, LocalTagResolver reg) throws KLVException {
     try {
+
+      if (localset == null) {
+        return null;
+      }
 
       if (!(localset.getKey().isUL() && localset.getKey().asUL().isLocalSet())) {
         return null;

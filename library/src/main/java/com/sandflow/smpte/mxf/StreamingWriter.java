@@ -237,7 +237,7 @@ public class StreamingWriter {
         Long localTag = reg.getLocalTag(auid);
 
         if (localTag == null) {
-          localTag = StaticLocalTags.getLocalTag(auid);
+          localTag = StaticLocalTags.register().getLocalTag(auid);
         }
 
         if (localTag == null) {
@@ -368,7 +368,7 @@ public class StreamingWriter {
 
       @Override
       public int getLocalTag(AUID auid) {
-        return (int) (StaticLocalTags.getLocalTag(auid).longValue() & 0xFFFFFFF);
+        return (int) (StaticLocalTags.register().getLocalTag(auid).longValue() & 0xFFFFFFF);
       }
 
       @Override

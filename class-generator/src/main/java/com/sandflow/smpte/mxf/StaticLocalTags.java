@@ -1,6 +1,7 @@
 package com.sandflow.smpte.mxf;
 
 import com.sandflow.smpte.klv.LocalTagRegister;
+import com.sandflow.smpte.klv.LocalTagResolver;
 import com.sandflow.smpte.util.AUID;
 
 public class StaticLocalTags {
@@ -18,18 +19,12 @@ public class StaticLocalTags {
   private StaticLocalTags() {
   }
 
-  /**
-   * Returns the Local Tag corresponding to a AUID
-   *
-   * @param auid AUID
-   * @return Local tag, or null if no Local Tag is associated with the AUID
-   */
-  public static Long getLocalTag(AUID auid) {
-    return StaticLocalTags.reg.getLocalTag(auid);
-  }
-
   protected static void add(long localTag, AUID auid) {
     StaticLocalTags.reg.add(localTag, auid);
+  }
+
+  public static LocalTagResolver register() {
+    return StaticLocalTags.reg;
   }
 
 }
