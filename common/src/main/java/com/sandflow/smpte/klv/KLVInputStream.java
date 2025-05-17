@@ -25,378 +25,249 @@
  */
 package com.sandflow.smpte.klv;
 
-import com.sandflow.smpte.klv.exceptions.KLVException;
 import static com.sandflow.smpte.klv.exceptions.KLVException.MAX_LENGTH_EXCEEED;
-import com.sandflow.smpte.util.AUID;
-import com.sandflow.smpte.util.UL;
-import java.io.DataInput;
-import java.io.DataInputStream;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.sandflow.smpte.klv.exceptions.KLVException;
+import com.sandflow.smpte.util.AUID;
+import com.sandflow.smpte.util.CountingInputStream;
+import com.sandflow.smpte.util.UL;
+
 /**
  * KLVInputStream allows KLV data structures to be read from an InputStream
  */
-public class KLVInputStream extends InputStream implements DataInput {
-    
-    /**
-     * Possible byte ordering of a KLV packet
-     */
-    public enum ByteOrder {
-        LITTLE_ENDIAN,
-        BIG_ENDIAN
-    }
-    
-    private DataInputStream dis;
-    private ByteOrder byteorder;
+public class KLVInputStream extends CountingInputStream {
 
-    /**
-     * Assumes big endian byte ordering.
-     * 
-     * @param is InputStream to read from
-     */
-    public KLVInputStream(InputStream is) {
-        this(is, ByteOrder.BIG_ENDIAN);
-    }
-    
-    /**
-     * Allows the byte ordering to be specified.
-     * 
-     * @param is InputStream to read from
-     * @param byteorder Byte ordering of the file
-     */
-    public KLVInputStream(InputStream is, ByteOrder byteorder) {
-        
-        if (is == null) throw new NullPointerException();
-        
-        dis = new DataInputStream(is);
-        this.byteorder = byteorder;
-    }
+  /**
+   * Possible byte ordering of a KLV packet
+   */
+  public enum ByteOrder {
+    LITTLE_ENDIAN,
+    BIG_ENDIAN
+  }
 
-    /**
-     * Byte order of the stream.
-     * 
-     * @return Byte order of the stream
-     */
-    public ByteOrder getByteOrder() {
-        return byteorder;
-    }
-    
-    /**
-     * Reads a single UL.
-     * 
-     * @return UL
-     * @throws IOException
-     * @throws EOFException 
-     */
-    public UL readUL() throws IOException, EOFException {
-        byte[] ul = new byte[16];
+  private ByteOrder byteorder;
 
-        readFully(ul);
-        
-        return new UL(ul);
-    }
-    
-    /**
-     * Reads a single AUID.
-     * @return AUID
-     * @throws IOException
-     * @throws EOFException 
-     */
-    public AUID readAUID() throws IOException, EOFException {
-        byte[] auid = new byte[16];
+  /**
+   * Assumes big endian byte ordering.
+   * 
+   * @param is InputStream to read from
+   */
+  public KLVInputStream(InputStream is) {
+    this(is, ByteOrder.BIG_ENDIAN);
+  }
 
-        readFully(auid);
+  /**
+   * Allows the byte ordering to be specified.
+   * 
+   * @param is        InputStream to read from
+   * @param byteorder Byte ordering of the file
+   */
+  public KLVInputStream(InputStream is, ByteOrder byteorder) {
+    super(is);
+    this.byteorder = byteorder;
+  }
 
-        return new AUID(auid);
-    }
+  /**
+   * Byte order of the stream.
+   * 
+   * @return Byte order of the stream
+   */
+  public ByteOrder getByteOrder() {
+    return byteorder;
+  }
 
-    /**
-     * Reads a single BER-encoded length. The maximum length of the encoded length is 8 bytes.
-     * 
-     * @return Length
-     * @throws EOFException
-     * @throws IOException
-     * @throws KLVException 
-     */
-    public long readBERLength() throws EOFException, IOException, KLVException {
+  /**
+   * Reads a single UL.
+   * 
+   * @return UL
+   * @throws IOException
+   * @throws EOFException
+   */
+  public UL readUL() throws IOException, EOFException {
+    byte[] ul = new byte[16];
 
-        long val = 0;
+    readFully(ul);
 
-        int b = read();
+    return new UL(ul);
+  }
 
-        if (b <= 0) {
-            throw new EOFException();
-        }
-        
-        if ((b & 0x80) == 0) {
-           return b;
-        }
+  /**
+   * Reads a single AUID.
+   * 
+   * @return AUID
+   * @throws IOException
+   * @throws EOFException
+   */
+  public AUID readAUID() throws IOException, EOFException {
+    byte[] auid = new byte[16];
 
-        int bersz =  (b & 0x0f);
+    readFully(auid);
 
-        if (bersz > 8) {
-            throw new KLVException(MAX_LENGTH_EXCEEED);
-        }
+    return new AUID(auid);
+  }
 
-        byte[] octets = new byte[bersz];
+  /**
+   * Reads a single BER-encoded length. The maximum length of the encoded length
+   * is 8 bytes.
+   * 
+   * @return Length
+   * @throws EOFException
+   * @throws IOException
+   * @throws KLVException
+   */
+  public long readBERLength() throws EOFException, IOException, KLVException {
 
-        readFully(octets);
+    long val = 0;
 
-        for (int i = 0; i < bersz; i++) {
-            int tmp = (((int) octets[i]) & 0xFF);
-                val = (val << 8) + tmp;
-                
-                if (val > Integer.MAX_VALUE) {
-                    throw new KLVException(MAX_LENGTH_EXCEEED);
-                }
-        }
+    int b = read();
 
-        return val;
+    if (b <= 0) {
+      throw new EOFException();
     }
 
-    /**
-     * Reads a single KLV triplet.
-     * 
-     * @return KLV Triplet
-     * @throws IOException
-     * @throws EOFException
-     * @throws KLVException 
-     */
-    public Triplet readTriplet() throws IOException, EOFException, KLVException {
-        AUID auid = readAUID();
-
-        long len = readBERLength();
-
-        if (len > Integer.MAX_VALUE) {
-            throw new KLVException(MAX_LENGTH_EXCEEED);
-        }
-
-        byte[] value = new byte[(int) len];
-
-        readFully(value);
-
-        return new MemoryTriplet(auid, value);
-    }
-    
-    @Override
-    public final int read(byte[] bytes) throws IOException {
-        return dis.read(bytes);
+    if ((b & 0x80) == 0) {
+      return b;
     }
 
-    @Override
-    public final int read(byte[] bytes, int i, int i1) throws IOException {
-        return dis.read(bytes, i, i1);
+    int bersz = (b & 0x0f);
+
+    if (bersz > 8) {
+      throw new KLVException(MAX_LENGTH_EXCEEED);
     }
 
-    @Override
-    public final void readFully(byte[] bytes) throws IOException {
-        dis.readFully(bytes);
+    byte[] octets = new byte[bersz];
+
+    readFully(octets);
+
+    for (int i = 0; i < bersz; i++) {
+      int tmp = (((int) octets[i]) & 0xFF);
+      val = (val << 8) + tmp;
+
+      if (val > Integer.MAX_VALUE) {
+        throw new KLVException(MAX_LENGTH_EXCEEED);
+      }
     }
 
-    @Override
-    public final void readFully(byte[] bytes, int i, int i1) throws IOException {
-        dis.readFully(bytes, i, i1);
+    return val;
+  }
+
+  /**
+   * Reads a single KLV triplet.
+   * 
+   * @return KLV Triplet
+   * @throws IOException
+   * @throws EOFException
+   * @throws KLVException
+   */
+  public Triplet readTriplet() throws IOException, EOFException, KLVException {
+    AUID auid = readAUID();
+
+    long len = readBERLength();
+
+    if (len > Integer.MAX_VALUE) {
+      throw new KLVException(MAX_LENGTH_EXCEEED);
     }
 
-    @Override
-    public final int skipBytes(int i) throws IOException {
-        return dis.skipBytes(i);
+    byte[] value = new byte[(int) len];
+
+    readFully(value);
+
+    return new MemoryTriplet(auid, value);
+  }
+
+  public final void readFully(byte[] b) throws IOException {
+    this.readFully(b, 0, b.length);
+  }
+
+  public final void readFully(byte[] b, int off, int len) throws IOException {
+    if (off + len > b.length) {
+      throw new IOException();
+    }
+    int c;
+    for (int n = 0; n < len; n += c) {
+      c = this.read(b, off + n, len - n);
+      if (c < 0) {
+        throw new EOFException();
+      }
+    }
+  }
+
+  public final byte readByte() throws IOException {
+    return (byte) this.read();
+  }
+
+  public final int readUnsignedByte() throws IOException {
+    return this.read();
+  }
+
+  public final short readShort() throws IOException {
+    int hi, lo;
+
+    if (byteorder == ByteOrder.BIG_ENDIAN) {
+      hi = readUnsignedByte();
+      lo = readUnsignedByte();
+    } else {
+      lo = readUnsignedByte();
+      hi = readUnsignedByte();
     }
 
-    @Override
-    public final boolean readBoolean() throws IOException {
-        return dis.readBoolean();
+    return (short) (lo + (hi << 8));
+  }
+
+  public final int readUnsignedShort() throws IOException {
+    return this.readShort() & 0xFFFF;
+  }
+
+  public final int readInt() throws IOException {
+    int b0, b1, b2, b3;
+
+    if (byteorder == ByteOrder.BIG_ENDIAN) {
+      b3 = readUnsignedByte();
+      b2 = readUnsignedByte();
+      b1 = readUnsignedByte();
+      b0 = readUnsignedByte();
+    } else {
+      b0 = readUnsignedByte();
+      b1 = readUnsignedByte();
+      b2 = readUnsignedByte();
+      b3 = readUnsignedByte();
     }
 
-    @Override
-    public final byte readByte() throws IOException {
-        return dis.readByte();
+    return b0 + (b1 << 8) + (b2 << 16) + (b3 << 24);
+  }
+
+  public long readUnsignedInt() throws IOException, EOFException {
+    return this.readInt() & 0xFFFFFFFFL;
+  }
+
+  public final long readLong() throws IOException {
+    int b0, b1, b2, b3, b4, b5, b6, b7;
+
+    if (byteorder == ByteOrder.BIG_ENDIAN) {
+      b7 = readUnsignedByte();
+      b6 = readUnsignedByte();
+      b5 = readUnsignedByte();
+      b4 = readUnsignedByte();
+      b3 = readUnsignedByte();
+      b2 = readUnsignedByte();
+      b1 = readUnsignedByte();
+      b0 = readUnsignedByte();
+    } else {
+      b0 = readUnsignedByte();
+      b1 = readUnsignedByte();
+      b2 = readUnsignedByte();
+      b3 = readUnsignedByte();
+      b4 = readUnsignedByte();
+      b5 = readUnsignedByte();
+      b6 = readUnsignedByte();
+      b7 = readUnsignedByte();
     }
 
-    @Override
-    public final int readUnsignedByte() throws IOException {
-        return dis.readUnsignedByte();
-    }
+    return b0 + (b1 << 8) + (b2 << 16) + (b3 << 24) + (b4 << 32) + (b5 << 40) + (b6 << 48) + (b7 << 56);
+  }
 
-    @Override
-    public final short readShort() throws IOException {
-        
-        if (byteorder == ByteOrder.BIG_ENDIAN) {
-        
-            return dis.readShort();
-            
-        } else {
-            
-            int lo = readUnsignedByte();
-            int hi = readUnsignedByte();
-            
-            return (short) (lo + (hi << 8));
-            
-        }
-    }
-
-    @Override
-    public final int readUnsignedShort() throws IOException {
-        
-        if (byteorder == ByteOrder.BIG_ENDIAN) {
-        
-            return dis.readUnsignedShort();
-            
-        } else {
-            
-            int lo = readUnsignedByte();
-            int hi = readUnsignedByte();
-            
-            return lo + hi << 8;
-            
-        }
-    }
-
-    @Override
-    public final char readChar() throws IOException {
-        return dis.readChar();
-    }
-
-    @Override
-    public final int readInt() throws IOException {
-        
-        if (byteorder == ByteOrder.BIG_ENDIAN) {
-        
-            return dis.readInt();
-            
-        } else {
-            
-            int b0 = readUnsignedByte();
-            int b1 = readUnsignedByte();
-            int b2 = readUnsignedByte();
-            int b3 = readUnsignedByte();
-            
-            return b0 + (b1 << 8) + (b2 << 16) + (b3 << 24);
-            
-        }
-        
-    }
-    
-    public long readUnsignedInt() throws IOException, EOFException {
-        
-        if (byteorder == ByteOrder.BIG_ENDIAN) {
-        
-            return ((long) dis.readInt()) & 0xFFFFFFFF;
-            
-        } else {
-            
-            int b0 = readUnsignedByte();
-            int b1 = readUnsignedByte();
-            int b2 = readUnsignedByte();
-            int b3 = readUnsignedByte();
-            
-            return ((long) b0 + (b1 << 8) + (b2 << 16) + (b3 << 24)) & 0xFFFFFFFF;
-            
-        }
-        
-    }
-
-    @Override
-    public final long readLong() throws IOException {
-        
-        if (byteorder == ByteOrder.BIG_ENDIAN) {
-        
-            return dis.readLong();
-            
-        } else {
-            
-            int b0 = readUnsignedByte();
-            int b1 = readUnsignedByte();
-            int b2 = readUnsignedByte();
-            int b3 = readUnsignedByte();
-            int b4 = readUnsignedByte();
-            int b5 = readUnsignedByte();
-            int b6 = readUnsignedByte();
-            int b7 = readUnsignedByte();
-            
-            return b0 + (b1 << 8) + (b2 << 16) + (b3 << 24) + (b4 << 32) + (b5 << 40) + (b6 << 48) + (b7 << 56);
-            
-        }
-    }
-
-    @Override
-    public final float readFloat() throws IOException {
-        return dis.readFloat();
-    }
-
-    @Override
-    public final double readDouble() throws IOException {
-        return dis.readDouble();
-    }
-
-    @Override
-    public final String readLine() throws IOException {
-        return dis.readLine();
-    }
-
-    @Override
-    public final String readUTF() throws IOException {
-        return dis.readUTF();
-    }
-
-    public static final String readUTF(DataInput di) throws IOException {
-        return DataInputStream.readUTF(di);
-    }
-
-    @Override
-    public int read() throws IOException {
-        return dis.read();
-    }
-
-    @Override
-    public long skip(long l) throws IOException {
-        return dis.skip(l);
-    }
-
-    @Override
-    public int available() throws IOException {
-        return dis.available();
-    }
-
-    @Override
-    public void close() throws IOException {
-        dis.close();
-    }
-
-    @Override
-    public synchronized void mark(int i) {
-        dis.mark(i);
-    }
-
-    @Override
-    public synchronized void reset() throws IOException {
-        dis.reset();
-    }
-
-    @Override
-    public boolean markSupported() {
-        return dis.markSupported();
-    }
-    
-    protected static final void swap(byte[] array, int i, int j) {
-        byte tmp = array[i];
-        array[i] = array[j];
-        array[j] = tmp;
-    }
-    
-    protected static final void uuidLEtoBE(byte[] uuid) {
-            /* swap the 32-bit word of the UUID */
-        swap(uuid, 0, 3);
-        swap(uuid, 1, 2);
-
-            /* swap the first 16-bit word of the UUID */
-        swap(uuid, 4, 5);
-
-            /* swap the second 16-bit word of the UUID */
-        swap(uuid, 6, 7);
-
-    }
-    
 }

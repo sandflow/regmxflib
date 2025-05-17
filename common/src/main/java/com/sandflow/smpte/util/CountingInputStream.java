@@ -25,6 +25,7 @@
  */
 package com.sandflow.smpte.util;
 
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -32,93 +33,69 @@ import java.io.InputStream;
  * Counts the number of bytes read from an InputStream and allows a maximum
  * number of bytes to be read to be set (optionally)
  */
-public class CountingInputStream extends InputStream {
+public class CountingInputStream extends FilterInputStream {
 
-    long count = 0;
-    long markCount = 0;
-    InputStream is;
+  long count = 0;
+  long markCount = 0;
 
-    /**
-     * Instantiates a CountingInputStream
-     *
-     * @param is       InputStream from which data will be read
-     */
-    public CountingInputStream(InputStream is) {
-        if (is == null) {
-            throw new NullPointerException("InputStream cannot be null");
-        }
-        this.is = is;
-    }
+  /**
+   * Instantiates a CountingInputStream
+   *
+   * @param is InputStream from which data will be read
+   */
+  public CountingInputStream(InputStream is) {
+    super(is);
+  }
 
-    @Override
-    public synchronized void mark(int i) {
-        markCount = count;
-        is.mark(i);
-    }
+  @Override
+  public synchronized void mark(int i) {
+    markCount = count;
+    super.mark(i);
+  }
 
-    @Override
-    public long skip(long l) throws IOException {
-        long sb = is.skip(l);
-        if (sb >= 0)
-            count += sb;
-        return sb;
-    }
+  @Override
+  public long skip(long l) throws IOException {
+    long sb = super.skip(l);
+    if (sb >= 0)
+      count += sb;
+    return sb;
+  }
 
-    @Override
-    public int read(byte[] bytes, int off, int len) throws IOException {
-        int sb = is.read(bytes, off, len);
-        if (sb >= 0)
-            count += sb;
-        return sb;
-    }
+  @Override
+  public int read(byte[] bytes, int off, int len) throws IOException {
+    int sb = in.read(bytes, off, len);
+    if (sb >= 0)
+      count += sb;
+    return sb;
+  }
 
-    @Override
-    public int read(byte[] bytes) throws IOException {
-        return this.read(bytes, 0, bytes.length);
-    }
+  @Override
+  public int read() throws IOException {
+    int sb = super.read();
+    if (sb >= 0)
+      count += 1;
+    return sb;
+  }
 
-    @Override
-    public int read() throws IOException {
-        int sb = is.read();
-        if (sb >= 0)
-            count += 1;
-        return sb;
-    }
+  @Override
+  public synchronized void reset() throws IOException {
+    count = markCount;
+    super.reset();
+  }
 
-    @Override
-    public boolean markSupported() {
-        return is.markSupported();
-    }
+  /**
+   * @return Returns the number of bytes read since the object was created or
+   *         resetCount was called
+   */
+  public long getCount() {
+    return count;
+  }
 
-    @Override
-    public synchronized void reset() throws IOException {
-        count = markCount;
-        is.reset();
-    }
-
-    @Override
-    public void close() throws IOException {
-        is.close();
-    }
-
-    @Override
-    public int available() throws IOException {
-        return is.available();
-    }
-
-    /**
-     * @return Returns the number of bytes read since the object was created or
-     *         resetCount was called
-     */
-    public long getCount() {
-        return count;
-    }
-
-    /**
-     * Resets the number of bytes read to zero.
-     */
-    public void resetCount() {
-        count = 0;
-    }
+  /**
+   * Resets the number of bytes read to zero.
+   */
+  public void resetCount() {
+    count = 0;
+  }
 
 }

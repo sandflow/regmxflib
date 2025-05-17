@@ -25,14 +25,14 @@
  */
 package com.sandflow.smpte.mxf;
 
-import com.sandflow.smpte.klv.KLVInputStream;
-import com.sandflow.smpte.klv.Triplet;
-import com.sandflow.smpte.klv.exceptions.KLVException;
-import com.sandflow.smpte.util.UL;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
+
+import com.sandflow.smpte.klv.Triplet;
+import com.sandflow.smpte.klv.exceptions.KLVException;
+import com.sandflow.smpte.util.UL;
 
 /**
  * Utilities for processing MXF files
@@ -56,7 +56,7 @@ public class MXFFiles {
    */
   public static long seekFooterPartition(SeekableByteChannel mxffile) throws IOException, KLVException {
     long headeroffset = seekHeaderPartition(mxffile);
-    KLVInputStream kis = new KLVInputStream(Channels.newInputStream(mxffile));
+    MXFInputStream kis = new MXFInputStream(Channels.newInputStream(mxffile));
     Triplet t = kis.readTriplet();
     if (t == null) {
       return -1;
@@ -86,7 +86,7 @@ public class MXFFiles {
 
     /* read RIP */
 
-    kis = new KLVInputStream(Channels.newInputStream(mxffile));
+    kis = new MXFInputStream(Channels.newInputStream(mxffile));
 
     t = kis.readTriplet();
 

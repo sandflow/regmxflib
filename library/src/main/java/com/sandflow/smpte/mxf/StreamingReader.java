@@ -9,10 +9,9 @@ import java.util.HashMap;
 import org.apache.commons.numbers.fraction.Fraction;
 
 import com.sandflow.smpte.klv.Group;
-import com.sandflow.smpte.klv.KLVInputStream;
-import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.LocalTagRegister;
 import com.sandflow.smpte.klv.MemoryTriplet;
+import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.PartitionPack.Kind;
@@ -26,7 +25,6 @@ import com.sandflow.smpte.mxf.types.SourcePackage;
 import com.sandflow.smpte.mxf.types.Track;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.BoundedInputStream;
-import com.sandflow.smpte.util.CountingInputStream;
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.EventHandler;
@@ -64,47 +62,18 @@ public class StreamingReader {
     }
   }
 
-  private KLVInputStream kis;
+  private MXFInputStream mis;
   private boolean isDone = false;
   private Preface preface;
   private ArrayList<TrackState> tracks = new ArrayList<TrackState>();
 
-  /**
-   * Creates a new StreamingReader from an InputStream.
-   *
-   * @param is         InputStream containing the MXF file data.
-   * @param evthandler Event handler for reporting parsing events or
-   *                   inconsistencies.
-   */
-  StreamingReader(InputStream is, EventHandler evthandler) throws IOException, KLVException, MXFException {
-    if (is == null) {
-      throw new NullPointerException("InputStream cannot be null");
-    }
-
-    /* TODO: handle byte ordering */
-
-    CountingInputStream cis = new CountingInputStream(is);
-    kis = new KLVInputStream(cis);
-
-    /* look for the header partition pack */
-    PartitionPack pp = null;
-    for (Triplet t; (t = kis.readTriplet()) != null;) {
-      if ((pp = PartitionPack.fromTriplet(t)) != null) {
-        break;
-      }
-    }
-
-    if (pp == null) {
-      MXFEvent.handle(evthandler,
-          new MXFEvent(MXFEvent.EventCodes.MISSING_PARTITION_PACK, "No Partition Pack found"));
-    }
-
-    /* start counting header metadata bytes */
-    cis.resetCount();
+  protected static Preface readHeaderMetadataFrom(InputStream is, long headerByteCount, EventHandler evthandler)
+      throws IOException, KLVException, MXFException {
+    MXFInputStream mis = new MXFInputStream(is);
 
     /* look for the primer pack */
     LocalTagRegister localreg = null;
-    for (Triplet t; (t = kis.readTriplet()) != null; cis.resetCount()) {
+    for (Triplet t; (t = mis.readTriplet()) != null; mis.resetCount()) {
 
       /* skip fill items, if any */
       if (!FillItem.getKey().equalsIgnoreVersion(t.getKey())) {
@@ -122,12 +91,11 @@ public class StreamingReader {
     /*
      * capture all local sets within the header metadata
      */
-    ArrayList<Group> gs = new ArrayList<>();
     HashMap<UUID, Set> setresolver = new HashMap<>();
 
-    while (cis.getCount() < pp.getHeaderByteCount()) {
+    while (mis.getCount() < headerByteCount) {
 
-      Triplet t = kis.readTriplet();
+      Triplet t = mis.readTriplet();
 
       /* skip fill items */
       /* TODO: replace with call to FillItem static method */
@@ -160,11 +128,11 @@ public class StreamingReader {
     /*
      * check that the header metadata length is consistent
      */
-    if (cis.getCount() != pp.getHeaderByteCount()) {
+    if (mis.getCount() != headerByteCount) {
       MXFEvent.handle(evthandler, new MXFEvent(
           MXFEvent.EventCodes.INCONSISTENT_HEADER_LENGTH,
           String.format("Actual Header Metadata length (%s) does not match the Partition Pack information (%s)",
-              cis.getCount(), pp.getHeaderByteCount())));
+              mis.getCount(), headerByteCount)));
     }
 
     MXFInputContext mic = new MXFInputContext() {
@@ -176,57 +144,92 @@ public class StreamingReader {
 
     for (Set s : setresolver.values()) {
       if (Preface.getKey().equalsIgnoreVersionAndGroupCoding(s.getKey())) {
-        this.preface = Preface.fromSet(s, mic);
+        return Preface.fromSet(s, mic);
+      }
+    }
 
-        /* collect tracks that are stored in essence containers */
-        for (EssenceData ed : this.preface.ContentStorageObject.EssenceDataObjects) {
+    return null;
+  }
 
-          /* retrieve the File Package */
-          SourcePackage fp = null;
-          for (Package p : preface.ContentStorageObject.Packages) {
-            if (p.PackageID.equals(ed.LinkedPackageID)) {
-              fp = (SourcePackage) p;
-              break;
-            }
-          }
+  /**
+   * Creates a new StreamingReader from an InputStream.
+   *
+   * @param is         InputStream containing the MXF file data.
+   * @param evthandler Event handler for reporting parsing events or
+   *                   inconsistencies.
+   */
+  StreamingReader(InputStream is, EventHandler evthandler) throws IOException, KLVException, MXFException {
+    if (is == null) {
+      throw new NullPointerException("InputStream cannot be null");
+    }
 
-          /* TODO: error in case no package is found */
+    /* TODO: handle byte ordering */
 
-          /* do we have a multi-descriptor */
-          FileDescriptor fds[] = null;
-          if (fp.EssenceDescription instanceof MultipleDescriptor) {
-            fds = ((MultipleDescriptor) fp.EssenceDescription).SubDescriptors.toArray(fds);
-          } else {
-            fds = new FileDescriptor[] { (FileDescriptor) fp.EssenceDescription };
-          }
+    mis = new MXFInputStream(is);
 
-          for (FileDescriptor fd : fds) {
-            Track foundTrack = null;
+    /* look for the header partition pack */
+    PartitionPack pp = null;
+    for (Triplet t; (t = mis.readTriplet()) != null;) {
+      if ((pp = PartitionPack.fromTriplet(t)) != null) {
+        break;
+      }
+    }
 
-            for (Track t : fp.PackageTracks) {
-              if (t.TrackID == fd.LinkedTrackID) {
-                foundTrack = t;
-                break;
-              }
-            }
+    if (pp == null) {
+      MXFEvent.handle(evthandler,
+          new MXFEvent(MXFEvent.EventCodes.MISSING_PARTITION_PACK, "No Partition Pack found"));
+    }
 
-            /* TODO: handle missing Track */
+    this.preface = readHeaderMetadataFrom(mis, pp.getHeaderByteCount(), evthandler);
 
-            this.tracks.add(new TrackState(new TrackInfo(fd, foundTrack, ed)));
-          }
+    /* TODO: handle NULL preface */
+
+    /* collect tracks that are stored in essence containers */
+    for (EssenceData ed : this.preface.ContentStorageObject.EssenceDataObjects) {
+
+      /* retrieve the File Package */
+      SourcePackage fp = null;
+      for (Package p : preface.ContentStorageObject.Packages) {
+        if (p.PackageID.equals(ed.LinkedPackageID)) {
+          fp = (SourcePackage) p;
+          break;
         }
+      }
 
-        /* find the first material package */
-        /* TODO: what to do if more than one Material Package */
+      /* TODO: error in case no package is found */
 
-        MaterialPackage mp;
-        for (Package p : preface.ContentStorageObject.Packages) {
-          if (p instanceof MaterialPackage) {
-            mp = (MaterialPackage) p;
+      /* do we have a multi-descriptor */
+      FileDescriptor fds[] = null;
+      if (fp.EssenceDescription instanceof MultipleDescriptor) {
+        fds = ((MultipleDescriptor) fp.EssenceDescription).SubDescriptors.toArray(fds);
+      } else {
+        fds = new FileDescriptor[] { (FileDescriptor) fp.EssenceDescription };
+      }
+
+      for (FileDescriptor fd : fds) {
+        Track foundTrack = null;
+
+        for (Track t : fp.PackageTracks) {
+          if (t.TrackID == fd.LinkedTrackID) {
+            foundTrack = t;
             break;
           }
         }
 
+        /* TODO: handle missing Track */
+
+        this.tracks.add(new TrackState(new TrackInfo(fd, foundTrack, ed)));
+      }
+    }
+
+    /* find the first material package */
+    /* TODO: what to do if more than one Material Package */
+
+    MaterialPackage mp;
+    for (Package p : preface.ContentStorageObject.Packages) {
+      if (p instanceof MaterialPackage) {
+        mp = (MaterialPackage) p;
+        break;
       }
     }
 
@@ -234,7 +237,7 @@ public class StreamingReader {
      * skip over index tables, if any
      */
     if (pp.getIndexSID() != 0) {
-      kis.skip(pp.getIndexByteCount());
+      mis.skip(pp.getIndexByteCount());
     }
 
   }
@@ -268,13 +271,13 @@ public class StreamingReader {
       AUID auid;
 
       try {
-        auid = kis.readAUID();
+        auid = mis.readAUID();
       } catch (EOFException e) {
         this.isDone = true;
         return false;
       }
 
-      long len = kis.readBERLength();
+      long len = mis.readBERLength();
 
       if (PartitionPack.isInstance(auid)) {
 
@@ -282,7 +285,7 @@ public class StreamingReader {
 
         /* partition pack is fixed length so that cast is ok */
         byte[] value = new byte[(int) len];
-        kis.readFully(value);
+        mis.readFully(value);
         Triplet t = new MemoryTriplet(auid, value);
         PartitionPack pp = PartitionPack.fromTriplet(t);
 
@@ -294,16 +297,16 @@ public class StreamingReader {
 
         this.currentSID = pp.getBodySID();
 
-        kis.skip(pp.getHeaderByteCount());
+        mis.skip(pp.getHeaderByteCount());
         if (pp.getIndexSID() != 0) {
-          kis.skip(pp.getIndexByteCount());
+          mis.skip(pp.getIndexByteCount());
         }
 
       } else if (FillItem.getKey().equalsIgnoreVersion(auid)) {
 
         /* skip over the fill item */
 
-        kis.skip(len);
+        mis.skip(len);
 
       } else {
 
@@ -324,7 +327,7 @@ public class StreamingReader {
           }
         }
 
-        this.currentPlayload = new BoundedInputStream(kis, len);
+        this.currentPlayload = new BoundedInputStream(mis, len);
         this.currentPayloadLength = len;
         break;
       }
