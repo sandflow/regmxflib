@@ -289,10 +289,12 @@ public class StreamingReader {
       this.currentPlayload.exhaust();
     }
 
-    /* loop until we find an essence element */
-    while (true) {
-      AUID auid;
+    AUID auid;
+    long len;
 
+    /* skip over partitions */
+
+    while (true) {
       try {
         auid = mis.readAUID();
       } catch (EOFException e) {
@@ -300,61 +302,66 @@ public class StreamingReader {
         return false;
       }
 
-      long len = mis.readBERLength();
+      len = mis.readBERLength();
 
-      if (PartitionPack.isInstance(auid)) {
+      if (! PartitionPack.isInstance(auid)) {
+        break;
+      }
 
-        /* skip over partition header metadata and index tables */
+      /* partition pack is fixed length so that cast is ok */
+      byte[] value = new byte[(int) len];
+      mis.readFully(value);
+      Triplet t = new MemoryTriplet(auid, value);
+      PartitionPack pp = PartitionPack.fromTriplet(t);
 
-        /* partition pack is fixed length so that cast is ok */
-        byte[] value = new byte[(int) len];
-        mis.readFully(value);
-        Triplet t = new MemoryTriplet(auid, value);
-        PartitionPack pp = PartitionPack.fromTriplet(t);
+      /* we are done when we reach the footer partition */
+      if (pp.getKind() == Kind.FOOTER) {
+        this.isDone = true;
+        return false;
+      }
 
-        /* we are done when we reach the footer partition */
-        if (pp.getKind() == Kind.FOOTER) {
-          this.isDone = true;
-          return false;
+      this.currentSID = pp.getBodySID();
+
+      /* do we have header metadata and/or an index table to skip? */
+
+      if (pp.getHeaderByteCount() + pp.getIndexByteCount() > 0) {
+        /* skip the optional fill item that follows the partition pack */
+        auid = mis.readAUID(); 
+        if (FillItem.isInstance(auid)) {
+          len = mis.readBERLength();
+          mis.skip(len);
         }
+        mis.skip(pp.getHeaderByteCount() + pp.getIndexByteCount() - UL.SIZE);
+      }
+        
+   }
+    
+    /* skip over any fill items */
+    while (FillItem.isInstance(auid)) {
+      mis.skip(len);
+      auid = mis.readAUID(); 
+      len = mis.readBERLength();
+    }
+    
+    /* we have reached an essence element */
+    UL essenceKey = auid.asUL();
+    long trackNum = MXFFiles.getTrackNumber(essenceKey);
 
-        this.currentSID = pp.getBodySID();
-
-        mis.skip(pp.getHeaderByteCount());
-        if (pp.getIndexSID() != 0) {
-          mis.skip(pp.getIndexByteCount());
-        }
-
-      } else if (FillItem.getKey().equalsIgnoreVersion(auid)) {
-
-        /* skip over the fill item */
-
-        mis.skip(len);
-
-      } else {
-
-        /* we have reached an essence element */
-        UL essenceKey = auid.asUL();
-        long trackNum = MXFFiles.getTrackNumber(essenceKey);
-
-        /* find track info */
-        this.currentTrackInfo = null;
-        for (TrackState trackState : this.tracks) {
-          if (trackState.info.container.EssenceStreamID == currentSID &&
-              trackState.info.track.EssenceTrackNumber == trackNum) {
-            this.currentOffset = trackState.currentPosition;
-            trackState.currentPosition = trackState.currentPosition
-                .add(trackState.info.descriptor.SampleRate.reciprocal());
-            this.currentTrackInfo = trackState.info;
-            break;
-          }
-        }
-
-        this.currentPlayload = new BoundedInputStream(mis, len);
-        this.currentPayloadLength = len;
+    /* find track info */
+    this.currentTrackInfo = null;
+    for (TrackState trackState : this.tracks) {
+      if (trackState.info.container.EssenceStreamID == currentSID &&
+          trackState.info.track.EssenceTrackNumber == trackNum) {
+        this.currentOffset = trackState.currentPosition;
+        trackState.currentPosition = trackState.currentPosition
+            .add(trackState.info.descriptor.SampleRate.reciprocal());
+        this.currentTrackInfo = trackState.info;
         break;
       }
     }
+
+    this.currentPlayload = new BoundedInputStream(mis, len);
+    this.currentPayloadLength = len;
 
     return true;
   }

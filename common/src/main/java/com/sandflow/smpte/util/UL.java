@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
  */
 public class UL {
 
+    public final static int SIZE = 16;
     private final static Pattern URN_PATTERN = Pattern.compile("urn:smpte:ul:[a-fA-F0-9]{8}\\.[a-fA-F0-9]{8}\\.[a-fA-F0-9]{8}\\.[a-fA-F0-9]{8}");
     private final static Pattern DOTVALUE_PATTERN = Pattern.compile("[a-fA-F0-9]{2}(\\.[a-fA-F0-9]{2}){15}");
     public final static int CATEGORY_DESIGNATOR_BYTE = 4;

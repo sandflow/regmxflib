@@ -25,12 +25,12 @@
  */
 package com.sandflow.smpte.mxf;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
 
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
+import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 
 /**
@@ -39,6 +39,10 @@ import com.sandflow.smpte.util.UL;
 public class FillItem {
     
     static final UL KEY = new UL(new byte[]{0x06, 0x0e, 0x2b, 0x34, 0x01, 0x01, 0x01, 0x02, 0x03, 0x01, 0x02, 0x10, 0x01, 0x00, 0x00, 0x00});
+
+    public static boolean isInstance(AUID key) {
+        return KEY.equalsIgnoreVersion(key);
+    }
 
     /**
      * Creates a Fill Item from a Triplet
