@@ -5,10 +5,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.apache.commons.numbers.fraction.Fraction;
 
-import com.sandflow.smpte.klv.Group;
 import com.sandflow.smpte.klv.LocalTagRegister;
 import com.sandflow.smpte.klv.MemoryTriplet;
 import com.sandflow.smpte.klv.Set;
@@ -52,7 +52,7 @@ public class StreamingReader {
    * Represents the state of a track during streaming,
    * including its current playback position.
    */
-  private class TrackState {
+  protected static class TrackState {
     Fraction currentPosition;
     TrackInfo info;
 
@@ -64,8 +64,8 @@ public class StreamingReader {
 
   private MXFInputStream mis;
   private boolean isDone = false;
-  private Preface preface;
-  private ArrayList<TrackState> tracks = new ArrayList<TrackState>();
+  private final Preface preface;
+  private final List<TrackState> tracks;
 
   protected static Preface readHeaderMetadataFrom(InputStream is, long headerByteCount, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
@@ -151,6 +151,20 @@ public class StreamingReader {
     return null;
   }
 
+  protected static MaterialPackage findMaterialPackage(Preface preface) {
+    /* find the first material package */
+    /* TODO: what to do if more than one Material Package */
+
+    MaterialPackage mp;
+    for (Package p : preface.ContentStorageObject.Packages) {
+      if (p instanceof MaterialPackage) {
+        return (MaterialPackage) p;
+      }
+    }
+
+    return null;
+  }
+
   /**
    * Creates a new StreamingReader from an InputStream.
    *
@@ -184,8 +198,32 @@ public class StreamingReader {
 
     /* TODO: handle NULL preface */
 
+    /* we can only handle a single essence container at this point */
+    if (this.preface.ContentStorageObject.EssenceDataObjects.size() != 1) {
+      throw new RuntimeException("Only one essence container supported");
+    }
+
+    /* we can only handle one material package at this point */
+    if (this.preface.ContentStorageObject.Packages.stream().filter(e -> e instanceof MaterialPackage).count() != 1) {
+      throw new RuntimeException("Only one material package supported");
+    }
+
+    this.tracks = StreamingReader.extractTracks(this.preface);
+
+    /*
+     * skip over index tables, if any
+     */
+    if (pp.getIndexSID() != 0) {
+      mis.skip(pp.getIndexByteCount());
+    }
+
+  }
+
+  protected static List<TrackState> extractTracks(Preface preface) {
+    ArrayList<TrackState> tracks = new ArrayList<>();
+
     /* collect tracks that are stored in essence containers */
-    for (EssenceData ed : this.preface.ContentStorageObject.EssenceDataObjects) {
+    for (EssenceData ed : preface.ContentStorageObject.EssenceDataObjects) {
 
       /* retrieve the File Package */
       SourcePackage fp = null;
@@ -196,7 +234,9 @@ public class StreamingReader {
         }
       }
 
-      /* TODO: error in case no package is found */
+      if (fp == null) {
+        throw new RuntimeException("No file packages found");
+      }
 
       /* do we have a multi-descriptor */
       FileDescriptor fds[] = null;
@@ -218,28 +258,11 @@ public class StreamingReader {
 
         /* TODO: handle missing Track */
 
-        this.tracks.add(new TrackState(new TrackInfo(fd, foundTrack, ed)));
+        tracks.add(new TrackState(new TrackInfo(fd, foundTrack, ed)));
       }
     }
 
-    /* find the first material package */
-    /* TODO: what to do if more than one Material Package */
-
-    MaterialPackage mp;
-    for (Package p : preface.ContentStorageObject.Packages) {
-      if (p instanceof MaterialPackage) {
-        mp = (MaterialPackage) p;
-        break;
-      }
-    }
-
-    /*
-     * skip over index tables, if any
-     */
-    if (pp.getIndexSID() != 0) {
-      mis.skip(pp.getIndexByteCount());
-    }
-
+    return tracks;
   }
 
   private long currentSID;

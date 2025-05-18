@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.apache.commons.numbers.fraction.Fraction;
 
@@ -37,10 +38,13 @@ import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
+import com.sandflow.smpte.mxf.types.MaterialPackage;
+import com.sandflow.smpte.mxf.types.Preface;
 import com.sandflow.smpte.util.CountingInputStream;
 import com.sandflow.smpte.util.UUID;
+import com.sandflow.util.events.EventHandler;
 
-public class RandomAccessReader extends StreamingReader {
+public class RandomAccessReader {
 
   interface Index {
     long getPos(int editUnit);
@@ -132,52 +136,45 @@ public class RandomAccessReader extends StreamingReader {
   }
 
 
-  HashMap<Long, Index> indexBySID;
-  RandomAccessInputSource fis;
-  RandomIndexPack rip;
+  private final HashMap<Long, Index> indexBySID = new HashMap<>();
+  private final RandomAccessInputSource fis;
+  private final Preface preface;
+  private final List<StreamingReader.TrackState> tracks;
 
-  RandomAccessReader(RandomAccessInputSource raip) throws IOException, KLVException, MXFException {
-    super(raip, null);
-
+  RandomAccessReader(RandomAccessInputSource raip, EventHandler evthandler) throws IOException, KLVException, MXFException {
     this.fis = raip;
     MXFInputStream mis = new MXFInputStream(this.fis);
 
-    /* load RIP */
-
-    /* look for the RIP start */
-
+    /* load the RIP */
     this.fis.position(this.fis.size() - 4);
-
     long ripSize = mis.readUnsignedInt();
-
     this.fis.position(this.fis.size() - ripSize);
 
     Triplet t = mis.readTriplet();
-
     if (t == null) {
+      /* no Triplet where the RIP should start */
       throw new RuntimeException();
     }
 
-    this.rip = RandomIndexPack.fromTriplet(t);
-
-    if (this.rip == null) {
+    RandomIndexPack rip = RandomIndexPack.fromTriplet(t);
+    if (rip == null) {
+      /* no RIP where it should be */
       throw new RuntimeException();
     }
 
     /* build index table and identify the right header metadata */
 
     PartitionPack headerMetadataPartition = null;
-    long lastIndexStart = 0;
 
-    for (int i = 0; i < this.rip.getOffsets().size(); i++) {
+    for (int i = 0; i < rip.getOffsets().size(); i++) {
 
       /* seek to and read partition */
-      this.fis.position(this.rip.getOffsets().get(i).getOffset());
+      this.fis.position(rip.getOffsets().get(i).getOffset());
       t = mis.readTriplet();
       PartitionPack pp = PartitionPack.fromTriplet(t);
 
       /* look for header metadata */
-      if ((i == 0 || i == this.rip.getOffsets().size() - 1) &&
+      if ((i == 0 || i == rip.getOffsets().size() - 1) &&
           (pp.getStatus() == PartitionPack.Status.CLOSED_COMPLETE
               || pp.getStatus() == PartitionPack.Status.CLOSED_INCOMPLETE)
           &&
@@ -264,6 +261,22 @@ public class RandomAccessReader extends StreamingReader {
     }
 
     /* Load header metadata */
+
+    this.preface = StreamingReader.readHeaderMetadataFrom(mis, headerMetadataPartition.getHeaderByteCount(), evthandler);
+
+    /* TODO: handle NULL preface */
+
+    /* we can only handle a single essence container at this point */
+    if (this.preface.ContentStorageObject.EssenceDataObjects.size() != 1) {
+      throw new RuntimeException("Only one essence container supported");
+    }
+
+    /* we can only handle one material package at this point */
+    if (this.preface.ContentStorageObject.Packages.stream().filter(e -> e instanceof MaterialPackage).count() != 1) {
+      throw new RuntimeException("Only one material package supported");
+    }
+
+    this.tracks = StreamingReader.extractTracks(this.preface);
   }
 
   public void seek(long editUnitOffset) {
