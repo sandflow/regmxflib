@@ -64,8 +64,8 @@ class StreamingReaderTest {
     assertEquals(640L, d.StoredWidth);
 
     int i = 0;
-    while (sr.nextUnit()) {
-      assertEquals(frameTime.multiply(i), sr.getUnitOffset());
+    while (sr.nextElement()) {
+      assertEquals(i, sr.getElementPosition());
       i++;
     }
 
@@ -80,11 +80,11 @@ class StreamingReaderTest {
     assertEquals(1, sr.getTrackCount());
 
     int i = 0;
-    while (sr.nextUnit()) {
-      WAVEPCMDescriptor d = (WAVEPCMDescriptor) sr.getUnitTrackInfo().descriptor();
+    while (sr.nextElement()) {
+      WAVEPCMDescriptor d = (WAVEPCMDescriptor) sr.getElementTrackInfo().descriptor();
       assertEquals(d.AverageBytesPerSecond, 288000);
       i++;
-      assertEquals(288000, sr.getUnitPayloadLength());
+      assertEquals(288000, sr.getElementLength());
     }
 
     assertEquals(1, i);

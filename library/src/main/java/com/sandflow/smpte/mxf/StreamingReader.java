@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.commons.numbers.fraction.Fraction;
-
 import com.sandflow.smpte.klv.LocalTagRegister;
 import com.sandflow.smpte.klv.MemoryTriplet;
 import com.sandflow.smpte.klv.Set;
@@ -53,11 +51,11 @@ public class StreamingReader {
    * including its current playback position.
    */
   protected static class TrackState {
-    Fraction currentPosition;
+    long position;
     TrackInfo info;
 
     TrackState(TrackInfo info) {
-      this.currentPosition = Fraction.from(0);
+      this.position = -1;
       this.info = info;
     }
   }
@@ -98,8 +96,7 @@ public class StreamingReader {
       Triplet t = mis.readTriplet();
 
       /* skip fill items */
-      /* TODO: replace with call to FillItem static method */
-      if (FillItem.getKey().equalsIgnoreVersion(t.getKey())) {
+      if (FillItem.isInstance(t.getKey())) {
         continue;
       }
 
@@ -266,10 +263,9 @@ public class StreamingReader {
   }
 
   private long currentSID;
-  private BoundedInputStream currentPlayload;
-  private long currentPayloadLength;
-  private TrackInfo currentTrackInfo;
-  private Fraction currentOffset;
+  private BoundedInputStream elementPayload;
+  private long elementLength;
+  private int elementTrackIndex;
 
   /**
    * Advances the stream to the next essence unit.
@@ -278,15 +274,15 @@ public class StreamingReader {
    * @throws IOException  if an I/O error occurs.
    * @throws KLVException if a KLV reading error occurs.
    */
-  boolean nextUnit() throws KLVException, IOException {
+  public boolean nextElement() throws KLVException, IOException {
 
     if (this.isDone) {
       return false;
     }
 
     /* exhaust current unit */
-    if (this.currentPlayload != null) {
-      this.currentPlayload.exhaust();
+    if (this.elementPayload != null) {
+      this.elementPayload.exhaust();
     }
 
     AUID auid;
@@ -348,20 +344,21 @@ public class StreamingReader {
     long trackNum = MXFFiles.getTrackNumber(essenceKey);
 
     /* find track info */
-    this.currentTrackInfo = null;
-    for (TrackState trackState : this.tracks) {
-      if (trackState.info.container.EssenceStreamID == currentSID &&
-          trackState.info.track.EssenceTrackNumber == trackNum) {
-        this.currentOffset = trackState.currentPosition;
-        trackState.currentPosition = trackState.currentPosition
-            .add(trackState.info.descriptor.SampleRate.reciprocal());
-        this.currentTrackInfo = trackState.info;
+    this.elementTrackIndex = -1;
+    for (int i = 0; i < this.tracks.size(); i++) {
+      TrackState ts = this.tracks.get(i);
+      if (ts.info.container().EssenceStreamID == currentSID &&
+          ts.info.track().EssenceTrackNumber == trackNum) {
+        this.elementTrackIndex = i;
+        ts.position++;
         break;
       }
     }
 
-    this.currentPlayload = new BoundedInputStream(mis, len);
-    this.currentPayloadLength = len;
+    /* TODO: error if no track info found */
+
+    this.elementPayload = new BoundedInputStream(mis, len);
+    this.elementLength = len;
 
     return true;
   }
@@ -369,10 +366,10 @@ public class StreamingReader {
   /**
    * Returns the temporal offset of the current unit.
    *
-   * @return Fractional offset from start.
+   * @return Offset in number of track edit units.
    */
-  Fraction getUnitOffset() {
-    return this.currentOffset;
+  public long getElementPosition() {
+    return this.tracks.get(this.elementTrackIndex).position;
   }
 
   /**
@@ -380,8 +377,8 @@ public class StreamingReader {
    *
    * @return TrackInfo object associated with the current unit.
    */
-  TrackInfo getUnitTrackInfo() {
-    return this.currentTrackInfo;
+  public TrackInfo getElementTrackInfo() {
+    return this.tracks.get(this.elementTrackIndex).info;
   }
 
   /**
@@ -389,8 +386,8 @@ public class StreamingReader {
    *
    * @return Payload length.
    */
-  long getUnitPayloadLength() {
-    return this.currentPayloadLength;
+  public long getElementLength() {
+    return this.elementLength;
   }
 
   /**
@@ -398,8 +395,8 @@ public class StreamingReader {
    *
    * @return InputStream for reading payload data.
    */
-  InputStream getUnitPayload() {
-    return this.currentPlayload;
+  public InputStream getElementPayload() {
+    return this.elementPayload;
   }
 
   /**
@@ -408,7 +405,7 @@ public class StreamingReader {
    * @param i index of the track.
    * @return TrackInfo object.
    */
-  TrackInfo getTrack(int i) {
+  public TrackInfo getTrack(int i) {
     return this.tracks.get(i).info;
   }
 
@@ -417,16 +414,11 @@ public class StreamingReader {
    *
    * @return number of tracks.
    */
-  int getTrackCount() {
+  public int getTrackCount() {
     return this.tracks.size();
   }
 
-  /**
-   * Checks if the stream has reached the end.
-   *
-   * @return true if done reading, false otherwise.
-   */
-  boolean isDone() {
+  public boolean isDone() {
     return this.isDone;
   }
 
@@ -435,7 +427,7 @@ public class StreamingReader {
    *
    * @return Preface object.
    */
-  Preface getPreface() {
+  public Preface getPreface() {
     return this.preface;
   }
 

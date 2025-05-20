@@ -37,9 +37,11 @@ import org.apache.commons.numbers.fraction.Fraction;
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
+import com.sandflow.smpte.mxf.StreamingReader.TrackInfo;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.mxf.types.MaterialPackage;
 import com.sandflow.smpte.mxf.types.Preface;
+import com.sandflow.smpte.util.BoundedInputStream;
 import com.sandflow.smpte.util.CountingInputStream;
 import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.EventHandler;
@@ -136,10 +138,15 @@ public class RandomAccessReader {
   }
 
 
-  private final HashMap<Long, Index> indexBySID = new HashMap<>();
+  private Index index;
   private final RandomAccessInputSource fis;
   private final Preface preface;
   private final List<StreamingReader.TrackState> tracks;
+
+  private BoundedInputStream elementPayload;
+  private long elementLength;
+  private int elementTrackIndex;
+  private long position;
 
   RandomAccessReader(RandomAccessInputSource raip, EventHandler evthandler) throws IOException, KLVException, MXFException {
     this.fis = raip;
@@ -230,20 +237,20 @@ public class RandomAccessReader {
 
           /* there can only be one CBE table per IndexSID, so if we already have
           a CBE index table, we ignore its */
-          if (this.indexBySID.containsKey(pp.getIndexSID())) {
+          if (this.index != null) {
             /* report error */
             continue;
           }
 
-          this.indexBySID.put(pp.getIndexSID(), new CBECLipIndex(its.EditUnitByteCount, its.IndexDuration));
+          this.index = new CBECLipIndex(its.EditUnitByteCount, its.IndexDuration);
         } else {
           VBEIndex vbeIndex;
 
-          Index index = this.indexBySID.get(pp.getIndexSID());
-          if (index == null) {
+          if (this.index == null) {
             vbeIndex = new VBEIndex();
-          } else if (index instanceof VBEIndex) {
-            vbeIndex = (VBEIndex) index;
+            this.index = vbeIndex;
+          } else if (this.index instanceof VBEIndex) {
+            vbeIndex = (VBEIndex) this.index;
           } else {
             /* report error */
             continue;
@@ -279,15 +286,60 @@ public class RandomAccessReader {
     this.tracks = StreamingReader.extractTracks(this.preface);
   }
 
-  public void seek(long editUnitOffset) {
-
+  /**
+   * Returns the temporal offset of the current unit.
+   *
+   * @return Offset in number of track edit units.
+   */
+  public long getElementPosition() {
+    return this.tracks.get(this.elementTrackIndex).position;
   }
 
-  public Fraction getEditRate() {
-    return Fraction.of(0);
+  /**
+   * Returns metadata about the current essence unit's track.
+   *
+   * @return TrackInfo object associated with the current unit.
+   */
+  public TrackInfo getElementTrackInfo() {
+    return this.tracks.get(this.elementTrackIndex).info;
   }
 
-  public long getDuration() {
-    return 0;
+  public long getElementLength() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getUnitPayloadLength'");
+  }
+
+  public InputStream getElementPayload() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getUnitPayload'");
+  }
+
+  public TrackInfo getTrack(int i) {
+    return this.tracks.get(i).info;
+  }
+
+  public int getTrackCount() {
+    return this.tracks.size();
+  }
+
+  public Preface getPreface() {
+    return this.preface;
+  }
+
+  public boolean nextElement() throws KLVException, IOException {
+    if (this.position >= this.index.length()) {
+      return false;
+    }
+
+    this.position++;
+    return true;
+  }
+
+  public InputStream seek(int position) {
+    /* TODO: check for bad position */
+
+    this.position = this.index.getPos(position);
+    this.fis.position(this.position);
+    return this.fis;
   }
 }
