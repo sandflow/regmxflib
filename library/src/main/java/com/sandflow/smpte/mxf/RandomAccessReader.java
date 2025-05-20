@@ -29,19 +29,16 @@ package com.sandflow.smpte.mxf;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-
-import org.apache.commons.numbers.fraction.Fraction;
 
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.StreamingReader.TrackInfo;
+import com.sandflow.smpte.mxf.StreamingReader.TrackState;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.mxf.types.MaterialPackage;
 import com.sandflow.smpte.mxf.types.Preface;
-import com.sandflow.smpte.util.BoundedInputStream;
 import com.sandflow.smpte.util.CountingInputStream;
 import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.EventHandler;
@@ -137,16 +134,18 @@ public class RandomAccessReader {
     }
   }
 
+  enum State {
+    FRAME_PAYLOAD,
+    CLIP_PAYLOAD,
+    READY
+  }
 
+  private State state;
   private Index index;
   private final RandomAccessInputSource fis;
   private final Preface preface;
   private final List<StreamingReader.TrackState> tracks;
-
-  private BoundedInputStream elementPayload;
-  private long elementLength;
-  private int elementTrackIndex;
-  private long position;
+  private final Long streamID;
 
   RandomAccessReader(RandomAccessInputSource raip, EventHandler evthandler) throws IOException, KLVException, MXFException {
     this.fis = raip;
@@ -283,8 +282,15 @@ public class RandomAccessReader {
       throw new RuntimeException("Only one material package supported");
     }
 
+    this.streamID = this.preface.ContentStorageObject.EssenceDataObjects.get(0).EssenceStreamID;
+
     this.tracks = StreamingReader.extractTracks(this.preface);
+
+    this.seek(0);
   }
+
+  private int elementTrackIndex;
+  private BodyReader bodyReader;
 
   /**
    * Returns the temporal offset of the current unit.
@@ -292,6 +298,9 @@ public class RandomAccessReader {
    * @return Offset in number of track edit units.
    */
   public long getElementPosition() {
+    if (this.state != State.FRAME_PAYLOAD) {
+      throw new RuntimeException();
+    }
     return this.tracks.get(this.elementTrackIndex).position;
   }
 
@@ -301,17 +310,24 @@ public class RandomAccessReader {
    * @return TrackInfo object associated with the current unit.
    */
   public TrackInfo getElementTrackInfo() {
+    if (this.state != State.FRAME_PAYLOAD) {
+      throw new RuntimeException();
+    }
     return this.tracks.get(this.elementTrackIndex).info;
   }
 
   public long getElementLength() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getUnitPayloadLength'");
+    if (this.state != State.FRAME_PAYLOAD) {
+      throw new RuntimeException();
+    }
+    return this.bodyReader.elementength();
   }
 
   public InputStream getElementPayload() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getUnitPayload'");
+    if (this.state != State.FRAME_PAYLOAD) {
+      throw new RuntimeException();
+    }
+    return this.bodyReader.elementPayload();
   }
 
   public TrackInfo getTrack(int i) {
@@ -326,20 +342,55 @@ public class RandomAccessReader {
     return this.preface;
   }
 
+  /**
+   * Advances the stream to the next essence unit.
+   *
+   * @return true if a new unit is available; false if end of stream.
+   * @throws IOException  if an I/O error occurs.
+   * @throws KLVException if a KLV reading error occurs.
+   */
   public boolean nextElement() throws KLVException, IOException {
-    if (this.position >= this.index.length()) {
+    if (this.state == State.CLIP_PAYLOAD) {
+      throw new RuntimeException();
+    }
+    this.state = State.FRAME_PAYLOAD;
+
+    if (! this.bodyReader.nextElement()) {
       return false;
     }
+    
+    /* we have reached an essence element */
+    long trackNum = MXFFiles.getTrackNumber(this.bodyReader.essenceKey().asUL());
 
-    this.position++;
+    /* find track info */
+    this.elementTrackIndex = -1;
+    for (int i = 0; i < this.tracks.size(); i++) {
+      TrackState ts = this.tracks.get(i);
+      if (ts.info.container().EssenceStreamID == this.streamID &&
+          ts.info.track().EssenceTrackNumber == trackNum) {
+        this.elementTrackIndex = i;
+        break;
+      }
+    }
+
+    /* TODO: error if no track info found */
+
+    this.tracks.get(this.elementTrackIndex).position++;
+
     return true;
   }
 
-  public InputStream seek(int position) {
-    /* TODO: check for bad position */
-
-    this.position = this.index.getPos(position);
-    this.fis.position(this.position);
+  public InputStream getClipPayload() {
+    if (this.state != State.READY) {
+      throw new RuntimeException();
+    }
+    this.state = State.CLIP_PAYLOAD;
     return this.fis;
+  }
+
+  public void seek(int position) {
+    this.state = State.READY;
+    /* TODO: check for bad position */
+    this.fis.position(this.index.getPos(position));
   }
 }

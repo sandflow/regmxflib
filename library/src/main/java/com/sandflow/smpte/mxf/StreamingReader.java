@@ -64,6 +64,7 @@ public class StreamingReader {
   private boolean isDone = false;
   private final Preface preface;
   private final List<TrackState> tracks;
+  private BodyReader bodyReader;
 
   protected static Preface readHeaderMetadataFrom(InputStream is, long headerByteCount, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
@@ -148,20 +149,6 @@ public class StreamingReader {
     return null;
   }
 
-  protected static MaterialPackage findMaterialPackage(Preface preface) {
-    /* find the first material package */
-    /* TODO: what to do if more than one Material Package */
-
-    MaterialPackage mp;
-    for (Package p : preface.ContentStorageObject.Packages) {
-      if (p instanceof MaterialPackage) {
-        return (MaterialPackage) p;
-      }
-    }
-
-    return null;
-  }
-
   /**
    * Creates a new StreamingReader from an InputStream.
    *
@@ -205,6 +192,8 @@ public class StreamingReader {
       throw new RuntimeException("Only one material package supported");
     }
 
+    this.streamID = this.preface.ContentStorageObject.EssenceDataObjects.get(0).EssenceStreamID;
+
     this.tracks = StreamingReader.extractTracks(this.preface);
 
     /*
@@ -214,6 +203,7 @@ public class StreamingReader {
       mis.skip(pp.getIndexByteCount());
     }
 
+    this.bodyReader = new BodyReader(is);
   }
 
   protected static List<TrackState> extractTracks(Preface preface) {
@@ -262,9 +252,7 @@ public class StreamingReader {
     return tracks;
   }
 
-  private long currentSID;
-  private BoundedInputStream elementPayload;
-  private long elementLength;
+  private long streamID;
   private int elementTrackIndex;
 
   /**
@@ -280,85 +268,28 @@ public class StreamingReader {
       return false;
     }
 
-    /* exhaust current unit */
-    if (this.elementPayload != null) {
-      this.elementPayload.exhaust();
-    }
-
-    AUID auid;
-    long len;
-
-    /* skip over partitions */
-
-    while (true) {
-      try {
-        auid = mis.readAUID();
-      } catch (EOFException e) {
-        this.isDone = true;
-        return false;
-      }
-
-      len = mis.readBERLength();
-
-      if (! PartitionPack.isInstance(auid)) {
-        break;
-      }
-
-      /* partition pack is fixed length so that cast is ok */
-      byte[] value = new byte[(int) len];
-      mis.readFully(value);
-      Triplet t = new MemoryTriplet(auid, value);
-      PartitionPack pp = PartitionPack.fromTriplet(t);
-
-      /* we are done when we reach the footer partition */
-      if (pp.getKind() == Kind.FOOTER) {
-        this.isDone = true;
-        return false;
-      }
-
-      this.currentSID = pp.getBodySID();
-
-      /* do we have header metadata and/or an index table to skip? */
-
-      if (pp.getHeaderByteCount() + pp.getIndexByteCount() > 0) {
-        /* skip the optional fill item that follows the partition pack */
-        auid = mis.readAUID(); 
-        if (FillItem.isInstance(auid)) {
-          len = mis.readBERLength();
-          mis.skip(len);
-        }
-        mis.skip(pp.getHeaderByteCount() + pp.getIndexByteCount() - UL.SIZE);
-      }
-        
-   }
-    
-    /* skip over any fill items */
-    while (FillItem.isInstance(auid)) {
-      mis.skip(len);
-      auid = mis.readAUID(); 
-      len = mis.readBERLength();
+    if (! this.bodyReader.nextElement()) {
+      this.isDone = true;
+      return false;
     }
     
     /* we have reached an essence element */
-    UL essenceKey = auid.asUL();
-    long trackNum = MXFFiles.getTrackNumber(essenceKey);
+    long trackNum = MXFFiles.getTrackNumber(this.bodyReader.essenceKey().asUL());
 
     /* find track info */
     this.elementTrackIndex = -1;
     for (int i = 0; i < this.tracks.size(); i++) {
       TrackState ts = this.tracks.get(i);
-      if (ts.info.container().EssenceStreamID == currentSID &&
+      if (ts.info.container().EssenceStreamID == this.streamID &&
           ts.info.track().EssenceTrackNumber == trackNum) {
         this.elementTrackIndex = i;
-        ts.position++;
         break;
       }
     }
 
     /* TODO: error if no track info found */
 
-    this.elementPayload = new BoundedInputStream(mis, len);
-    this.elementLength = len;
+    this.tracks.get(this.elementTrackIndex).position++;
 
     return true;
   }
@@ -387,7 +318,7 @@ public class StreamingReader {
    * @return Payload length.
    */
   public long getElementLength() {
-    return this.elementLength;
+    return this.bodyReader.elementength();
   }
 
   /**
@@ -396,7 +327,7 @@ public class StreamingReader {
    * @return InputStream for reading payload data.
    */
   public InputStream getElementPayload() {
-    return this.elementPayload;
+    return this.bodyReader.elementPayload();
   }
 
   /**
