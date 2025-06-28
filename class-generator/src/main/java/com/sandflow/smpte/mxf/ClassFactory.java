@@ -2,6 +2,7 @@ package com.sandflow.smpte.mxf;
 
 import java.util.HashMap;
 
+import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.util.UL;
 
 public class ClassFactory {
@@ -13,6 +14,8 @@ public class ClassFactory {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+
+    ClassFactory.putClass(IndexTableSegment.getKey(), IndexTableSegment.class);
   }
 
   private ClassFactory() {

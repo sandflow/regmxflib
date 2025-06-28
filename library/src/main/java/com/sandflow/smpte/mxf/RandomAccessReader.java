@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
@@ -49,9 +51,11 @@ public class RandomAccessReader {
     long getPos(int editUnit);
 
     long length();
+
+    void applyECOffsets(SortedMap<Long, Long> ecToFileOffsets);
   }
 
-  class CBECLipIndex implements Index {
+  static class CBECLipIndex implements Index {
     private long cbeSize;
     private long startPos;
     private long length;
@@ -75,43 +79,70 @@ public class RandomAccessReader {
       if (editUnit >= this.length) {
         throw new IllegalArgumentException();
       }
-      return this.cbeSize * editUnit;
+      return this.cbeSize * editUnit + this.startPos;
     }
 
     @Override
     public long length() {
       return this.length;
     }
+
+    @Override
+    public void applyECOffsets(SortedMap<Long, Long> ecToFileOffsets) {
+      if (ecToFileOffsets.size() != 1) {
+        throw new RuntimeException();
+      }
+      this.startPos = ecToFileOffsets.entrySet().iterator().next().getValue();
+    }
   }
 
   class VBEIndex implements Index {
-    private ArrayList<Long> pos = new ArrayList<>();
+    private ArrayList<Long> positions = new ArrayList<>();
 
     protected void add(long pos) {
-      this.pos.add(pos);
+      this.positions.add(pos);
     }
 
     @Override
     public long getPos(int editUnit) {
-      if (editUnit >= this.pos.size()) {
+      if (editUnit >= this.positions.size()) {
         throw new IllegalArgumentException();
       }
-      return (long) this.pos.get(editUnit);
+      return (long) this.positions.get(editUnit);
     }
 
     @Override
     public long length() {
-      return this.pos.size();
+      return this.positions.size();
+    }
+
+    @Override
+    public void applyECOffsets(SortedMap<Long, Long> ecToFileOffsets) {
+      if (ecToFileOffsets.size() == 0) {
+        throw new RuntimeException();
+      }
+      var nextECOffset = ecToFileOffsets.entrySet().iterator();
+      long ecOffset = nextECOffset.next().
+      for (int i = 0; i < this.positions.size(); i++) {
+        long pos = this.positions.get(i);
+        if (pos >= ms) {
+          ecOffset = ms;
+        }
+        this.positions.set(i, pos + ecOffset);
+      }
+
+      this.startPos = ecToFileOffsets.entrySet().iterator().next().getValue();
     }
   }
 
-  public abstract class RandomAccessInputSource extends InputStream {
+  public static abstract class RandomAccessInputSource extends InputStream {
     /**
      * Set the position (in bytes) from the beginning of the source.
      *
      * @param pos Position in bytes
+     * @throws IOException
      */
-    public void position(long pos) {
+    public void position(long pos) throws IOException {
       throw new UnsupportedOperationException();
     }
 
@@ -119,8 +150,9 @@ public class RandomAccessReader {
      * Returns the size (in bytes) of the source.
      * 
      * @return Size in bytes
+     * @throws IOException
      */
-    public long size() {
+    public long size() throws IOException {
       throw new UnsupportedOperationException();
     }
 
@@ -128,8 +160,9 @@ public class RandomAccessReader {
      * Returns the position (in bytes) from the beginning of the source.
      * 
      * @return Position in bytes
+     * @throws IOException
      */
-    public long position() {
+    public long position() throws IOException {
       throw new UnsupportedOperationException();
     }
   }
@@ -170,9 +203,16 @@ public class RandomAccessReader {
     }
 
     /*
-     * iterate through partitions to build index table and identify the
-     * right header metadata
+     * process all the partitions, extracting:
+     * - index information
+     * - essence container locations
+     * - header metadata information
      */
+
+    /* content package offsets within the essence container */
+    ArrayList<Long> offsets = new ArrayList<>();
+    /* essence container to file offsets */
+    TreeMap<Long, Long> ecToFileOffsets = new TreeMap<>();
 
     PartitionPack headerMetadataPartition = null;
 
@@ -203,15 +243,17 @@ public class RandomAccessReader {
         headerMetadataPartition = pp;
       }
 
-      /* skip if there is no index table */
-      if (pp.getIndexSID() == 0 || pp.getIndexByteCount() == 0) {
+      /*
+       * skip further processing unless the partition contains index table
+       * segements or essence container bytes
+       */
+
+      if (pp.getIndexSID() == 0 && pp.getBodySID() == 0) {
         continue;
       }
 
-      /* look for the the start of the index table */
-
+      /* skip the fill item that follows the partition pack, if any */
       long pos = this.fis.position();
-
       t = mis.readTriplet();
       FillItem fi = FillItem.fromTriplet(t);
       if (fi != null) {
@@ -260,38 +302,58 @@ public class RandomAccessReader {
             continue;
           }
 
-          this.index = new CBECLipIndex(its.EditUnitByteCount, its.IndexDuration);
-        } else {
-          VBEIndex vbeIndex;
+          if (its.EditUnitByteCount != null && its.EditUnitByteCount > 0) {
+            /* we have a CBE index table */
 
-          if (this.index == null) {
-            vbeIndex = new VBEIndex();
-            this.index = vbeIndex;
-          } else if (this.index instanceof VBEIndex) {
-            vbeIndex = (VBEIndex) this.index;
-          } else {
-            /* report error */
-            continue;
-          }
-
-          for (var e : its.IndexEntryArray) {
-            if (e.StreamOffset == null) {
+            /*
+             * there can only be one CBE table per IndexSID
+             */
+            if (this.index != null) {
               throw new RuntimeException();
             }
-            vbeIndex.add(e.StreamOffset);
+
+            this.index = new CBECLipIndex(its.EditUnitByteCount, its.IndexDuration);
+          } else {
+            VBEIndex vbeIndex;
+
+            if (this.index == null) {
+              vbeIndex = new VBEIndex();
+              this.index = vbeIndex;
+            } else if (this.index instanceof VBEIndex) {
+              vbeIndex = (VBEIndex) this.index;
+            } else {
+              /* report error */
+              continue;
+            }
+
+            for (var e : its.IndexEntryArray) {
+              if (e.StreamOffset == null) {
+                throw new RuntimeException();
+              }
+              vbeIndex.add(e.StreamOffset);
+            }
           }
         }
+
+      }
+
+      /* save the essence container offset */
+      if (pp.getBodySID() != 0) {
+        ecToFileOffsets.put(pp.getBodyOffset(), this.fis.position());
       }
 
     }
 
+    /*  */
+
     /* Load header metadata */
 
+    this.fis.position(headerMetadataPartition.getThisPartition());
+    mis.readTriplet();
     this.preface = StreamingReader.readHeaderMetadataFrom(mis, headerMetadataPartition.getHeaderByteCount(),
         evthandler);
-    if (this.preface == null) {
-      throw new RuntimeException();
-    }
+
+    /* TODO: handle NULL preface */
 
     /* we can only handle a single essence container at this point */
     if (this.preface.ContentStorageObject.EssenceDataObjects.size() != 1) {
@@ -373,6 +435,8 @@ public class RandomAccessReader {
   public boolean nextElement() throws KLVException, IOException {
     if (this.state == State.CLIP_PAYLOAD) {
       throw new RuntimeException();
+    } else if (this.state == State.READY) {
+      this.bodyReader = new BodyReader(fis);
     }
     this.state = State.FRAME_PAYLOAD;
 
@@ -409,7 +473,7 @@ public class RandomAccessReader {
     return this.fis;
   }
 
-  public void seek(int position) {
+  public void seek(int position) throws IOException {
     this.state = State.READY;
     /* TODO: check for bad position */
     this.fis.position(this.index.getPos(position));
