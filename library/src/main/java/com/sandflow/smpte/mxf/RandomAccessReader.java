@@ -29,7 +29,10 @@ package com.sandflow.smpte.mxf;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -49,25 +52,20 @@ import com.sandflow.util.events.EventHandler;
 public class RandomAccessReader {
 
   interface Index {
-    long getPos(int editUnit);
+    long getECPosition(int editUnitIndex);
 
     long length();
-
-    void applyECOffsets(SortedMap<Long, Long> ecToFileOffsets);
   }
 
   static class CBECLipIndex implements Index {
     private long cbeSize;
-    private long startPos;
     private long length;
 
     CBECLipIndex(long cbeSize, long length) {
       if (length <= 0) {
         throw new IllegalArgumentException();
       }
-      if (startPos <= 0) {
-        throw new IllegalArgumentException();
-      }
+
       if (length <= 0) {
         throw new IllegalArgumentException();
       }
@@ -76,36 +74,28 @@ public class RandomAccessReader {
     }
 
     @Override
-    public long getPos(int editUnit) {
+    public long getECPosition(int editUnit) {
       if (editUnit >= this.length) {
         throw new IllegalArgumentException();
       }
-      return this.cbeSize * editUnit + this.startPos;
+      return this.cbeSize * editUnit;
     }
 
     @Override
     public long length() {
       return this.length;
     }
-
-    @Override
-    public void applyECOffsets(SortedMap<Long, Long> ecToFileOffsets) {
-      if (ecToFileOffsets.size() != 1) {
-        throw new RuntimeException();
-      }
-      this.startPos = ecToFileOffsets.entrySet().iterator().next().getValue();
-    }
   }
 
-  class VBEIndex implements Index {
+  static class VBEIndex implements Index {
     private ArrayList<Long> positions = new ArrayList<>();
 
-    protected void add(long pos) {
-      this.positions.add(pos);
+    protected void addECPosition(long ecPosition) {
+      this.positions.add(ecPosition);
     }
 
     @Override
-    public long getPos(int editUnit) {
+    public long getECPosition(int editUnit) {
       if (editUnit >= this.positions.size()) {
         throw new IllegalArgumentException();
       }
@@ -116,25 +106,7 @@ public class RandomAccessReader {
     public long length() {
       return this.positions.size();
     }
-
-    @Override
-    public void applyECOffsets(SortedMap<Long, Long> ecToFileOffsets) {
-      if (ecToFileOffsets.size() == 0) {
-        throw new RuntimeException();
-      }
-      var nextECOffset = ecToFileOffsets.entrySet().iterator();
-      long ecOffset = nextECOffset.next().
-      for (int i = 0; i < this.positions.size(); i++) {
-        long pos = this.positions.get(i);
-        if (pos >= ms) {
-          ecOffset = ms;
-        }
-        this.positions.set(i, pos + ecOffset);
-      }
-
-      this.startPos = ecToFileOffsets.entrySet().iterator().next().getValue();
-    }
-  }
+   }
 
   public static abstract class RandomAccessInputSource extends InputStream {
     /**
@@ -174,12 +146,38 @@ public class RandomAccessReader {
     READY
   }
 
+  /**
+   * Maps Essence Container offset to file offsets
+   */
+  private class ECToFilePositionMapper {
+    final private TreeMap<Long, Long> ecToFileOffsets = new TreeMap<>();
+
+    void addPartition(long ecPosition, long filePosition) {
+      this.ecToFileOffsets.put(ecPosition, filePosition);
+    }
+
+    long getFilePosition(long ecPosition) {
+      if (this.ecToFileOffsets.size() == 0) {
+        throw new RuntimeException();
+      }
+      var entry = this.ecToFileOffsets.floorEntry(ecPosition);
+
+      if (entry == null) {
+        throw new RuntimeException();
+      }
+
+      return ecPosition - entry.getKey() + entry.getValue();
+    }
+  }
+
   private State state;
-  private Index index;
   private final RandomAccessInputSource fis;
   private final Preface preface;
   private final List<StreamingReader.TrackState> tracks;
-  private final Long streamID;
+  private final Long bodySID = null;
+  private final Long indexSID = null;
+  private Index euToECPosition;
+  private final ECToFilePositionMapper ecToFilePositions = new ECToFilePositionMapper();
 
   RandomAccessReader(RandomAccessInputSource raip, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
@@ -210,11 +208,6 @@ public class RandomAccessReader {
      * - header metadata information
      */
 
-    /* content package offsets within the essence container */
-    ArrayList<Long> offsets = new ArrayList<>();
-    /* essence container to file offsets */
-    TreeMap<Long, Long> ecToFileOffsets = new TreeMap<>();
-
     PartitionPack headerMetadataPartition = null;
 
     for (int i = 0; i < rip.getOffsets().size(); i++) {
@@ -234,7 +227,6 @@ public class RandomAccessReader {
       }
 
       /* skip generic stream partition */
-
       if (pp.getStatus() == Status.STREAM) {
         continue;
       }
@@ -252,7 +244,6 @@ public class RandomAccessReader {
        * skip further processing unless the partition contains index table
        * segements or essence container bytes
        */
-
       if (pp.getIndexSID() == 0 && pp.getBodySID() == 0) {
         continue;
       }
@@ -302,7 +293,7 @@ public class RandomAccessReader {
            * there can only be one CBE table per IndexSID, so if we already have
            * a CBE index table, we ignore its
            */
-          if (this.index != null) {
+          if (this.euToECPosition != null) {
             /* report error */
             continue;
           }
@@ -313,19 +304,19 @@ public class RandomAccessReader {
             /*
              * there can only be one CBE table per IndexSID
              */
-            if (this.index != null) {
+            if (this.euToECPosition != null) {
               throw new RuntimeException();
             }
 
-            this.index = new CBECLipIndex(its.EditUnitByteCount, its.IndexDuration);
+            this.euToECPosition = new CBECLipIndex(its.EditUnitByteCount, its.IndexDuration);
           } else {
             VBEIndex vbeIndex;
 
-            if (this.index == null) {
+            if (this.euToECPosition == null) {
               vbeIndex = new VBEIndex();
-              this.index = vbeIndex;
-            } else if (this.index instanceof VBEIndex) {
-              vbeIndex = (VBEIndex) this.index;
+              this.euToECPosition = vbeIndex;
+            } else if (this.euToECPosition instanceof VBEIndex) {
+              vbeIndex = (VBEIndex) this.euToECPosition;
             } else {
               /* report error */
               continue;
@@ -335,7 +326,7 @@ public class RandomAccessReader {
               if (e.StreamOffset == null) {
                 throw new RuntimeException();
               }
-              vbeIndex.add(e.StreamOffset);
+              vbeIndex.addECPosition(e.StreamOffset);
             }
           }
         }
@@ -370,7 +361,7 @@ public class RandomAccessReader {
       throw new RuntimeException("Only one material package supported");
     }
 
-    this.streamID = this.preface.ContentStorageObject.EssenceDataObjects.get(0).EssenceStreamID;
+    this.bodySID = this.preface.ContentStorageObject.EssenceDataObjects.get(0).EssenceStreamID;
 
     this.tracks = StreamingReader.extractTracks(this.preface);
 
@@ -456,7 +447,7 @@ public class RandomAccessReader {
     this.elementTrackIndex = -1;
     for (int i = 0; i < this.tracks.size(); i++) {
       TrackState ts = this.tracks.get(i);
-      if (ts.info.container().EssenceStreamID == this.streamID &&
+      if (ts.info.container().EssenceStreamID == this.bodySID &&
           ts.info.track().EssenceTrackNumber == trackNum) {
         this.elementTrackIndex = i;
         break;
@@ -481,6 +472,6 @@ public class RandomAccessReader {
   public void seek(int position) throws IOException {
     this.state = State.READY;
     /* TODO: check for bad position */
-    this.fis.position(this.index.getPos(position));
+    this.fis.position(this.euToECPosition.getECPosition(position));
   }
 }
