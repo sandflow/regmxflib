@@ -36,6 +36,7 @@ import java.util.TreeMap;
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
+import com.sandflow.smpte.mxf.PartitionPack.Status;
 import com.sandflow.smpte.mxf.StreamingReader.TrackInfo;
 import com.sandflow.smpte.mxf.StreamingReader.TrackState;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
@@ -232,7 +233,11 @@ public class RandomAccessReader {
         throw new RuntimeException();
       }
 
-      /* TODO: check for generic stream partition */
+      /* skip generic stream partition */
+
+      if (pp.getStatus() == Status.STREAM) {
+        continue;
+      }
 
       /* look for header metadata */
       if ((i == 0 || i == rip.getOffsets().size() - 1) &&

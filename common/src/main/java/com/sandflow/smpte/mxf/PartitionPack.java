@@ -144,6 +144,9 @@ public class PartitionPack {
       case 0x04:
         pp.setStatus(Status.CLOSED_COMPLETE);
         break;
+      case 0x11:
+        pp.setStatus(Status.STREAM);
+        break;
       default:
         return null;
     }
@@ -362,7 +365,8 @@ public class PartitionPack {
     OPEN_INCOMPLETE((byte) 1),
     CLOSED_INCOMPLETE((byte) 2),
     OPEN_COMPLETE((byte) 3),
-    CLOSED_COMPLETE((byte) 4);
+    CLOSED_COMPLETE((byte) 4),
+    STREAM((byte) 0x11);
 
     private final byte byte14;
 
