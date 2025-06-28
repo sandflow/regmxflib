@@ -29,12 +29,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.RandomAccessFile;
 
-import org.apache.commons.numbers.fraction.Fraction;
 import org.junit.jupiter.api.Test;
 
-import com.sandflow.smpte.mxf.RandomAccessReader.RandomAccessInputSource;
 import com.sandflow.smpte.mxf.types.RGBADescriptor;
 
 class RandomAccessReaderTest {
@@ -42,11 +41,10 @@ class RandomAccessReaderTest {
   @Test
   void testVBE() throws Exception {
     File f = new File(ClassLoader.getSystemResource("mxf-files/video.mxf").toURI());
-    RandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
-    RandomAccessReader rar = new RandomAccessReader(rais, null);
+    RandomAccessReader rar = new RandomAccessReader(new FileRandomAccessInputSource(new RandomAccessFile(f, "r")),
+        null);
 
     assertEquals(1, rar.getTrackCount());
-    Fraction frameTime = rar.getTrack(0).descriptor().SampleRate.reciprocal();
 
     RGBADescriptor d = (RGBADescriptor) rar.getTrack(0).descriptor();
     assertEquals(640L, d.StoredWidth);
@@ -57,6 +55,26 @@ class RandomAccessReaderTest {
       rar.seek(i);
       assertTrue(rar.nextElement());
     }
-    
+
   }
+
+  @Test
+  void testCBE() throws Exception {
+    File f = new File(ClassLoader.getSystemResource("mxf-files/audio.mxf").toURI());
+    RandomAccessReader rar = new RandomAccessReader(new FileRandomAccessInputSource(new RandomAccessFile(f, "r")),
+        null);
+
+    assertEquals(1, rar.getTrackCount());
+
+    assertEquals(48000, rar.size());
+
+    rar.seek(24000);
+
+    InputStream is = rar.getClipPayload();
+
+    byte[] buffer = new byte[144000];
+
+    is.read(buffer);
+  }
+
 }
