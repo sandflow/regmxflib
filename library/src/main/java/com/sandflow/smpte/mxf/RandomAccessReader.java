@@ -29,11 +29,7 @@ package com.sandflow.smpte.mxf;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
 import java.util.TreeMap;
 
 import com.sandflow.smpte.klv.Set;
@@ -106,7 +102,7 @@ public class RandomAccessReader {
     public long length() {
       return this.positions.size();
     }
-   }
+  }
 
   public static abstract class RandomAccessInputSource extends InputStream {
     /**
@@ -115,9 +111,7 @@ public class RandomAccessReader {
      * @param pos Position in bytes
      * @throws IOException
      */
-    public void position(long pos) throws IOException {
-      throw new UnsupportedOperationException();
-    }
+    public abstract void position(long pos) throws IOException;
 
     /**
      * Returns the size (in bytes) of the source.
@@ -125,9 +119,7 @@ public class RandomAccessReader {
      * @return Size in bytes
      * @throws IOException
      */
-    public long size() throws IOException {
-      throw new UnsupportedOperationException();
-    }
+    public abstract long size() throws IOException;
 
     /**
      * Returns the position (in bytes) from the beginning of the source.
@@ -135,9 +127,7 @@ public class RandomAccessReader {
      * @return Position in bytes
      * @throws IOException
      */
-    public long position() throws IOException {
-      throw new UnsupportedOperationException();
-    }
+    public abstract long position() throws IOException;
   }
 
   enum State {
@@ -174,8 +164,8 @@ public class RandomAccessReader {
   private final RandomAccessInputSource fis;
   private final Preface preface;
   private final List<StreamingReader.TrackState> tracks;
-  private final Long bodySID = null;
-  private final Long indexSID = null;
+  private Long bodySID = null;
+  private Long indexSID = null;
   private Index euToECPosition;
   private final ECToFilePositionMapper ecToFilePositions = new ECToFilePositionMapper();
 
@@ -248,7 +238,10 @@ public class RandomAccessReader {
         continue;
       }
 
-      /* skip the fill item that follows the partition pack, if any */
+      /*
+       * skip the header metadata, including the optional fill item that follows
+       * the partition pack
+       */
       long pos = this.fis.position();
       t = mis.readTriplet();
       FillItem fi = FillItem.fromTriplet(t);
@@ -266,50 +259,51 @@ public class RandomAccessReader {
         this.fis.position(pos + pp.getHeaderByteCount());
       }
 
-      CountingInputStream cis = new CountingInputStream(this.fis);
-      /* Reset MXF Input stream */
-      /* TODO: include counting in MXFInputStream */
-      mis = new MXFInputStream(cis);
+      if (pp.getIndexSID() != 0) {
+        /* read the one or more index segments */
 
-      /* read Index Segments until the IndexByteCount is exceeded */
-      while (cis.getCount() < pp.getIndexByteCount()) {
-        IndexTableSegment its = IndexTableSegment.fromSet(
-            Set.fromLocalSet(mis.readTriplet(), StaticLocalTags.register()),
-            new MXFInputContext() {
-              @Override
-              public Set getSet(UUID uuid) {
-                throw new UnsupportedOperationException("Unimplemented method 'getSet'");
-              }
-            });
-
-        if (its == null) {
-          continue;
+        /* we only support indexing a single EC */
+        /* TODO: confirm that indexSID and bodySID are consistent */
+        if (this.indexSID == null) {
+          this.indexSID = pp.getIndexSID();
+        } else if (this.indexSID != pp.getIndexSID()) {
+          throw new RuntimeException();
         }
 
-        if (its.EditUnitByteCount != null && its.EditUnitByteCount > 0) {
-          /* we have a CBE index table */
+        /* Reset MXF Input stream */
+        /* TODO: include counting in MXFInputStream */
+        CountingInputStream cis = new CountingInputStream(this.fis);
+        mis = new MXFInputStream(cis);
 
-          /*
-           * there can only be one CBE table per IndexSID, so if we already have
-           * a CBE index table, we ignore its
-           */
-          if (this.euToECPosition != null) {
-            /* report error */
-            continue;
+        /* read Index Segments until the IndexByteCount is exceeded */
+        while (cis.getCount() < pp.getIndexByteCount()) {
+          IndexTableSegment its = IndexTableSegment.fromSet(
+              Set.fromLocalSet(mis.readTriplet(), StaticLocalTags.register()),
+              new MXFInputContext() {
+                @Override
+                public Set getSet(UUID uuid) {
+                  throw new UnsupportedOperationException("Unimplemented method 'getSet'");
+                }
+              });
+
+          if (its == null) {
+            throw new RuntimeException();
           }
 
           if (its.EditUnitByteCount != null && its.EditUnitByteCount > 0) {
             /* we have a CBE index table */
 
             /*
-             * there can only be one CBE table per IndexSID
+             * there can only be one CBE table per IndexSID, so if we already have
+             * a CBE index table, we ignore its
              */
             if (this.euToECPosition != null) {
-              throw new RuntimeException();
+              throw new RuntimeException("Only one VBE permitted.");
             }
 
             this.euToECPosition = new CBECLipIndex(its.EditUnitByteCount, its.IndexDuration);
           } else {
+            /* we have a VBE index table */
             VBEIndex vbeIndex;
 
             if (this.euToECPosition == null) {
@@ -329,18 +323,22 @@ public class RandomAccessReader {
               vbeIndex.addECPosition(e.StreamOffset);
             }
           }
-        }
 
+        }
       }
 
       /* save the essence container offset */
       if (pp.getBodySID() != 0) {
-        ecToFileOffsets.put(pp.getBodyOffset(), this.fis.position());
+        if (this.bodySID == null) {
+          this.bodySID = pp.getBodySID();
+        } else if (this.bodySID != pp.getBodySID()) {
+          throw new RuntimeException();
+        }
+
+        this.ecToFilePositions.addPartition(pp.getBodyOffset(), this.fis.position());
       }
 
     }
-
-    /*  */
 
     /* Load header metadata */
 
@@ -349,7 +347,9 @@ public class RandomAccessReader {
     this.preface = StreamingReader.readHeaderMetadataFrom(mis, headerMetadataPartition.getHeaderByteCount(),
         evthandler);
 
-    /* TODO: handle NULL preface */
+    if (this.preface == null) {
+      throw new RuntimeException();
+    }
 
     /* we can only handle a single essence container at this point */
     if (this.preface.ContentStorageObject.EssenceDataObjects.size() != 1) {
@@ -469,9 +469,13 @@ public class RandomAccessReader {
     return this.fis;
   }
 
+  public long size() {
+    return this.euToECPosition.length();
+  }
+
   public void seek(int position) throws IOException {
     this.state = State.READY;
     /* TODO: check for bad position */
-    this.fis.position(this.euToECPosition.getECPosition(position));
+    this.fis.position(this.ecToFilePositions.getFilePosition(this.euToECPosition.getECPosition(position)));
   }
 }
