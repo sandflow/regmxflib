@@ -147,7 +147,8 @@ public class RandomAccessReader {
   private final List<StreamingReader.TrackState> tracks;
   private final Long streamID;
 
-  RandomAccessReader(RandomAccessInputSource raip, EventHandler evthandler) throws IOException, KLVException, MXFException {
+  RandomAccessReader(RandomAccessInputSource raip, EventHandler evthandler)
+      throws IOException, KLVException, MXFException {
     this.fis = raip;
     MXFInputStream mis = new MXFInputStream(this.fis);
 
@@ -168,7 +169,10 @@ public class RandomAccessReader {
       throw new RuntimeException();
     }
 
-    /* build index table and identify the right header metadata */
+    /*
+     * iterate through partitions to build index table and identify the
+     * right header metadata
+     */
 
     PartitionPack headerMetadataPartition = null;
 
@@ -177,7 +181,18 @@ public class RandomAccessReader {
       /* seek to and read partition */
       this.fis.position(rip.getOffsets().get(i).getOffset());
       t = mis.readTriplet();
+      if (t == null) {
+        /* no triplet where it should be */
+        throw new RuntimeException();
+      }
+
       PartitionPack pp = PartitionPack.fromTriplet(t);
+      if (pp == null) {
+        /* no partition pack where expected */
+        throw new RuntimeException();
+      }
+
+      /* TODO: check for generic stream partition */
 
       /* look for header metadata */
       if ((i == 0 || i == rip.getOffsets().size() - 1) &&
@@ -198,15 +213,18 @@ public class RandomAccessReader {
       long pos = this.fis.position();
 
       t = mis.readTriplet();
-
       FillItem fi = FillItem.fromTriplet(t);
       if (fi != null) {
-        /* so we have skipped a Fill Item and are either at the start of the
-        header metadata or index table */
+        /*
+         * so we have skipped a Fill Item and are either at the start of the
+         * header metadata or index table
+         */
         this.fis.position(this.fis.position() + pp.getHeaderByteCount());
       } else {
-        /* no fill item, so we are either at the start of the header metadata or
-        index table */
+        /*
+         * no fill item, so we are either at the start of the header metadata or
+         * index table
+         */
         this.fis.position(pos + pp.getHeaderByteCount());
       }
 
@@ -218,14 +236,13 @@ public class RandomAccessReader {
       /* read Index Segments until the IndexByteCount is exceeded */
       while (cis.getCount() < pp.getIndexByteCount()) {
         IndexTableSegment its = IndexTableSegment.fromSet(
-          Set.fromLocalSet(mis.readTriplet(), StaticLocalTags.register()),
-          new MXFInputContext() {
-            @Override
-            public Set getSet(UUID uuid) {
-              throw new UnsupportedOperationException("Unimplemented method 'getSet'");
-            }
-          }
-        );
+            Set.fromLocalSet(mis.readTriplet(), StaticLocalTags.register()),
+            new MXFInputContext() {
+              @Override
+              public Set getSet(UUID uuid) {
+                throw new UnsupportedOperationException("Unimplemented method 'getSet'");
+              }
+            });
 
         if (its == null) {
           continue;
@@ -234,8 +251,10 @@ public class RandomAccessReader {
         if (its.EditUnitByteCount != null && its.EditUnitByteCount > 0) {
           /* we have a CBE index table */
 
-          /* there can only be one CBE table per IndexSID, so if we already have
-          a CBE index table, we ignore its */
+          /*
+           * there can only be one CBE table per IndexSID, so if we already have
+           * a CBE index table, we ignore its
+           */
           if (this.index != null) {
             /* report error */
             continue;
@@ -268,9 +287,11 @@ public class RandomAccessReader {
 
     /* Load header metadata */
 
-    this.preface = StreamingReader.readHeaderMetadataFrom(mis, headerMetadataPartition.getHeaderByteCount(), evthandler);
-
-    /* TODO: handle NULL preface */
+    this.preface = StreamingReader.readHeaderMetadataFrom(mis, headerMetadataPartition.getHeaderByteCount(),
+        evthandler);
+    if (this.preface == null) {
+      throw new RuntimeException();
+    }
 
     /* we can only handle a single essence container at this point */
     if (this.preface.ContentStorageObject.EssenceDataObjects.size() != 1) {
@@ -355,10 +376,10 @@ public class RandomAccessReader {
     }
     this.state = State.FRAME_PAYLOAD;
 
-    if (! this.bodyReader.nextElement()) {
+    if (!this.bodyReader.nextElement()) {
       return false;
     }
-    
+
     /* we have reached an essence element */
     long trackNum = MXFFiles.getTrackNumber(this.bodyReader.essenceKey().asUL());
 
