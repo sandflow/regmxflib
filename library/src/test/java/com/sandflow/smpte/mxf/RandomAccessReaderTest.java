@@ -25,6 +25,7 @@
  */
 package com.sandflow.smpte.mxf;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -75,6 +76,29 @@ class RandomAccessReaderTest {
     byte[] buffer = new byte[144000];
 
     is.read(buffer);
+  }
+
+  @Test
+  void testClipVBE() throws Exception {
+    final byte[] iaFrameMagic = {01, 00, 00, 00, 00, 02, 00, 00, 00 };
+
+    File f = new File(ClassLoader.getSystemResource("mxf-files/iab.mxf").toURI());
+    RandomAccessReader rar = new RandomAccessReader(new FileRandomAccessInputSource(new RandomAccessFile(f, "r")),
+        null);
+
+    assertEquals(1, rar.getTrackCount());
+
+    assertEquals(2, rar.size());
+
+    byte[] buffer = new byte[iaFrameMagic.length];
+
+    for (int i = 0; i < rar.size(); i++) {
+      rar.seek(i);
+      InputStream is = rar.getClipPayload();
+      is.read(buffer);
+      assertArrayEquals(buffer, iaFrameMagic);
+    }
+
   }
 
 }
