@@ -41,6 +41,7 @@ import com.sandflow.smpte.mxf.StreamingReader.TrackState;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.mxf.types.MaterialPackage;
 import com.sandflow.smpte.mxf.types.Preface;
+import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.CountingInputStream;
 import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.EventHandler;
@@ -168,6 +169,7 @@ public class RandomAccessReader {
   private Long indexSID = null;
   private Index euToECPosition;
   private final ECToFilePositionMapper ecToFilePositions = new ECToFilePositionMapper();
+  private long clipStartOffset;
 
   RandomAccessReader(RandomAccessInputSource raip, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
@@ -469,13 +471,39 @@ public class RandomAccessReader {
     return this.fis;
   }
 
+  public void startClipAccess() throws IOException, KLVException {
+    if (this.state != State.READY) {
+      throw new RuntimeException();
+    }
+    /* determine the KL offset */
+    long clipStartPosition = this.ecToFilePositions.getFilePosition(this.euToECPosition.getECPosition(0));
+    this.fis.position(clipStartPosition);
+    MXFInputStream mis = new MXFInputStream(fis);
+    mis.readAUID();
+    mis.readBERLength();
+    this.clipStartOffset = clipStartPosition - this.fis.position();
+    this.state = State.CLIP_PAYLOAD;
+  }
+
+  public void startFrameAccess() {
+    if (this.state != State.READY) {
+      throw new RuntimeException();
+    }
+    this.state = State.FRAME_PAYLOAD;
+  }
+
   public long size() {
     return this.euToECPosition.length();
   }
 
-  public void seek(int position) throws IOException {
-    this.state = State.READY;
-    /* TODO: check for bad position */
-    this.fis.position(this.ecToFilePositions.getFilePosition(this.euToECPosition.getECPosition(position)));
+  public void seek(int euIndex) throws IOException {
+    if (this.state != State.FRAME_PAYLOAD && this.state != State.FRAME_PAYLOAD) {
+      throw new RuntimeException();
+    }
+    long position = this.ecToFilePositions.getFilePosition(this.euToECPosition.getECPosition(euIndex));
+    if (this.state == State.CLIP_PAYLOAD) {
+      position += this.clipStartOffset;
+    }
+    this.fis.position(position);
   }
 }
