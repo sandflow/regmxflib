@@ -30,7 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
-import java.io.InputStream;
 import java.io.RandomAccessFile;
 
 import org.junit.jupiter.api.Test;
@@ -40,65 +39,60 @@ import com.sandflow.smpte.mxf.types.RGBADescriptor;
 class RandomAccessReaderTest {
 
   @Test
-  void testVBE() throws Exception {
+  void testFrameVBE() throws Exception {
     File f = new File(ClassLoader.getSystemResource("mxf-files/video.mxf").toURI());
-    RandomAccessReader rar = new RandomAccessReader(new FileRandomAccessInputSource(new RandomAccessFile(f, "r")),
-        null);
+    FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
 
-    assertEquals(1, rar.getTrackCount());
-
-    RGBADescriptor d = (RGBADescriptor) rar.getTrack(0).descriptor();
+    RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
+    assertEquals(1, fi.getTrackCount());
+    RGBADescriptor d = (RGBADescriptor) fi.getTrack(0).descriptor();
     assertEquals(640L, d.StoredWidth);
+    assertEquals(24, fi.getSize());
 
-    assertEquals(24, rar.size());
-
-    for (int i = 0; i < rar.size(); i++) {
-      rar.seek(i);
-      assertTrue(rar.nextElement());
+    FrameReader fr = new FrameReader(fi, rais);
+    for (int i = 0; i < fr.getSize(); i++) {
+      fr.seek(i);
+      assertTrue(fr.nextElement());
     }
-
+    fr.close();
   }
 
   @Test
-  void testCBE() throws Exception {
+  void testClipCBE() throws Exception {
     File f = new File(ClassLoader.getSystemResource("mxf-files/audio.mxf").toURI());
-    RandomAccessReader rar = new RandomAccessReader(new FileRandomAccessInputSource(new RandomAccessFile(f, "r")),
-        null);
+    FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
 
-    assertEquals(1, rar.getTrackCount());
+    RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
+    assertEquals(1, fi.getTrackCount());
+    assertEquals(48000, fi.getSize());
 
-    assertEquals(48000, rar.size());
-
-    rar.seek(24000);
-
-    InputStream is = rar.getClipPayload();
-
+    ClipReader fr = new ClipReader(fi, rais);
+    fr.seek(24000);
     byte[] buffer = new byte[144000];
-
-    is.read(buffer);
+    fr.read(buffer);
+    fr.close();
   }
 
   @Test
   void testClipVBE() throws Exception {
-    final byte[] iaFrameMagic = {01, 00, 00, 00, 00, 02, 00, 00, 00 };
+    final byte[] iaFrameMagic = { 01, 00, 00, 00, 00, 02, 00, 00 };
 
     File f = new File(ClassLoader.getSystemResource("mxf-files/iab.mxf").toURI());
-    RandomAccessReader rar = new RandomAccessReader(new FileRandomAccessInputSource(new RandomAccessFile(f, "r")),
-        null);
+    FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
 
-    assertEquals(1, rar.getTrackCount());
-
-    assertEquals(2, rar.size());
+    RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
+    assertEquals(1, fi.getTrackCount());
+    assertEquals(2, fi.getSize());
 
     byte[] buffer = new byte[iaFrameMagic.length];
 
-    for (int i = 0; i < rar.size(); i++) {
-      rar.seek(i);
-      InputStream is = rar.getClipPayload();
-      is.read(buffer);
+    ClipReader fr = new ClipReader(fi, rais);
+    for (int i = 0; i < fr.getSize(); i++) {
+      fr.seek(i);
+      fr.read(buffer);
       assertArrayEquals(buffer, iaFrameMagic);
     }
-
+    fr.close();
   }
 
 }

@@ -27,7 +27,6 @@
 package com.sandflow.smpte.mxf;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
@@ -37,19 +36,24 @@ import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.PartitionPack.Status;
 import com.sandflow.smpte.mxf.StreamingReader.TrackInfo;
-import com.sandflow.smpte.mxf.StreamingReader.TrackState;
+import com.sandflow.smpte.mxf.types.EssenceData;
+import com.sandflow.smpte.mxf.types.FileDescriptor;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.mxf.types.MaterialPackage;
+import com.sandflow.smpte.mxf.types.MultipleDescriptor;
+import com.sandflow.smpte.mxf.types.Package;
 import com.sandflow.smpte.mxf.types.Preface;
-import com.sandflow.smpte.util.AUID;
+import com.sandflow.smpte.mxf.types.SourcePackage;
+import com.sandflow.smpte.mxf.types.Track;
 import com.sandflow.smpte.util.CountingInputStream;
+import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.EventHandler;
 
-public class RandomAccessReader {
+public class RandomAccessFileInfo {
 
   interface Index {
-    long getECPosition(int editUnitIndex);
+    long getECPosition(long editUnitIndex);
 
     long length();
   }
@@ -71,7 +75,7 @@ public class RandomAccessReader {
     }
 
     @Override
-    public long getECPosition(int editUnit) {
+    public long getECPosition(long editUnit) {
       if (editUnit >= this.length) {
         throw new IllegalArgumentException();
       }
@@ -92,49 +96,17 @@ public class RandomAccessReader {
     }
 
     @Override
-    public long getECPosition(int editUnit) {
+    public long getECPosition(long editUnit) {
       if (editUnit >= this.positions.size()) {
         throw new IllegalArgumentException();
       }
-      return (long) this.positions.get(editUnit);
+      return (long) this.positions.get((int) editUnit);
     }
 
     @Override
     public long length() {
       return this.positions.size();
     }
-  }
-
-  public static abstract class RandomAccessInputSource extends InputStream {
-    /**
-     * Set the position (in bytes) from the beginning of the source.
-     *
-     * @param pos Position in bytes
-     * @throws IOException
-     */
-    public abstract void position(long pos) throws IOException;
-
-    /**
-     * Returns the size (in bytes) of the source.
-     * 
-     * @return Size in bytes
-     * @throws IOException
-     */
-    public abstract long size() throws IOException;
-
-    /**
-     * Returns the position (in bytes) from the beginning of the source.
-     * 
-     * @return Position in bytes
-     * @throws IOException
-     */
-    public abstract long position() throws IOException;
-  }
-
-  enum State {
-    FRAME_PAYLOAD,
-    CLIP_PAYLOAD,
-    READY
   }
 
   /**
@@ -161,25 +133,67 @@ public class RandomAccessReader {
     }
   }
 
-  private State state;
-  private final RandomAccessInputSource fis;
+  protected static List<TrackInfo> extractTracks(Preface preface) {
+    ArrayList<TrackInfo> tracks = new ArrayList<>();
+
+    /* collect tracks that are stored in essence containers */
+    for (EssenceData ed : preface.ContentStorageObject.EssenceDataObjects) {
+
+      /* retrieve the File Package */
+      SourcePackage fp = null;
+      for (Package p : preface.ContentStorageObject.Packages) {
+        if (p.PackageID.equals(ed.LinkedPackageID)) {
+          fp = (SourcePackage) p;
+          break;
+        }
+      }
+
+      if (fp == null) {
+        throw new RuntimeException("No file packages found");
+      }
+
+      /* do we have a multi-descriptor */
+      FileDescriptor fds[] = null;
+      if (fp.EssenceDescription instanceof MultipleDescriptor) {
+        fds = ((MultipleDescriptor) fp.EssenceDescription).SubDescriptors.toArray(fds);
+      } else {
+        fds = new FileDescriptor[] { (FileDescriptor) fp.EssenceDescription };
+      }
+
+      for (FileDescriptor fd : fds) {
+        Track foundTrack = null;
+
+        for (Track t : fp.PackageTracks) {
+          if (t.TrackID == fd.LinkedTrackID) {
+            foundTrack = t;
+            break;
+          }
+        }
+
+        /* TODO: handle missing Track */
+
+        tracks.add(new TrackInfo(fd, foundTrack, ed));
+      }
+    }
+
+    return tracks;
+  }
+
   private final Preface preface;
-  private final List<StreamingReader.TrackState> tracks;
+  private final List<StreamingReader.TrackInfo> tracks;
   private Long bodySID = null;
   private Long indexSID = null;
   private Index euToECPosition;
   private final ECToFilePositionMapper ecToFilePositions = new ECToFilePositionMapper();
-  private long clipStartOffset;
 
-  RandomAccessReader(RandomAccessInputSource raip, EventHandler evthandler)
+  RandomAccessFileInfo(RandomAccessInputSource raip, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
-    this.fis = raip;
-    MXFInputStream mis = new MXFInputStream(this.fis);
+    MXFInputStream mis = new MXFInputStream(raip);
 
     /* load the RIP */
-    this.fis.position(this.fis.size() - 4);
+    raip.position(raip.size() - 4);
     long ripSize = mis.readUnsignedInt();
-    this.fis.position(this.fis.size() - ripSize);
+    raip.position(raip.size() - ripSize);
 
     Triplet t = mis.readTriplet();
     if (t == null) {
@@ -205,7 +219,7 @@ public class RandomAccessReader {
     for (int i = 0; i < rip.getOffsets().size(); i++) {
 
       /* seek to and read partition */
-      this.fis.position(rip.getOffsets().get(i).getOffset());
+      raip.position(rip.getOffsets().get(i).getOffset());
       t = mis.readTriplet();
       if (t == null) {
         /* no triplet where it should be */
@@ -244,7 +258,7 @@ public class RandomAccessReader {
        * skip the header metadata, including the optional fill item that follows
        * the partition pack
        */
-      long pos = this.fis.position();
+      long pos = raip.position();
       t = mis.readTriplet();
       FillItem fi = FillItem.fromTriplet(t);
       if (fi != null) {
@@ -252,13 +266,13 @@ public class RandomAccessReader {
          * so we have skipped a Fill Item and are either at the start of the
          * header metadata or index table
          */
-        this.fis.position(this.fis.position() + pp.getHeaderByteCount());
+        raip.position(raip.position() + pp.getHeaderByteCount());
       } else {
         /*
          * no fill item, so we are either at the start of the header metadata or
          * index table
          */
-        this.fis.position(pos + pp.getHeaderByteCount());
+        raip.position(pos + pp.getHeaderByteCount());
       }
 
       if (pp.getIndexSID() != 0) {
@@ -274,7 +288,7 @@ public class RandomAccessReader {
 
         /* Reset MXF Input stream */
         /* TODO: include counting in MXFInputStream */
-        CountingInputStream cis = new CountingInputStream(this.fis);
+        CountingInputStream cis = new CountingInputStream(raip);
         mis = new MXFInputStream(cis);
 
         /* read Index Segments until the IndexByteCount is exceeded */
@@ -337,14 +351,14 @@ public class RandomAccessReader {
           throw new RuntimeException();
         }
 
-        this.ecToFilePositions.addPartition(pp.getBodyOffset(), this.fis.position());
+        this.ecToFilePositions.addPartition(pp.getBodyOffset(), raip.position());
       }
 
     }
 
     /* Load header metadata */
 
-    this.fis.position(headerMetadataPartition.getThisPartition());
+    raip.position(headerMetadataPartition.getThisPartition());
     mis.readTriplet();
     this.preface = StreamingReader.readHeaderMetadataFrom(mis, headerMetadataPartition.getHeaderByteCount(),
         evthandler);
@@ -363,56 +377,15 @@ public class RandomAccessReader {
       throw new RuntimeException("Only one material package supported");
     }
 
-    this.bodySID = this.preface.ContentStorageObject.EssenceDataObjects.get(0).EssenceStreamID;
+    /* TODO: check for consistent bodySID */
+    // this.bodySID =
+    // this.preface.ContentStorageObject.EssenceDataObjects.get(0).EssenceStreamID;
 
-    this.tracks = StreamingReader.extractTracks(this.preface);
-
-    this.seek(0);
-  }
-
-  private int elementTrackIndex;
-  private BodyReader bodyReader;
-
-  /**
-   * Returns the temporal offset of the current unit.
-   *
-   * @return Offset in number of track edit units.
-   */
-  public long getElementPosition() {
-    if (this.state != State.FRAME_PAYLOAD) {
-      throw new RuntimeException();
-    }
-    return this.tracks.get(this.elementTrackIndex).position;
-  }
-
-  /**
-   * Returns metadata about the current essence unit's track.
-   *
-   * @return TrackInfo object associated with the current unit.
-   */
-  public TrackInfo getElementTrackInfo() {
-    if (this.state != State.FRAME_PAYLOAD) {
-      throw new RuntimeException();
-    }
-    return this.tracks.get(this.elementTrackIndex).info;
-  }
-
-  public long getElementLength() {
-    if (this.state != State.FRAME_PAYLOAD) {
-      throw new RuntimeException();
-    }
-    return this.bodyReader.elementength();
-  }
-
-  public InputStream getElementPayload() {
-    if (this.state != State.FRAME_PAYLOAD) {
-      throw new RuntimeException();
-    }
-    return this.bodyReader.elementPayload();
+    this.tracks = extractTracks(this.preface);
   }
 
   public TrackInfo getTrack(int i) {
-    return this.tracks.get(i).info;
+    return this.tracks.get(i);
   }
 
   public int getTrackCount() {
@@ -423,87 +396,30 @@ public class RandomAccessReader {
     return this.preface;
   }
 
-  /**
-   * Advances the stream to the next essence unit.
-   *
-   * @return true if a new unit is available; false if end of stream.
-   * @throws IOException  if an I/O error occurs.
-   * @throws KLVException if a KLV reading error occurs.
-   */
-  public boolean nextElement() throws KLVException, IOException {
-    if (this.state == State.CLIP_PAYLOAD) {
-      throw new RuntimeException();
-    } else if (this.state == State.READY) {
-      this.bodyReader = new BodyReader(fis);
-    }
-    this.state = State.FRAME_PAYLOAD;
-
-    if (!this.bodyReader.nextElement()) {
-      return false;
-    }
-
-    /* we have reached an essence element */
-    long trackNum = MXFFiles.getTrackNumber(this.bodyReader.essenceKey().asUL());
-
-    /* find track info */
-    this.elementTrackIndex = -1;
-    for (int i = 0; i < this.tracks.size(); i++) {
-      TrackState ts = this.tracks.get(i);
-      if (ts.info.container().EssenceStreamID == this.bodySID &&
-          ts.info.track().EssenceTrackNumber == trackNum) {
-        this.elementTrackIndex = i;
-        break;
-      }
-    }
-
-    /* TODO: error if no track info found */
-
-    this.tracks.get(this.elementTrackIndex).position++;
-
-    return true;
+  public long ecFromEUPosition(long position) {
+    return this.euToECPosition.getECPosition(position);
   }
 
-  public InputStream getClipPayload() {
-    if (this.state != State.READY) {
-      throw new RuntimeException();
-    }
-    this.state = State.CLIP_PAYLOAD;
-    return this.fis;
+  public long fileFromECPosition(long position) {
+    return this.ecToFilePositions.getFilePosition(position);
   }
 
-  public void startClipAccess() throws IOException, KLVException {
-    if (this.state != State.READY) {
-      throw new RuntimeException();
-    }
-    /* determine the KL offset */
-    long clipStartPosition = this.ecToFilePositions.getFilePosition(this.euToECPosition.getECPosition(0));
-    this.fis.position(clipStartPosition);
-    MXFInputStream mis = new MXFInputStream(fis);
-    mis.readAUID();
-    mis.readBERLength();
-    this.clipStartOffset = clipStartPosition - this.fis.position();
-    this.state = State.CLIP_PAYLOAD;
-  }
-
-  public void startFrameAccess() {
-    if (this.state != State.READY) {
-      throw new RuntimeException();
-    }
-    this.state = State.FRAME_PAYLOAD;
-  }
-
-  public long size() {
+  public long getSize() {
     return this.euToECPosition.length();
   }
 
-  public void seek(int euIndex) throws IOException {
-    if (this.state != State.FRAME_PAYLOAD && this.state != State.FRAME_PAYLOAD) {
-      throw new RuntimeException();
+  public TrackInfo getTrackInfo(UL elementKey) {
+    long trackNum = MXFFiles.getTrackNumber(elementKey);
+
+    /* find track info */
+    for (int i = 0; i < this.tracks.size(); i++) {
+      TrackInfo info = this.tracks.get(i);
+      if (info.track().EssenceTrackNumber == trackNum) {
+        return info;
+      }
     }
-    long position = this.ecToFilePositions.getFilePosition(this.euToECPosition.getECPosition(euIndex));
-    if (this.state == State.CLIP_PAYLOAD) {
-      position += this.clipStartOffset;
-    }
-    this.fis.position(position);
+
+    return null;
   }
+
 }

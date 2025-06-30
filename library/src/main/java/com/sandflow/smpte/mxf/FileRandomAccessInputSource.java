@@ -3,8 +3,6 @@ package com.sandflow.smpte.mxf;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import com.sandflow.smpte.mxf.RandomAccessReader.RandomAccessInputSource;
-
 public class FileRandomAccessInputSource extends RandomAccessInputSource {
 
   final RandomAccessFile rap;
