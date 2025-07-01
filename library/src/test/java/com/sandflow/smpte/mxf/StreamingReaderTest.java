@@ -25,7 +25,9 @@
  */
 package com.sandflow.smpte.mxf;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.File;
@@ -33,6 +35,9 @@ import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.Writer;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.numbers.fraction.Fraction;
 import org.junit.jupiter.api.Test;
@@ -48,27 +53,27 @@ class StreamingReaderTest {
     dir.mkdirs();
   }
 
-
   @Test
   void testVBE() throws Exception {
+    List<Long> actualSizes = Arrays.asList(1964L, 1296L, 1965L, 2023L, 1698L, 1966L, 2063L, 1618L, 2100L, 2068L,
+        2520L, 1846L, 2475L, 2540L, 2214L, 2486L, 2615L, 2150L, 2628L, 2614L, 3058L, 2472L, 2992L, 3093L);
+
     InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/video.mxf");
     assertNotNull(is);
 
     StreamingReader sr = new StreamingReader(is, null);
 
     assertEquals(1, sr.getTrackCount());
-    Fraction frameTime = sr.getTrack(0).descriptor().SampleRate.reciprocal();
 
     RGBADescriptor d = (RGBADescriptor) sr.getTrack(0).descriptor();
     assertEquals(640L, d.StoredWidth);
 
-    int i = 0;
+    ArrayList<Long> measuredSizes = new ArrayList<>();
     while (sr.nextElement()) {
-      assertEquals(i, sr.getElementPosition());
-      i++;
+      measuredSizes.add(sr.getElementLength());
     }
 
-    assertEquals(24, i);
+    assertIterableEquals(actualSizes, measuredSizes);
   }
 
   @Test

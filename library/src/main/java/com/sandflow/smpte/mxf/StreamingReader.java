@@ -41,20 +41,6 @@ public class StreamingReader extends InputStream {
       EssenceData container) {
   }
 
-  /**
-   * Represents the state of a track during streaming,
-   * including its current playback position.
-   */
-  protected static class TrackState {
-    long position;
-    TrackInfo info;
-
-    TrackState(TrackInfo info) {
-      this.position = -1;
-      this.info = info;
-    }
-  }
-
   enum State {
     READY,
     IN_PAYLOAD,
@@ -64,7 +50,7 @@ public class StreamingReader extends InputStream {
   private MXFInputStream mis;
   private State state;
   private final Preface preface;
-  private final List<TrackState> tracks;
+  private final List<TrackInfo> tracks;
   private ElementInfo elementInfo;
   private long remainingElementBytes = 0;
 
@@ -210,8 +196,8 @@ public class StreamingReader extends InputStream {
   }
 
   /* refactor this */
-  protected static List<TrackState> extractTracks(Preface preface) {
-    ArrayList<TrackState> tracks = new ArrayList<>();
+  protected static List<TrackInfo> extractTracks(Preface preface) {
+    ArrayList<TrackInfo> tracks = new ArrayList<>();
 
     /* collect tracks that are stored in essence containers */
     for (EssenceData ed : preface.ContentStorageObject.EssenceDataObjects) {
@@ -249,7 +235,7 @@ public class StreamingReader extends InputStream {
 
         /* TODO: handle missing Track */
 
-        tracks.add(new TrackState(new TrackInfo(fd, foundTrack, ed)));
+        tracks.add(new TrackInfo(fd, foundTrack, ed));
       }
     }
 
@@ -287,9 +273,9 @@ public class StreamingReader extends InputStream {
     /* find track info */
     this.elementTrackIndex = -1;
     for (int i = 0; i < this.tracks.size(); i++) {
-      TrackState ts = this.tracks.get(i);
-      if (ts.info.container().EssenceStreamID == this.streamID &&
-          ts.info.track().EssenceTrackNumber == trackNum) {
+      TrackInfo ti = this.tracks.get(i);
+      if (ti.container().EssenceStreamID == this.streamID &&
+          ti.track().EssenceTrackNumber == trackNum) {
         this.elementTrackIndex = i;
         break;
       }
@@ -297,28 +283,13 @@ public class StreamingReader extends InputStream {
 
     /* TODO: error if no track info found */
 
-    this.tracks.get(this.elementTrackIndex).position++;
-
     this.remainingElementBytes = this.elementInfo.length();
-
-    System.out.println(this.remainingElementBytes);
 
     this.state = State.IN_PAYLOAD;
 
     return true;
   }
 
-  /**
-   * Returns the temporal offset of the current unit.
-   *
-   * @return Offset in number of track edit units.
-   */
-  public long getElementPosition() {
-    if (this.state != State.IN_PAYLOAD) {
-      throw new RuntimeException();
-    }
-    return this.tracks.get(this.elementTrackIndex).position;
-  }
 
   /**
    * Returns metadata about the current essence unit's track.
@@ -329,7 +300,7 @@ public class StreamingReader extends InputStream {
     if (this.state != State.IN_PAYLOAD) {
       throw new RuntimeException();
     }
-    return this.tracks.get(this.elementTrackIndex).info;
+    return this.tracks.get(this.elementTrackIndex);
   }
 
   /**
@@ -351,7 +322,7 @@ public class StreamingReader extends InputStream {
    * @return TrackInfo object.
    */
   public TrackInfo getTrack(int i) {
-    return this.tracks.get(i).info;
+    return this.tracks.get(i);
   }
 
   /**
