@@ -25,13 +25,18 @@
  */
 package com.sandflow.smpte.mxf;
 
+import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
 
+import com.sandflow.smpte.klv.MemoryTriplet;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
+import com.sandflow.smpte.mxf.PartitionPack.Kind;
+import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 
 /**
@@ -137,6 +142,65 @@ public class MXFFiles {
         ((essenceKey.getValueOctet(13) & 0xFF) << 16) +
         ((essenceKey.getValueOctet(14) & 0xFF) << 8) +
         (essenceKey.getValueOctet(15) & 0xFF);
+  }
+
+  static public record ElementInfo(AUID key, long length) {
+  }
+
+  public static ElementInfo nextElement(InputStream is) throws IOException, KLVException {
+    AUID elementKey;
+    long elementLength;
+
+    MXFInputStream mis = new MXFInputStream(is);
+
+    /* skip over partitions */
+    while (true) {
+      elementKey = mis.readAUID();
+      elementLength = mis.readBERLength();
+
+      if (elementKey.isUUID()) {
+        /* skip KLVs that do not have a UL key */
+        mis.exhaust(elementLength);
+        continue;
+      }
+
+      if (!PartitionPack.isInstance(elementKey)) {
+        /* we have reached what looks like a GC element */
+        break;
+      }
+
+      /* partition pack is fixed length so that cast is ok */
+      byte[] value = new byte[(int) elementLength];
+      mis.readFully(value);
+      PartitionPack pp = PartitionPack.fromTriplet(new MemoryTriplet(elementKey, value));
+
+      /* we are done when we reach the footer partition */
+      if (pp.getKind() == Kind.FOOTER) {
+        return null;
+      }
+
+      /* do we have header metadata and/or an index table to skip? */
+
+      if (pp.getHeaderByteCount() + pp.getIndexByteCount() > 0) {
+        /* skip the optional fill item that follows the partition pack */
+        elementKey = mis.readAUID();
+        if (FillItem.isInstance(elementKey)) {
+          elementLength = mis.readBERLength();
+          mis.exhaust(elementLength);
+        }
+        mis.exhaust(pp.getHeaderByteCount() + pp.getIndexByteCount() - UL.SIZE);
+      }
+
+    }
+
+    /* skip over any fill items */
+    while (FillItem.isInstance(elementKey)) {
+      mis.exhaust(elementLength);
+      elementKey = mis.readAUID();
+      elementLength = mis.readBERLength();
+    }
+
+    return new ElementInfo(elementKey, elementLength);
   }
 
 }

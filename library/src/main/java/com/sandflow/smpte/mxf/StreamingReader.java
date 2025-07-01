@@ -12,6 +12,7 @@ import com.sandflow.smpte.klv.MemoryTriplet;
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
+import com.sandflow.smpte.mxf.MXFFiles.ElementInfo;
 import com.sandflow.smpte.mxf.PartitionPack.Kind;
 import com.sandflow.smpte.mxf.types.EssenceData;
 import com.sandflow.smpte.mxf.types.FileDescriptor;
@@ -31,7 +32,7 @@ import com.sandflow.util.events.EventHandler;
  * StreamingReader provides a streaming interface to read MXF (Material Exchange
  * Format) files.
  */
-public class StreamingReader {
+public class StreamingReader extends InputStream {
 
   /**
    * Represents information associated with an Essence Track.
@@ -60,11 +61,18 @@ public class StreamingReader {
     }
   }
 
+  enum State {
+    READY,
+    IN_PAYLOAD,
+    DONE
+  }
+
   private MXFInputStream mis;
-  private boolean isDone = false;
+  private State state;
   private final Preface preface;
   private final List<TrackState> tracks;
-  private BodyReader bodyReader;
+  private ElementInfo elementInfo;
+  private long remainingElementBytes = 0;
 
   protected static Preface readHeaderMetadataFrom(InputStream is, long headerByteCount, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
@@ -200,10 +208,10 @@ public class StreamingReader {
      * skip over index tables, if any
      */
     if (pp.getIndexSID() != 0) {
-      mis.skip(pp.getIndexByteCount());
+      mis.exhaust(pp.getIndexByteCount());
     }
 
-    this.bodyReader = new BodyReader(is);
+    this.state = State.READY;
   }
 
   protected static List<TrackState> extractTracks(Preface preface) {
@@ -264,17 +272,25 @@ public class StreamingReader {
    */
   public boolean nextElement() throws KLVException, IOException {
 
-    if (this.isDone) {
+    if (this.state == State.DONE) {
       return false;
     }
 
-    if (! this.bodyReader.nextElement()) {
-      this.isDone = true;
+    long skippedBytes = this.mis.exhaust(this.remainingElementBytes);
+
+    if (skippedBytes != this.remainingElementBytes) {
+      throw new RuntimeException();
+    }
+
+    this.elementInfo = MXFFiles.nextElement(this.mis);
+
+    if (this.elementInfo == null) {
+      this.state = State.DONE;
       return false;
     }
-    
+
     /* we have reached an essence element */
-    long trackNum = MXFFiles.getTrackNumber(this.bodyReader.essenceKey().asUL());
+    long trackNum = MXFFiles.getTrackNumber(this.elementInfo.key().asUL());
 
     /* find track info */
     this.elementTrackIndex = -1;
@@ -291,6 +307,12 @@ public class StreamingReader {
 
     this.tracks.get(this.elementTrackIndex).position++;
 
+    this.remainingElementBytes = this.elementInfo.length();
+
+    System.out.println(this.remainingElementBytes);
+
+    this.state = State.IN_PAYLOAD;
+
     return true;
   }
 
@@ -300,6 +322,9 @@ public class StreamingReader {
    * @return Offset in number of track edit units.
    */
   public long getElementPosition() {
+    if (this.state != State.IN_PAYLOAD) {
+      throw new RuntimeException();
+    }
     return this.tracks.get(this.elementTrackIndex).position;
   }
 
@@ -309,6 +334,9 @@ public class StreamingReader {
    * @return TrackInfo object associated with the current unit.
    */
   public TrackInfo getElementTrackInfo() {
+    if (this.state != State.IN_PAYLOAD) {
+      throw new RuntimeException();
+    }
     return this.tracks.get(this.elementTrackIndex).info;
   }
 
@@ -318,16 +346,10 @@ public class StreamingReader {
    * @return Payload length.
    */
   public long getElementLength() {
-    return this.bodyReader.elementength();
-  }
-
-  /**
-   * Returns an InputStream over the current essence payload.
-   *
-   * @return InputStream for reading payload data.
-   */
-  public InputStream getElementPayload() {
-    return this.bodyReader.elementPayload();
+    if (this.state != State.IN_PAYLOAD) {
+      throw new RuntimeException();
+    }
+    return this.elementInfo.length();
   }
 
   /**
@@ -350,7 +372,7 @@ public class StreamingReader {
   }
 
   public boolean isDone() {
-    return this.isDone;
+    return this.state == State.DONE;
   }
 
   /**
@@ -360,6 +382,38 @@ public class StreamingReader {
    */
   public Preface getPreface() {
     return this.preface;
+  }
+
+  @Override
+  public int read() throws IOException {
+    if (this.state != State.IN_PAYLOAD) {
+      throw new RuntimeException();
+    }
+    if (this.remainingElementBytes == 0)
+      return -1;
+    int r = this.mis.read();
+    this.remainingElementBytes = r == -1 ? 0 : this.remainingElementBytes - 1;
+    return r;
+  }
+
+  @Override
+  public int read(byte[] b, int off, int len) throws IOException {
+    if (this.state != State.IN_PAYLOAD) {
+      throw new RuntimeException();
+    }
+    if (this.remainingElementBytes == 0)
+      return -1;
+    int r = this.mis.read(b, off, len);
+    this.remainingElementBytes = r == -1 ? 0 : this.remainingElementBytes - r;
+    return r;
+  }
+
+  @Override
+  public void close() throws IOException {
+    /*
+     * do nothing: it is the responsibility of the caller to close the
+     * underlying RandomAccessInputSource
+     */
   }
 
 }

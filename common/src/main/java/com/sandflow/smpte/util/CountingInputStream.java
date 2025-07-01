@@ -55,6 +55,7 @@ public class CountingInputStream extends FilterInputStream {
 
   @Override
   public long skip(long l) throws IOException {
+    System.out.println(l);
     long sb = super.skip(l);
     if (sb >= 0)
       count += sb;
