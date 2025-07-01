@@ -408,18 +408,4 @@ public class RandomAccessFileInfo {
     return this.euToECPosition.length();
   }
 
-  public TrackInfo getTrackInfo(UL elementKey) {
-    long trackNum = MXFFiles.getTrackNumber(elementKey);
-
-    /* find track info */
-    for (int i = 0; i < this.tracks.size(); i++) {
-      TrackInfo info = this.tracks.get(i);
-      if (info.track().EssenceTrackNumber == trackNum) {
-        return info;
-      }
-    }
-
-    return null;
-  }
-
 }

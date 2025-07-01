@@ -19,6 +19,7 @@ import com.sandflow.smpte.mxf.types.Package;
 import com.sandflow.smpte.mxf.types.Preface;
 import com.sandflow.smpte.mxf.types.SourcePackage;
 import com.sandflow.smpte.mxf.types.Track;
+import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.EventHandler;
 
@@ -290,7 +291,20 @@ public class StreamingReader extends InputStream {
     return true;
   }
 
+  public TrackInfo getTrackInfo(UL elementKey) {
+    long trackNum = MXFFiles.getTrackNumber(elementKey);
 
+    /* find track info */
+    for (int i = 0; i < this.tracks.size(); i++) {
+      TrackInfo info = this.tracks.get(i);
+      if (info.track().EssenceTrackNumber == trackNum) {
+        return info;
+      }
+    }
+
+    return null;
+  }
+  
   /**
    * Returns metadata about the current essence unit's track.
    *
