@@ -93,4 +93,21 @@ public class ClipReader extends InputStream {
     this.remainingElementBytes = r == -1 ? 0 : this.remainingElementBytes - r;
     return r;
   }
+
+  @Override
+  public long skip(long n) throws IOException {
+    if (this.remainingElementBytes == 0)
+      return -1;
+    long s = this.source.skip(n);
+    this.remainingElementBytes = this.remainingElementBytes - s;
+    return s;
+  }
+
+  @Override
+  public void close() throws IOException {
+    /*
+     * do nothing: it is the responsibility of the caller to close the
+     * underlying RandomAccessInputSource
+     */
+  }
 }

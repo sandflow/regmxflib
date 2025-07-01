@@ -160,7 +160,7 @@ public class MXFFiles {
 
       if (elementKey.isUUID()) {
         /* skip KLVs that do not have a UL key */
-        mis.exhaust(elementLength);
+        mis.skipFully(elementLength);
         continue;
       }
 
@@ -186,16 +186,16 @@ public class MXFFiles {
         elementKey = mis.readAUID();
         if (FillItem.isInstance(elementKey)) {
           elementLength = mis.readBERLength();
-          mis.exhaust(elementLength);
+          mis.skipFully(elementLength);
         }
-        mis.exhaust(pp.getHeaderByteCount() + pp.getIndexByteCount() - UL.SIZE);
+        mis.skipFully(pp.getHeaderByteCount() + pp.getIndexByteCount() - UL.SIZE);
       }
 
     }
 
     /* skip over any fill items */
     while (FillItem.isInstance(elementKey)) {
-      mis.exhaust(elementLength);
+      mis.skipFully(elementLength);
       elementKey = mis.readAUID();
       elementLength = mis.readBERLength();
     }

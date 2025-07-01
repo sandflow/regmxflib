@@ -271,21 +271,21 @@ public class KLVInputStream extends CountingInputStream {
   }
 
   public long skipFully(long n) throws IOException {
-    long remaining = n;
-    while (remaining > 0) {
-      long skipped = this.skip(remaining);
-      if (skipped > 0) {
-        remaining -= skipped;
+    byte[] buf = new byte[1024];
+    long r = n;
+    while (r > 0) {
+      long s = this.skip(r);
+      if (s > 0) {
+        r -= s;
       } else {
-        int b = in.read();
+        int b = in.read(buf);
         if (b == -1) {
-          // EOF reached
           break;
         }
-        remaining--;
+        r = r - b;
       }
     }
-    return n - remaining; // actual number of bytes skipped
+    return n - r;
   }
 
 }

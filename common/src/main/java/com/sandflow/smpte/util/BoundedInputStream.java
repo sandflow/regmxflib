@@ -73,21 +73,4 @@ public class BoundedInputStream extends CountingInputStream {
         return super.read();
     }
 
-    /**
-     * Skips to the end of the stream, if the maximum number of bytes to be read
-     * was set to a value greater than -1. Otherwise, it does nothing.
-     * 
-     * @return Returns the number of bytes skipped, or -1 if no limit was set.
-     */
-    public long exhaust() throws IOException {
-        if (maxCount < 0) {
-            return -1;
-        }
-        long count = maxCount - getCount();
-        while (maxCount > getCount())
-            this.skip(maxCount - getCount());
-        return count;
-    }
-
-
 }

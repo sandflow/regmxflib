@@ -208,7 +208,7 @@ public class StreamingReader extends InputStream {
      * skip over index tables, if any
      */
     if (pp.getIndexSID() != 0) {
-      mis.exhaust(pp.getIndexByteCount());
+      mis.skipFully(pp.getIndexByteCount());
     }
 
     this.state = State.READY;
@@ -276,11 +276,7 @@ public class StreamingReader extends InputStream {
       return false;
     }
 
-    long skippedBytes = this.mis.exhaust(this.remainingElementBytes);
-
-    if (skippedBytes != this.remainingElementBytes) {
-      throw new RuntimeException();
-    }
+    this.mis.skipFully(this.remainingElementBytes);
 
     this.elementInfo = MXFFiles.nextElement(this.mis);
 
@@ -406,6 +402,18 @@ public class StreamingReader extends InputStream {
     int r = this.mis.read(b, off, len);
     this.remainingElementBytes = r == -1 ? 0 : this.remainingElementBytes - r;
     return r;
+  }
+
+  @Override
+  public long skip(long n) throws IOException {
+    if (this.state != State.IN_PAYLOAD) {
+      throw new RuntimeException();
+    }
+    if (this.remainingElementBytes == 0)
+      return -1;
+    long s = this.mis.skip(n);
+    this.remainingElementBytes = this.remainingElementBytes - s;
+    return s;
   }
 
   @Override
