@@ -290,11 +290,11 @@ public class StreamingWriter {
     pp.setHeaderByteCount(headerSize);
     pp.setOperationalPattern(Labels.MXFOP1aSingleItemSinglePackageUniTrackStreamInternal.asUL());
     pp.setEssenceContainers(Arrays.asList(new UL[] { this.essenceInfo.essenceContainerKey }));
-    pp.setThisPartition(this.fos.written());
+    pp.setThisPartition(this.fos.getWrittenCount());
     if (kind == PartitionPack.Kind.FOOTER) {
       pp.setFooterPartition(pp.getThisPartition());
     }
-    pp.setBodyOffset(this.essenceStream.written());
+    pp.setBodyOffset(this.essenceStream.getWrittenCount());
     if (this.curPartition != null) {
       pp.setPreviousPartition(this.curPartition.getThisPartition());
     }
@@ -477,7 +477,7 @@ public class StreamingWriter {
     }
 
     /* check if the previous unit landed where it was expected */
-    if (this.nextTPos != 0 && this.essenceStream.written() != this.nextBPos) {
+    if (this.nextTPos != 0 && this.essenceStream.getWrittenCount() != this.nextBPos) {
       throw new RuntimeException("Number of bytes written does not match the size of the unit.");
     }
 
@@ -495,7 +495,7 @@ public class StreamingWriter {
     }
 
     /* add an entry to the index table if we have VBE essence */
-    this.vbeBytePositions.add(this.essenceStream.written());
+    this.vbeBytePositions.add(this.essenceStream.getWrittenCount());
 
 
     /* start the essence element if frame-wrapping */
@@ -505,7 +505,7 @@ public class StreamingWriter {
     }
 
     /* update the expected position of the next Unit */
-    this.nextBPos = this.essenceStream.written() + unitSize;
+    this.nextBPos = this.essenceStream.getWrittenCount() + unitSize;
 
     /* update the temporal positions */
     this.tPos = this.nextTPos;

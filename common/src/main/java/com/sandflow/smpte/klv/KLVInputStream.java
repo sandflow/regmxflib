@@ -278,7 +278,7 @@ public class KLVInputStream extends CountingInputStream {
       if (s > 0) {
         r -= s;
       } else {
-        int b = in.read(buf);
+        int b = this.read(buf);
         if (b == -1) {
           break;
         }
@@ -286,6 +286,11 @@ public class KLVInputStream extends CountingInputStream {
       }
     }
     return n - r;
+  }
+
+  @Override
+  public void close() throws IOException {
+    /* do nothing since this is pure filtering stream */
   }
 
 }

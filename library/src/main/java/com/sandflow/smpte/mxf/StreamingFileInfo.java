@@ -76,7 +76,7 @@ public class StreamingFileInfo implements HeaderInfo {
      */
     HashMap<UUID, Set> setresolver = new HashMap<>();
 
-    while (mis.getCount() < headerByteCount) {
+    while (mis.getReadCount() < headerByteCount) {
 
       Triplet t = mis.readTriplet();
 
@@ -110,11 +110,11 @@ public class StreamingFileInfo implements HeaderInfo {
     /*
      * check that the header metadata length is consistent
      */
-    if (mis.getCount() != headerByteCount) {
+    if (mis.getReadCount() != headerByteCount) {
       MXFEvent.handle(evthandler, new MXFEvent(
           MXFEvent.EventCodes.INCONSISTENT_HEADER_LENGTH,
           String.format("Actual Header Metadata length (%s) does not match the Partition Pack information (%s)",
-              mis.getCount(), headerByteCount)));
+              mis.getReadCount(), headerByteCount)));
     }
 
     MXFInputContext mic = new MXFInputContext() {

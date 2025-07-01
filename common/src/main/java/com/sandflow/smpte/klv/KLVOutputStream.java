@@ -258,7 +258,7 @@ public class KLVOutputStream extends CountingOutputStream {
 
   @Override
   public void close() throws IOException {
-    /* Do nothing */
+    /* do nothing since this is pure filtering stream */
   }
 
 }

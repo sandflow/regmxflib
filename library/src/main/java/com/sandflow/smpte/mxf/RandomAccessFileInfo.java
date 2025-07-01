@@ -36,7 +36,6 @@ import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.PartitionPack.Status;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.mxf.types.Preface;
-import com.sandflow.smpte.util.CountingInputStream;
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.EventHandler;
@@ -231,12 +230,10 @@ public class RandomAccessFileInfo implements HeaderInfo {
         }
 
         /* Reset MXF Input stream */
-        /* TODO: include counting in MXFInputStream */
-        CountingInputStream cis = new CountingInputStream(raip);
-        mis = new MXFInputStream(cis);
+        mis = new MXFInputStream(raip);
 
         /* read Index Segments until the IndexByteCount is exceeded */
-        while (cis.getCount() < pp.getIndexByteCount()) {
+        while (mis.getReadCount() < pp.getIndexByteCount()) {
           IndexTableSegment its = IndexTableSegment.fromSet(
               Set.fromLocalSet(mis.readTriplet(), StaticLocalTags.register()),
               new MXFInputContext() {

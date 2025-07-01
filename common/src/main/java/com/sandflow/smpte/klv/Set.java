@@ -35,7 +35,6 @@ import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.klv.exceptions.TripletLengthException;
 import com.sandflow.smpte.mxf.MXFOutputStream;
 import com.sandflow.smpte.util.AUID;
-import com.sandflow.smpte.util.CountingInputStream;
 import com.sandflow.smpte.util.UL;
 
 /**
@@ -130,13 +129,11 @@ public class Set implements Group {
 
       UL lskey = localset.getKey().asUL();
 
-      CountingInputStream cis = new CountingInputStream(localset.getValueAsStream());
-
-      KLVInputStream kis = new KLVInputStream(cis);
+      KLVInputStream kis = new KLVInputStream(localset.getValueAsStream());
 
       Set set = new Set(lskey);
 
-      while (cis.getCount() < localset.getLength()) {
+      while (kis.getReadCount() < localset.getLength()) {
 
         long localtag = 0;
 

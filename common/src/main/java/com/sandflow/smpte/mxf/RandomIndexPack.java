@@ -107,7 +107,7 @@ public class RandomIndexPack {
       mos.writeUnsignedInt(offset.getBodySID());
       mos.writeLong(offset.getOffset());
     }
-    long ripSize = mos.written() + 4;
+    long ripSize = mos.getWrittenCount() + 4;
     mos.writeUnsignedInt(ripSize);
   }
 

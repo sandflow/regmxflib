@@ -35,7 +35,7 @@ import java.io.InputStream;
  */
 public class CountingInputStream extends FilterInputStream {
 
-  long count = 0;
+  long readCount = 0;
   long markCount = 0;
 
   /**
@@ -49,7 +49,7 @@ public class CountingInputStream extends FilterInputStream {
 
   @Override
   public synchronized void mark(int i) {
-    markCount = count;
+    markCount = readCount;
     super.mark(i);
   }
 
@@ -57,7 +57,7 @@ public class CountingInputStream extends FilterInputStream {
   public long skip(long l) throws IOException {
     long sb = super.skip(l);
     if (sb >= 0)
-      count += sb;
+      readCount += sb;
     return sb;
   }
 
@@ -65,7 +65,7 @@ public class CountingInputStream extends FilterInputStream {
   public int read(byte[] bytes, int off, int len) throws IOException {
     int sb = in.read(bytes, off, len);
     if (sb >= 0)
-      count += sb;
+      readCount += sb;
     return sb;
   }
 
@@ -73,13 +73,13 @@ public class CountingInputStream extends FilterInputStream {
   public int read() throws IOException {
     int sb = super.read();
     if (sb >= 0)
-      count += 1;
+      readCount += 1;
     return sb;
   }
 
   @Override
   public synchronized void reset() throws IOException {
-    count = markCount;
+    readCount = markCount;
     super.reset();
   }
 
@@ -87,15 +87,15 @@ public class CountingInputStream extends FilterInputStream {
    * @return Returns the number of bytes read since the object was created or
    *         resetCount was called
    */
-  public long getCount() {
-    return count;
+  public long getReadCount() {
+    return readCount;
   }
 
   /**
    * Resets the number of bytes read to zero.
    */
   public void resetCount() {
-    count = 0;
+    readCount = 0;
   }
 
 }
