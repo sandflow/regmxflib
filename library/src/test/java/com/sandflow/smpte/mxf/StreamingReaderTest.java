@@ -44,6 +44,7 @@ import org.junit.jupiter.api.Test;
 
 import com.sandflow.smpte.mxf.types.RGBADescriptor;
 import com.sandflow.smpte.mxf.types.WAVEPCMDescriptor;
+import com.sandflow.smpte.util.JSONSerializer;
 
 class StreamingReaderTest {
 

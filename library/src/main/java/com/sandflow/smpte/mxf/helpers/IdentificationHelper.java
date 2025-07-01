@@ -1,4 +1,4 @@
-package com.sandflow.smpte.mxf;
+package com.sandflow.smpte.mxf.helpers;
 
 import java.time.LocalDateTime;
 
