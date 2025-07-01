@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.sandflow.smpte.klv.exceptions.KLVException;
-import com.sandflow.smpte.mxf.StreamingReader.TrackInfo;
+import com.sandflow.smpte.mxf.HeaderInfo.TrackInfo;
 import com.sandflow.smpte.mxf.types.FileDescriptor;
 import com.sandflow.smpte.mxf.types.Track;
 import com.sandflow.smpte.util.AUID;

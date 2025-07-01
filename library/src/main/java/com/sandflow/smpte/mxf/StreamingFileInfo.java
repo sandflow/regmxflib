@@ -29,11 +29,13 @@ package com.sandflow.smpte.mxf;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
+import com.sandflow.smpte.klv.LocalTagRegister;
+import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
-import com.sandflow.smpte.mxf.StreamingReader.TrackInfo;
 import com.sandflow.smpte.mxf.types.EssenceData;
 import com.sandflow.smpte.mxf.types.FileDescriptor;
 import com.sandflow.smpte.mxf.types.MaterialPackage;
@@ -43,11 +45,95 @@ import com.sandflow.smpte.mxf.types.Preface;
 import com.sandflow.smpte.mxf.types.SourcePackage;
 import com.sandflow.smpte.mxf.types.Track;
 import com.sandflow.smpte.util.UL;
+import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.EventHandler;
 
-public class StreamingFileInfo {
+public class StreamingFileInfo implements HeaderInfo {
 
-  protected static List<TrackInfo> extractTracks(Preface preface) {
+  private static Preface readHeaderMetadataFrom(InputStream is, long headerByteCount, EventHandler evthandler)
+      throws IOException, KLVException, MXFException {
+    MXFInputStream mis = new MXFInputStream(is);
+
+    /* look for the primer pack */
+    LocalTagRegister localreg = null;
+    for (Triplet t; (t = mis.readTriplet()) != null; mis.resetCount()) {
+
+      /* skip fill items, if any */
+      if (!FillItem.getKey().equalsIgnoreVersion(t.getKey())) {
+        localreg = PrimerPack.createLocalTagRegister(t);
+        break;
+      }
+    }
+
+    if (localreg == null) {
+      MXFEvent.handle(evthandler, new MXFEvent(
+          MXFEvent.EventCodes.MISSING_PRIMER_PACK,
+          "No Primer Pack found"));
+    }
+
+    /*
+     * capture all local sets within the header metadata
+     */
+    HashMap<UUID, Set> setresolver = new HashMap<>();
+
+    while (mis.getCount() < headerByteCount) {
+
+      Triplet t = mis.readTriplet();
+
+      /* skip fill items */
+      if (FillItem.isInstance(t.getKey())) {
+        continue;
+      }
+
+      try {
+        Set s = Set.fromLocalSet(t, localreg);
+
+        if (s != null) {
+
+          UUID instanceID = HeaderMetadataSet.getInstanceID(s);
+          if (instanceID != null) {
+            setresolver.put(instanceID, s);
+          }
+
+        } else {
+          MXFEvent.handle(evthandler, new MXFEvent(
+              MXFEvent.EventCodes.GROUP_READ_FAILED,
+              String.format("Failed to read Group: {0}", t.getKey().toString())));
+        }
+      } catch (KLVException ke) {
+        MXFEvent.handle(evthandler, new MXFEvent(
+            MXFEvent.EventCodes.GROUP_READ_FAILED,
+            String.format("Failed to read Group %s with error %s", t.getKey().toString(), ke.getMessage())));
+      }
+    }
+
+    /*
+     * check that the header metadata length is consistent
+     */
+    if (mis.getCount() != headerByteCount) {
+      MXFEvent.handle(evthandler, new MXFEvent(
+          MXFEvent.EventCodes.INCONSISTENT_HEADER_LENGTH,
+          String.format("Actual Header Metadata length (%s) does not match the Partition Pack information (%s)",
+              mis.getCount(), headerByteCount)));
+    }
+
+    MXFInputContext mic = new MXFInputContext() {
+      @Override
+      public Set getSet(UUID uuid) {
+        return setresolver.get(uuid);
+      }
+    };
+
+    for (Set s : setresolver.values()) {
+      if (Preface.getKey().equalsIgnoreVersionAndGroupCoding(s.getKey())) {
+        return Preface.fromSet(s, mic);
+      }
+    }
+
+    return null;
+  }
+
+  private static List<TrackInfo> extractTracks(Preface preface) {
     ArrayList<TrackInfo> tracks = new ArrayList<>();
 
     /* collect tracks that are stored in essence containers */
@@ -94,7 +180,7 @@ public class StreamingFileInfo {
   }
 
   private final Preface preface;
-  private final List<StreamingReader.TrackInfo> tracks;
+  private final List<TrackInfo> tracks;
 
   StreamingFileInfo(InputStream is, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
@@ -113,7 +199,7 @@ public class StreamingFileInfo {
           new MXFEvent(MXFEvent.EventCodes.MISSING_PARTITION_PACK, "No Partition Pack found"));
     }
 
-    this.preface = StreamingReader.readHeaderMetadataFrom(mis, pp.getHeaderByteCount(), evthandler);
+    this.preface = readHeaderMetadataFrom(mis, pp.getHeaderByteCount(), evthandler);
 
     /* TODO: handle NULL preface */
 
@@ -127,7 +213,7 @@ public class StreamingFileInfo {
       throw new RuntimeException("Only one material package supported");
     }
 
-    this.tracks = StreamingReader.extractTracks(this.preface);
+    this.tracks = extractTracks(this.preface);
 
     /*
      * skip over index tables, if any
@@ -137,18 +223,22 @@ public class StreamingFileInfo {
     }
   }
 
+  @Override
   public TrackInfo getTrack(int i) {
     return this.tracks.get(i);
   }
 
+  @Override
   public int getTrackCount() {
     return this.tracks.size();
   }
 
+  @Override
   public Preface getPreface() {
     return this.preface;
   }
 
+  @Override
   public TrackInfo getTrackInfo(UL elementKey) {
     long trackNum = MXFFiles.getTrackNumber(elementKey);
 

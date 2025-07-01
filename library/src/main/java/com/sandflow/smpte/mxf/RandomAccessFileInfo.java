@@ -28,29 +28,20 @@ package com.sandflow.smpte.mxf;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.TreeMap;
 
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.PartitionPack.Status;
-import com.sandflow.smpte.mxf.StreamingReader.TrackInfo;
-import com.sandflow.smpte.mxf.types.EssenceData;
-import com.sandflow.smpte.mxf.types.FileDescriptor;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
-import com.sandflow.smpte.mxf.types.MaterialPackage;
-import com.sandflow.smpte.mxf.types.MultipleDescriptor;
-import com.sandflow.smpte.mxf.types.Package;
 import com.sandflow.smpte.mxf.types.Preface;
-import com.sandflow.smpte.mxf.types.SourcePackage;
-import com.sandflow.smpte.mxf.types.Track;
 import com.sandflow.smpte.util.CountingInputStream;
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.EventHandler;
 
-public class RandomAccessFileInfo {
+public class RandomAccessFileInfo implements HeaderInfo {
 
   interface Index {
     long getECPosition(long editUnitIndex);
@@ -133,54 +124,7 @@ public class RandomAccessFileInfo {
     }
   }
 
-  protected static List<TrackInfo> extractTracks(Preface preface) {
-    ArrayList<TrackInfo> tracks = new ArrayList<>();
-
-    /* collect tracks that are stored in essence containers */
-    for (EssenceData ed : preface.ContentStorageObject.EssenceDataObjects) {
-
-      /* retrieve the File Package */
-      SourcePackage fp = null;
-      for (Package p : preface.ContentStorageObject.Packages) {
-        if (p.PackageID.equals(ed.LinkedPackageID)) {
-          fp = (SourcePackage) p;
-          break;
-        }
-      }
-
-      if (fp == null) {
-        throw new RuntimeException("No file packages found");
-      }
-
-      /* do we have a multi-descriptor */
-      FileDescriptor fds[] = null;
-      if (fp.EssenceDescription instanceof MultipleDescriptor) {
-        fds = ((MultipleDescriptor) fp.EssenceDescription).SubDescriptors.toArray(fds);
-      } else {
-        fds = new FileDescriptor[] { (FileDescriptor) fp.EssenceDescription };
-      }
-
-      for (FileDescriptor fd : fds) {
-        Track foundTrack = null;
-
-        for (Track t : fp.PackageTracks) {
-          if (t.TrackID == fd.LinkedTrackID) {
-            foundTrack = t;
-            break;
-          }
-        }
-
-        /* TODO: handle missing Track */
-
-        tracks.add(new TrackInfo(fd, foundTrack, ed));
-      }
-    }
-
-    return tracks;
-  }
-
-  private final Preface preface;
-  private final List<StreamingReader.TrackInfo> tracks;
+  private final HeaderInfo basicInfo;
   private Long bodySID = null;
   private Long indexSID = null;
   private Index euToECPosition;
@@ -359,41 +303,27 @@ public class RandomAccessFileInfo {
     /* Load header metadata */
 
     raip.position(headerMetadataPartition.getThisPartition());
-    mis.readTriplet();
-    this.preface = StreamingReader.readHeaderMetadataFrom(mis, headerMetadataPartition.getHeaderByteCount(),
-        evthandler);
-
-    if (this.preface == null) {
-      throw new RuntimeException();
-    }
-
-    /* we can only handle a single essence container at this point */
-    if (this.preface.ContentStorageObject.EssenceDataObjects.size() != 1) {
-      throw new RuntimeException("Only one essence container supported");
-    }
-
-    /* we can only handle one material package at this point */
-    if (this.preface.ContentStorageObject.Packages.stream().filter(e -> e instanceof MaterialPackage).count() != 1) {
-      throw new RuntimeException("Only one material package supported");
-    }
+    this.basicInfo = new StreamingFileInfo(raip, evthandler);
 
     /* TODO: check for consistent bodySID */
     // this.bodySID =
     // this.preface.ContentStorageObject.EssenceDataObjects.get(0).EssenceStreamID;
 
-    this.tracks = extractTracks(this.preface);
   }
 
+  @Override
   public TrackInfo getTrack(int i) {
-    return this.tracks.get(i);
+    return this.basicInfo.getTrack(i);
   }
 
+  @Override
   public int getTrackCount() {
-    return this.tracks.size();
+    return this.basicInfo.getTrackCount();
   }
 
+  @Override
   public Preface getPreface() {
-    return this.preface;
+    return this.basicInfo.getPreface();
   }
 
   public long ecFromEUPosition(long position) {
@@ -406,6 +336,11 @@ public class RandomAccessFileInfo {
 
   public long getSize() {
     return this.euToECPosition.length();
+  }
+
+  @Override
+  public TrackInfo getTrackInfo(UL elementKey) {
+    return this.basicInfo.getTrackInfo(elementKey);
   }
 
 }

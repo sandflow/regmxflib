@@ -2,25 +2,10 @@ package com.sandflow.smpte.mxf;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
-import com.sandflow.smpte.klv.LocalTagRegister;
-import com.sandflow.smpte.klv.Set;
-import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
+import com.sandflow.smpte.mxf.HeaderInfo.TrackInfo;
 import com.sandflow.smpte.mxf.MXFFiles.ElementInfo;
-import com.sandflow.smpte.mxf.types.EssenceData;
-import com.sandflow.smpte.mxf.types.FileDescriptor;
-import com.sandflow.smpte.mxf.types.MaterialPackage;
-import com.sandflow.smpte.mxf.types.MultipleDescriptor;
-import com.sandflow.smpte.mxf.types.Package;
-import com.sandflow.smpte.mxf.types.Preface;
-import com.sandflow.smpte.mxf.types.SourcePackage;
-import com.sandflow.smpte.mxf.types.Track;
-import com.sandflow.smpte.util.UL;
-import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.EventHandler;
 
 /**
@@ -29,19 +14,6 @@ import com.sandflow.util.events.EventHandler;
  */
 public class StreamingReader extends InputStream {
 
-  /**
-   * Represents information associated with an Essence Track.
-   *
-   * @param descriptor File descriptor associated with the track.
-   * @param track      Track metadata.
-   * @param container  Essence container reference.
-   */
-  public record TrackInfo(
-      FileDescriptor descriptor,
-      Track track,
-      EssenceData container) {
-  }
-
   enum State {
     READY,
     IN_PAYLOAD,
@@ -49,95 +21,11 @@ public class StreamingReader extends InputStream {
   }
 
   private MXFInputStream mis;
-  private State state;
-  private final Preface preface;
-  private final List<TrackInfo> tracks;
+  protected State state;
+  private final HeaderInfo info;
   private ElementInfo elementInfo;
   private long remainingElementBytes = 0;
-
-  /* refactor this */
-  protected static Preface readHeaderMetadataFrom(InputStream is, long headerByteCount, EventHandler evthandler)
-      throws IOException, KLVException, MXFException {
-    MXFInputStream mis = new MXFInputStream(is);
-
-    /* look for the primer pack */
-    LocalTagRegister localreg = null;
-    for (Triplet t; (t = mis.readTriplet()) != null; mis.resetCount()) {
-
-      /* skip fill items, if any */
-      if (!FillItem.getKey().equalsIgnoreVersion(t.getKey())) {
-        localreg = PrimerPack.createLocalTagRegister(t);
-        break;
-      }
-    }
-
-    if (localreg == null) {
-      MXFEvent.handle(evthandler, new MXFEvent(
-          MXFEvent.EventCodes.MISSING_PRIMER_PACK,
-          "No Primer Pack found"));
-    }
-
-    /*
-     * capture all local sets within the header metadata
-     */
-    HashMap<UUID, Set> setresolver = new HashMap<>();
-
-    while (mis.getCount() < headerByteCount) {
-
-      Triplet t = mis.readTriplet();
-
-      /* skip fill items */
-      if (FillItem.isInstance(t.getKey())) {
-        continue;
-      }
-
-      try {
-        Set s = Set.fromLocalSet(t, localreg);
-
-        if (s != null) {
-
-          UUID instanceID = HeaderMetadataSet.getInstanceID(s);
-          if (instanceID != null) {
-            setresolver.put(instanceID, s);
-          }
-
-        } else {
-          MXFEvent.handle(evthandler, new MXFEvent(
-              MXFEvent.EventCodes.GROUP_READ_FAILED,
-              String.format("Failed to read Group: {0}", t.getKey().toString())));
-        }
-      } catch (KLVException ke) {
-        MXFEvent.handle(evthandler, new MXFEvent(
-            MXFEvent.EventCodes.GROUP_READ_FAILED,
-            String.format("Failed to read Group %s with error %s", t.getKey().toString(), ke.getMessage())));
-      }
-    }
-
-    /*
-     * check that the header metadata length is consistent
-     */
-    if (mis.getCount() != headerByteCount) {
-      MXFEvent.handle(evthandler, new MXFEvent(
-          MXFEvent.EventCodes.INCONSISTENT_HEADER_LENGTH,
-          String.format("Actual Header Metadata length (%s) does not match the Partition Pack information (%s)",
-              mis.getCount(), headerByteCount)));
-    }
-
-    MXFInputContext mic = new MXFInputContext() {
-      @Override
-      public Set getSet(UUID uuid) {
-        return setresolver.get(uuid);
-      }
-    };
-
-    for (Set s : setresolver.values()) {
-      if (Preface.getKey().equalsIgnoreVersionAndGroupCoding(s.getKey())) {
-        return Preface.fromSet(s, mic);
-      }
-    }
-
-    return null;
-  }
+  private TrackInfo trackInfo;
 
   /**
    * Creates a new StreamingReader from an InputStream.
@@ -146,105 +34,22 @@ public class StreamingReader extends InputStream {
    * @param evthandler Event handler for reporting parsing events or
    *                   inconsistencies.
    */
-  StreamingReader(InputStream is, EventHandler evthandler) throws IOException, KLVException, MXFException {
+  StreamingReader(HeaderInfo info, InputStream is, EventHandler evthandler)
+      throws IOException, KLVException, MXFException {
     if (is == null) {
       throw new NullPointerException("InputStream cannot be null");
     }
 
+    if (info == null) {
+      throw new NullPointerException("Info cannot be null");
+    }
+    this.info = info;
+
     /* TODO: handle byte ordering */
-
-    mis = new MXFInputStream(is);
-
-    /* look for the header partition pack */
-    PartitionPack pp = null;
-    for (Triplet t; (t = mis.readTriplet()) != null;) {
-      if ((pp = PartitionPack.fromTriplet(t)) != null) {
-        break;
-      }
-    }
-
-    if (pp == null) {
-      MXFEvent.handle(evthandler,
-          new MXFEvent(MXFEvent.EventCodes.MISSING_PARTITION_PACK, "No Partition Pack found"));
-    }
-
-    this.preface = readHeaderMetadataFrom(mis, pp.getHeaderByteCount(), evthandler);
-
-    /* TODO: handle NULL preface */
-
-    /* we can only handle a single essence container at this point */
-    if (this.preface.ContentStorageObject.EssenceDataObjects.size() != 1) {
-      throw new RuntimeException("Only one essence container supported");
-    }
-
-    /* we can only handle one material package at this point */
-    if (this.preface.ContentStorageObject.Packages.stream().filter(e -> e instanceof MaterialPackage).count() != 1) {
-      throw new RuntimeException("Only one material package supported");
-    }
-
-    this.streamID = this.preface.ContentStorageObject.EssenceDataObjects.get(0).EssenceStreamID;
-
-    this.tracks = StreamingReader.extractTracks(this.preface);
-
-    /*
-     * skip over index tables, if any
-     */
-    if (pp.getIndexSID() != 0) {
-      mis.skipFully(pp.getIndexByteCount());
-    }
+    this.mis = new MXFInputStream(is);
 
     this.state = State.READY;
   }
-
-  /* refactor this */
-  protected static List<TrackInfo> extractTracks(Preface preface) {
-    ArrayList<TrackInfo> tracks = new ArrayList<>();
-
-    /* collect tracks that are stored in essence containers */
-    for (EssenceData ed : preface.ContentStorageObject.EssenceDataObjects) {
-
-      /* retrieve the File Package */
-      SourcePackage fp = null;
-      for (Package p : preface.ContentStorageObject.Packages) {
-        if (p.PackageID.equals(ed.LinkedPackageID)) {
-          fp = (SourcePackage) p;
-          break;
-        }
-      }
-
-      if (fp == null) {
-        throw new RuntimeException("No file packages found");
-      }
-
-      /* do we have a multi-descriptor */
-      FileDescriptor fds[] = null;
-      if (fp.EssenceDescription instanceof MultipleDescriptor) {
-        fds = ((MultipleDescriptor) fp.EssenceDescription).SubDescriptors.toArray(fds);
-      } else {
-        fds = new FileDescriptor[] { (FileDescriptor) fp.EssenceDescription };
-      }
-
-      for (FileDescriptor fd : fds) {
-        Track foundTrack = null;
-
-        for (Track t : fp.PackageTracks) {
-          if (t.TrackID == fd.LinkedTrackID) {
-            foundTrack = t;
-            break;
-          }
-        }
-
-        /* TODO: handle missing Track */
-
-        tracks.add(new TrackInfo(fd, foundTrack, ed));
-      }
-    }
-
-    return tracks;
-  }
-
-  private long streamID;
-  private int elementTrackIndex;
 
   /**
    * Advances the stream to the next essence unit.
@@ -259,7 +64,9 @@ public class StreamingReader extends InputStream {
       return false;
     }
 
-    this.mis.skipFully(this.remainingElementBytes);
+    if (this.state == State.IN_PAYLOAD) {
+      this.mis.skipFully(this.remainingElementBytes);
+    }
 
     this.elementInfo = MXFFiles.nextElement(this.mis);
 
@@ -268,19 +75,9 @@ public class StreamingReader extends InputStream {
       return false;
     }
 
-    /* we have reached an essence element */
-    long trackNum = MXFFiles.getTrackNumber(this.elementInfo.key().asUL());
 
     /* find track info */
-    this.elementTrackIndex = -1;
-    for (int i = 0; i < this.tracks.size(); i++) {
-      TrackInfo ti = this.tracks.get(i);
-      if (ti.container().EssenceStreamID == this.streamID &&
-          ti.track().EssenceTrackNumber == trackNum) {
-        this.elementTrackIndex = i;
-        break;
-      }
-    }
+    this.trackInfo = info.getTrackInfo(this.elementInfo.key().asUL());
 
     /* TODO: error if no track info found */
 
@@ -291,20 +88,6 @@ public class StreamingReader extends InputStream {
     return true;
   }
 
-  public TrackInfo getTrackInfo(UL elementKey) {
-    long trackNum = MXFFiles.getTrackNumber(elementKey);
-
-    /* find track info */
-    for (int i = 0; i < this.tracks.size(); i++) {
-      TrackInfo info = this.tracks.get(i);
-      if (info.track().EssenceTrackNumber == trackNum) {
-        return info;
-      }
-    }
-
-    return null;
-  }
-  
   /**
    * Returns metadata about the current essence unit's track.
    *
@@ -314,7 +97,7 @@ public class StreamingReader extends InputStream {
     if (this.state != State.IN_PAYLOAD) {
       throw new RuntimeException();
     }
-    return this.tracks.get(this.elementTrackIndex);
+    return this.trackInfo;
   }
 
   /**
@@ -329,36 +112,9 @@ public class StreamingReader extends InputStream {
     return this.elementInfo.length();
   }
 
-  /**
-   * Returns the TrackInfo for a specific track.
-   *
-   * @param i index of the track.
-   * @return TrackInfo object.
-   */
-  public TrackInfo getTrack(int i) {
-    return this.tracks.get(i);
-  }
-
-  /**
-   * Returns the number of essence tracks available.
-   *
-   * @return number of tracks.
-   */
-  public int getTrackCount() {
-    return this.tracks.size();
-  }
 
   public boolean isDone() {
     return this.state == State.DONE;
-  }
-
-  /**
-   * Returns the Preface metadata object parsed from the MXF file.
-   *
-   * @return Preface object.
-   */
-  public Preface getPreface() {
-    return this.preface;
   }
 
   @Override

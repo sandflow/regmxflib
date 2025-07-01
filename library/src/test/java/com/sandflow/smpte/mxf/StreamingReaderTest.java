@@ -61,13 +61,12 @@ class StreamingReaderTest {
     InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/video.mxf");
     assertNotNull(is);
 
-    StreamingReader sr = new StreamingReader(is, null);
-
-    assertEquals(1, sr.getTrackCount());
-
-    RGBADescriptor d = (RGBADescriptor) sr.getTrack(0).descriptor();
+    StreamingFileInfo info = new StreamingFileInfo(is, null);
+    assertEquals(1, info.getTrackCount());
+    RGBADescriptor d = (RGBADescriptor) info.getTrack(0).descriptor();
     assertEquals(640L, d.StoredWidth);
 
+    StreamingReader sr = new StreamingReader(info, is, null);
     ArrayList<Long> measuredSizes = new ArrayList<>();
     while (sr.nextElement()) {
       measuredSizes.add(sr.getElementLength());
@@ -80,8 +79,10 @@ class StreamingReaderTest {
   void testCBE() throws Exception {
     InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/audio.mxf");
 
-    StreamingReader sr = new StreamingReader(is, null);
-    assertEquals(1, sr.getTrackCount());
+    StreamingFileInfo info = new StreamingFileInfo(is, null);
+    assertEquals(1, info.getTrackCount());
+
+    StreamingReader sr = new StreamingReader(info, is, null);
 
     int i = 0;
     while (sr.nextElement()) {
@@ -101,10 +102,9 @@ class StreamingReaderTest {
   void testPreface() throws Exception {
     InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/audio.mxf");
 
-    StreamingReader sr = new StreamingReader(is, null);
-
+    StreamingFileInfo info = new StreamingFileInfo(is, null);
     Writer w = new FileWriter("target/test-output/out.json");
-    JSONSerializer.serialize(sr.getPreface(), w);
+    JSONSerializer.serialize(info.getPreface(), w);
     w.close();
 
   }
