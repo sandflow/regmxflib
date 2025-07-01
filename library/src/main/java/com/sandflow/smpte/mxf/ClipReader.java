@@ -34,8 +34,12 @@ public class ClipReader extends InputStream {
     this.track = ti.track();
     this.descriptor = ti.descriptor();
 
-    if (Labels.IMF_IABEssenceClipWrappedContainer.equals(this.descriptor.ContainerFormat)) {
-      /* ASDCPLib already indexes from the start of the Clip Triplet */
+    if (Labels.IMF_IABEssenceClipWrappedContainer.equals(this.descriptor.ContainerFormat)
+        && this.info.ecFromEUPosition(0) != 0) {
+      /*
+       * DEVIATION: Some versions of ASDCPLib index from the start of the K of the
+       * clip instead of from the start of the V of the clip
+       */
       this.essenceOffset = 0;
     } else {
       this.essenceOffset = this.source.position() - clipStartPosition;
