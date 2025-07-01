@@ -1,6 +1,5 @@
 package com.sandflow.smpte.mxf;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -8,12 +7,10 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.sandflow.smpte.klv.LocalTagRegister;
-import com.sandflow.smpte.klv.MemoryTriplet;
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.MXFFiles.ElementInfo;
-import com.sandflow.smpte.mxf.PartitionPack.Kind;
 import com.sandflow.smpte.mxf.types.EssenceData;
 import com.sandflow.smpte.mxf.types.FileDescriptor;
 import com.sandflow.smpte.mxf.types.MaterialPackage;
@@ -22,9 +19,6 @@ import com.sandflow.smpte.mxf.types.Package;
 import com.sandflow.smpte.mxf.types.Preface;
 import com.sandflow.smpte.mxf.types.SourcePackage;
 import com.sandflow.smpte.mxf.types.Track;
-import com.sandflow.smpte.util.AUID;
-import com.sandflow.smpte.util.BoundedInputStream;
-import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.EventHandler;
 
@@ -74,6 +68,7 @@ public class StreamingReader extends InputStream {
   private ElementInfo elementInfo;
   private long remainingElementBytes = 0;
 
+  /* refactor this */
   protected static Preface readHeaderMetadataFrom(InputStream is, long headerByteCount, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
     MXFInputStream mis = new MXFInputStream(is);
@@ -214,6 +209,7 @@ public class StreamingReader extends InputStream {
     this.state = State.READY;
   }
 
+  /* refactor this */
   protected static List<TrackState> extractTracks(Preface preface) {
     ArrayList<TrackState> tracks = new ArrayList<>();
 

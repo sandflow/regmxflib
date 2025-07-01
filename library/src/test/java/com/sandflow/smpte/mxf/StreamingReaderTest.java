@@ -39,7 +39,6 @@ import org.junit.jupiter.api.Test;
 
 import com.sandflow.smpte.mxf.types.RGBADescriptor;
 import com.sandflow.smpte.mxf.types.WAVEPCMDescriptor;
-import com.sandflow.smpte.util.UL;
 
 class StreamingReaderTest {
 
@@ -88,6 +87,8 @@ class StreamingReaderTest {
     }
 
     assertEquals(1, i);
+
+    sr.close();
 
   }
 
