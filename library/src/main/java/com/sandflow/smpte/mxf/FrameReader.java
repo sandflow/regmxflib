@@ -3,6 +3,7 @@ package com.sandflow.smpte.mxf;
 import java.io.IOException;
 
 import com.sandflow.smpte.klv.exceptions.KLVException;
+import com.sandflow.smpte.util.RandomAccessInputSource;
 
 public class FrameReader extends StreamingReader {
 

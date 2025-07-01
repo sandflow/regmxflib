@@ -1,4 +1,4 @@
-package com.sandflow.smpte.util;
+package com.sandflow.util;
 
 import java.io.IOException;
 import java.io.Writer;

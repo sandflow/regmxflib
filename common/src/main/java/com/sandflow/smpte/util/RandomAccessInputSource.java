@@ -1,4 +1,4 @@
-package com.sandflow.smpte.mxf;
+package com.sandflow.smpte.util;
 
 import java.io.IOException;
 import java.io.InputStream;

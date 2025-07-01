@@ -35,6 +35,7 @@ import java.io.RandomAccessFile;
 import org.junit.jupiter.api.Test;
 
 import com.sandflow.smpte.mxf.types.RGBADescriptor;
+import com.sandflow.smpte.util.FileRandomAccessInputSource;
 
 class RandomAccessReaderTest {
 

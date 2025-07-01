@@ -8,6 +8,7 @@ import com.sandflow.smpte.mxf.HeaderInfo.TrackInfo;
 import com.sandflow.smpte.mxf.types.FileDescriptor;
 import com.sandflow.smpte.mxf.types.Track;
 import com.sandflow.smpte.util.AUID;
+import com.sandflow.smpte.util.RandomAccessInputSource;
 
 public class ClipReader extends InputStream {
   final AUID elementKey;

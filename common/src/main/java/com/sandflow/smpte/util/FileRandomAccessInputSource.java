@@ -1,4 +1,4 @@
-package com.sandflow.smpte.mxf;
+package com.sandflow.smpte.util;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -7,7 +7,7 @@ public class FileRandomAccessInputSource extends RandomAccessInputSource {
 
   final RandomAccessFile rap;
 
-  FileRandomAccessInputSource(RandomAccessFile rap) {
+  public FileRandomAccessInputSource(RandomAccessFile rap) {
     this.rap = rap;
   }
 

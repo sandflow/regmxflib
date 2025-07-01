@@ -150,7 +150,9 @@ public class KLVOutputStream extends CountingOutputStream {
       throw new IllegalArgumentException("Length cannot be negative");
     }
 
-    /* TODO: check max length */
+    if (l > 16_777_215) {
+      throw new IllegalArgumentException("Length cannot be greater than 16,777,215");
+    }
 
     int n = 3;
     this.write(0x80 | n);
