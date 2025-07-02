@@ -250,8 +250,9 @@ public class UL {
     }
     
     /**
-     * Returns the sequence of bytes that make up the UL (in the order specified by ST 298 4122)
-     * 
+     * Returns the sequence of bytes that make up the UL (in the order specified
+     * by ST 298 4122) The returned array must not be modified by the caller.
+     *
      * @return Sequence of 16 bytes
      */
     public byte[] getValue() {
@@ -265,7 +266,6 @@ public class UL {
      * @return Value of the byte
      */
     public byte getValueOctet(int i) {
-        /* TODO: should this be cloned? */
         return value[i];
     }
 

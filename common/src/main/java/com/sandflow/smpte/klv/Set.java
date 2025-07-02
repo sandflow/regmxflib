@@ -72,13 +72,11 @@ public class Set implements Group {
 
   public static void toStreamAsLocalSet(Group g, LocalTagRegister reg, MXFOutputStream mos)
       throws EOFException, IOException {
-    boolean isBERLocalLength = false;
-    for (Triplet t : g.getItems()) {
-      if (t.getLength() > 65535) {
-        isBERLocalLength = true;
-        break;
-      }
+    if (g == null || !g.getKey().isGroup()) {
+      throw new IllegalArgumentException("Not a group");
     }
+
+    boolean isBERLocalLength = g.getItems().stream().anyMatch((e) -> e.getLength() > 65535);
 
     /* write the value of the local set */
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -96,7 +94,6 @@ public class Set implements Group {
     mbos.close();
 
     /* write the local set */
-    /* TODO: confirm that the group is a group */
     byte[] lsKey = g.getKey().getValue().clone();
     lsKey[UL.REGISTRY_DESIGNATOR_BYTE] = (byte) ((isBERLocalLength ? ItemLengthEncoding.BER.bitmask
         : ItemLengthEncoding.TWO_BYTE.bitmask)
