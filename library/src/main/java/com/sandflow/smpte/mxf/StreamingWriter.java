@@ -214,9 +214,6 @@ public class StreamingWriter {
 
     this.fos.write(headerbytes);
 
-    /* required 8 KB fill item per ST 2067-5 */
-    FillItem.toStream(this.fos, (short) 8192);
-
     this.state = State.START;
   }
 
@@ -267,13 +264,19 @@ public class StreamingWriter {
     this.preface.serialize(ctx);
 
     /* serialize the header */
-    MXFOutputStream mos = new MXFOutputStream(new ByteArrayOutputStream());
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    MXFOutputStream mos = new MXFOutputStream(bos);
     mos.writeTriplet(PrimerPack.createTriplet(reg));
     for (Set set : sets) {
       Set.toStreamAsLocalSet(set, reg, mos);
     }
 
-    return ((ByteArrayOutputStream) mos.stream()).toByteArray();
+    /* required 8 KB fill item per ST 2067-5 */
+    FillItem.toStream(mos, (short) 8192);
+
+    mos.flush();
+
+    return bos.toByteArray();
   }
 
   /**
@@ -300,7 +303,7 @@ public class StreamingWriter {
     if (this.curPartition != null) {
       pp.setPreviousPartition(this.curPartition.getThisPartition());
     }
-    this.fos.writeTriplet(PartitionPack.toTriplet(pp, kind, status));
+    this.fos.writeBER4Triplet(PartitionPack.toTriplet(pp, kind, status));
 
     this.rip.addOffset(new PartitionOffset(bodySID, pp.getThisPartition()));
 
@@ -423,7 +426,7 @@ public class StreamingWriter {
 
     this.startEssencePartition();
     this.essenceStream.writeUL(this.elementKey);
-    this.essenceStream.writeBER4Length(unitSize * unitCount);
+    this.essenceStream.writeBERLength(unitSize * unitCount);
 
     return this.essenceStream;
   }
@@ -462,7 +465,7 @@ public class StreamingWriter {
     this.startEssencePartition();
 
     this.essenceStream.writeUL(this.elementKey);
-    this.essenceStream.writeBER4Length(totalSize);
+    this.essenceStream.writeBERLength(totalSize);
   }
 
   /*
@@ -503,7 +506,7 @@ public class StreamingWriter {
     /* start the essence element if frame-wrapping */
     if (this.unitWrapping == UnitWrapping.FRAME) {
       this.essenceStream.writeUL(this.elementKey);
-      this.essenceStream.writeBER4Length(unitSize);
+      this.essenceStream.writeBERLength(unitSize);
     }
 
     /* update the expected position of the next Unit */

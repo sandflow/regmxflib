@@ -169,11 +169,17 @@ public class KLVOutputStream extends CountingOutputStream {
    * @throws EOFException
    * @throws KLVException
    */
-  public void writeTriplet(Triplet t) throws IOException, EOFException, KLVException {
+  public void writeTriplet(Triplet t) throws IOException {
     this.writeAUID(t.getKey());
-    /* TODO: super ugly for compatibility with ASDCPLib */
-    this.writeBER4Length(t.getLength());
+    this.writeBERLength(t.getLength());
     this.write(t.getValue());
+  }
+
+  public void writeBER4Triplet(Triplet triplet) throws IOException {
+    writeAUID(triplet.getKey());
+    /* TODO: super ugly for compatibility with ASDCPLib */
+    writeBER4Length(triplet.getLength());
+    write(triplet.getValue());
   }
 
   protected static final void swap(byte[] array, int i, int j) {

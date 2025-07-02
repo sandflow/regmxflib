@@ -64,7 +64,7 @@ public class FillItem {
     public static void toStream(OutputStream os, short size) throws IOException {
         MXFOutputStream mos = new MXFOutputStream(os);
         mos.writeUL(KEY);
-        mos.writeBER4Length(size);
+        mos.writeBERLength(size);
         mos.write(new byte[size]);
     }
     
