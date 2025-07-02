@@ -37,7 +37,7 @@ import com.sandflow.smpte.klv.MemoryTriplet;
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.mxf.ClassFactory;
-import com.sandflow.smpte.mxf.LocalSetItemAdapter;
+import com.sandflow.smpte.mxf.SetItemAdapter;
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
 import com.sandflow.smpte.mxf.MXFOutputContext;
@@ -294,31 +294,31 @@ public class IndexTableSegment {
 
   void writeToSet(Set s, MXFOutputContext ctx) throws IOException {
 
-    LocalSetItemAdapter.toSetItem(this.SliceCount, SliceCount_AUID,
+    SetItemAdapter.toSetItem(this.SliceCount, SliceCount_AUID,
         com.sandflow.smpte.mxf.adapters.UInt8Adapter::toStream, s, ctx);
-    LocalSetItemAdapter.toSetItem(this.DeltaEntryArray, DeltaEntryArray_AUID,
+    SetItemAdapter.toSetItem(this.DeltaEntryArray, DeltaEntryArray_AUID,
         com.sandflow.smpte.mxf.types.DeltaEntryArray::toStream, s, ctx);
-    LocalSetItemAdapter.toSetItem(this.VBEByteCount, VBEByteCount_AUID,
+    SetItemAdapter.toSetItem(this.VBEByteCount, VBEByteCount_AUID,
         com.sandflow.smpte.mxf.adapters.UInt64Adapter::toStream, s, ctx);
-    LocalSetItemAdapter.toSetItem(this.ForwardIndexDirection, ForwardIndexDirection_AUID,
+    SetItemAdapter.toSetItem(this.ForwardIndexDirection, ForwardIndexDirection_AUID,
         com.sandflow.smpte.mxf.adapters.BooleanAdapter::toStream, s, ctx);
-    LocalSetItemAdapter.toSetItem(this.IndexEditRate, IndexEditRate_AUID,
+    SetItemAdapter.toSetItem(this.IndexEditRate, IndexEditRate_AUID,
         com.sandflow.smpte.mxf.adapters.RationalAdapter::toStream, s, ctx);
-    LocalSetItemAdapter.toSetItem(this.IndexStreamID, IndexStreamID_AUID,
+    SetItemAdapter.toSetItem(this.IndexStreamID, IndexStreamID_AUID,
         com.sandflow.smpte.mxf.adapters.UInt32Adapter::toStream, s, ctx);
-    LocalSetItemAdapter.toSetItem(this.IndexDuration, IndexDuration_AUID,
+    SetItemAdapter.toSetItem(this.IndexDuration, IndexDuration_AUID,
         com.sandflow.smpte.mxf.adapters.Int64Adapter::toStream, s, ctx);
-    LocalSetItemAdapter.toSetItem(this.PositionTableCount, PositionTableCount_AUID,
+    SetItemAdapter.toSetItem(this.PositionTableCount, PositionTableCount_AUID,
         com.sandflow.smpte.mxf.adapters.UInt8Adapter::toStream, s, ctx);
-    LocalSetItemAdapter.toSetItem(this.InstanceID, InstanceID_AUID,
+    SetItemAdapter.toSetItem(this.InstanceID, InstanceID_AUID,
         com.sandflow.smpte.mxf.adapters.UUIDAdapter::toStream, s, ctx);
-    LocalSetItemAdapter.toSetItem(this.IndexStartPosition, IndexStartPosition_AUID,
+    SetItemAdapter.toSetItem(this.IndexStartPosition, IndexStartPosition_AUID,
         com.sandflow.smpte.mxf.adapters.Int64Adapter::toStream, s, ctx);
-    LocalSetItemAdapter.toSetItem(this.SingleEssenceLocation, SingleEssenceLocation_AUID,
+    SetItemAdapter.toSetItem(this.SingleEssenceLocation, SingleEssenceLocation_AUID,
         com.sandflow.smpte.mxf.adapters.BooleanAdapter::toStream, s, ctx);
-    LocalSetItemAdapter.toSetItem(this.SingleIndexLocation, SingleIndexLocation_AUID,
+    SetItemAdapter.toSetItem(this.SingleIndexLocation, SingleIndexLocation_AUID,
         com.sandflow.smpte.mxf.adapters.BooleanAdapter::toStream, s, ctx);
-    LocalSetItemAdapter.toSetItem(this.ExtStartOffset, ExtStartOffset_AUID,
+    SetItemAdapter.toSetItem(this.ExtStartOffset, ExtStartOffset_AUID,
         com.sandflow.smpte.mxf.adapters.UInt64Adapter::toStream, s, ctx);
     if (this.IndexEntryArray != null) {
       ByteArrayOutputStream ibos = new ByteArrayOutputStream();
@@ -332,9 +332,9 @@ public class IndexTableSegment {
       imos.flush();
       s.addItem(new MemoryTriplet(IndexEntryArray_AUID, ibos.toByteArray()));
     }
-    LocalSetItemAdapter.toSetItem(this.EditUnitByteCount, EditUnitByteCount_AUID,
+    SetItemAdapter.toSetItem(this.EditUnitByteCount, EditUnitByteCount_AUID,
         com.sandflow.smpte.mxf.adapters.UInt32Adapter::toStream, s, ctx);
-    LocalSetItemAdapter.toSetItem(this.EssenceStreamID, EssenceStreamID_AUID,
+    SetItemAdapter.toSetItem(this.EssenceStreamID, EssenceStreamID_AUID,
         com.sandflow.smpte.mxf.adapters.UInt32Adapter::toStream, s, ctx);
   }
 

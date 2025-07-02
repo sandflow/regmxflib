@@ -34,7 +34,7 @@ import java.io.IOException;
 
 {{#if members}}import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.util.AUID;
-import com.sandflow.smpte.mxf.LocalSetItemAdapter;{{/if}}
+import com.sandflow.smpte.mxf.SetItemAdapter;{{/if}}
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.mxf.ClassFactory;
 import com.sandflow.smpte.mxf.MXFInputContext;
@@ -110,7 +110,7 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
 {{#if parentClassName}}
     super.writeToSet(s, ctx);{{/if}}
 {{#each members}}{{#unless isInherited}}
-    LocalSetItemAdapter.toSetItem(this.{{symbol}}, {{symbol}}_AUID, {{adapterName}}::toStream, s, ctx);{{/unless}}{{/each}}
+    SetItemAdapter.toSetItem(this.{{symbol}}, {{symbol}}_AUID, {{adapterName}}::toStream, s, ctx);{{/unless}}{{/each}}
   }
 
   public void serialize(MXFOutputContext ctx) throws IOException {

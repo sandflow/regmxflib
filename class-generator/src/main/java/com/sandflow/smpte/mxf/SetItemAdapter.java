@@ -8,17 +8,16 @@ import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.util.AUID;
 
 @FunctionalInterface
-public interface LocalSetItemAdapter<T> {
+public interface SetItemAdapter<T> {
   void apply(T v, MXFOutputStream os, MXFOutputContext ctx) throws IOException;
 
-  public static <T> void toSetItem(T itemValue, AUID itemKey, LocalSetItemAdapter<T> a, Set s,
-      MXFOutputContext ctx)
+  public static <T> void toSetItem(T itemValue, AUID itemKey, SetItemAdapter<T> adapter, Set s, MXFOutputContext ctx)
       throws IOException {
     if (itemValue == null)
       return;
     ByteArrayOutputStream ibos = new ByteArrayOutputStream();
     MXFOutputStream imos = new MXFOutputStream(ibos);
-    a.apply(itemValue, imos, ctx);
+    adapter.apply(itemValue, imos, ctx);
 
     s.addItem(new MemoryTriplet(itemKey, ibos.toByteArray()));
   }
