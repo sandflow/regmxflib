@@ -31,18 +31,24 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 
+import com.sandflow.smpte.klv.KLVInputStream.ByteOrder;
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFInputStream;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.MXFOutputStream;
 
-public class UTF8StringAdapter {
+public class UTF16CharacterAdapter {
+
   public static String fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
-    return CharacterAdapterUtilities.readerToString(new InputStreamReader(is, StandardCharsets.UTF_8), false);
+    return CharacterAdapterUtilities.readerToString(
+        new InputStreamReader(is,
+            is.getByteOrder() == ByteOrder.BIG_ENDIAN ? StandardCharsets.UTF_16BE : StandardCharsets.UTF_16LE),
+        false);
   }
 
   public static void toStream(String s, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
-    var osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
+    var osw = new OutputStreamWriter(os,
+        os.getByteOrder() == ByteOrder.BIG_ENDIAN ? StandardCharsets.UTF_16BE : StandardCharsets.UTF_16LE);
     osw.write(s);
     osw.flush();
   }

@@ -36,13 +36,14 @@ import com.sandflow.smpte.mxf.MXFInputStream;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.MXFOutputStream;
 
-public class UTF8StringAdapter {
+public class ASCIICharacterAdapter {
+
   public static String fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
-    return CharacterAdapterUtilities.readerToString(new InputStreamReader(is, StandardCharsets.UTF_8), false);
+    return CharacterAdapterUtilities.readerToString(new InputStreamReader(is, StandardCharsets.US_ASCII), false);
   }
 
   public static void toStream(String s, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
-    var osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
+    var osw = new OutputStreamWriter(os, StandardCharsets.US_ASCII);
     osw.write(s);
     osw.flush();
   }

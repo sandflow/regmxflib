@@ -24,27 +24,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.sandflow.smpte.mxf.adapters;
+ package com.sandflow.smpte.mxf.adapters;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 
-import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFInputStream;
-import com.sandflow.smpte.mxf.MXFOutputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+public class CharacterAdapterUtilities {
+  static public String readerToString(InputStreamReader r, boolean terminateOnNull) throws IOException {
+    StringBuilder sb = new StringBuilder();
 
-public class UTF8StringAdapter {
-  public static String fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
-    return CharacterAdapterUtilities.readerToString(new InputStreamReader(is, StandardCharsets.UTF_8), false);
+    var buf = new char[256];
+    int c;
+    while((c = r.read(buf)) != -1)
+      sb.append(buf, 0, c);
+    int i = terminateOnNull ? sb.indexOf("\0") : -1;
+
+    return i == -1 ? sb.toString() : sb.substring(0, i);
   }
-
-  public static void toStream(String s, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
-    var osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
-    osw.write(s);
-    osw.flush();
-  }
-
 }

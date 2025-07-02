@@ -36,7 +36,8 @@ import com.sandflow.smpte.mxf.MXFInputStream;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.MXFOutputStream;
 
-public class UTF8StringAdapter {
+public class UTF8CharacterAdapter {
+
   public static String fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return CharacterAdapterUtilities.readerToString(new InputStreamReader(is, StandardCharsets.UTF_8), false);
   }

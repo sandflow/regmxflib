@@ -39,15 +39,7 @@ import com.sandflow.smpte.mxf.MXFOutputStream;
 public class ASCIIStringAdapter {
 
   public static String fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
-    var isr = new InputStreamReader(is, StandardCharsets.US_ASCII);
-    var sb = new StringBuilder();
-
-    var buf = new char[256];
-    int c;
-    /* TODO: stop on null string */
-    while((c = isr.read(buf)) != -1)
-      sb.append(buf, 0, c);
-    return sb.toString();
+    return CharacterAdapterUtilities.readerToString(new InputStreamReader(is, StandardCharsets.US_ASCII), true);
   }
 
   public static void toStream(String s, MXFOutputStream os, MXFOutputContext ctx) throws IOException {

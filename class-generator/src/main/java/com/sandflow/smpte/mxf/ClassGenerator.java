@@ -48,6 +48,7 @@ import org.apache.commons.numbers.fraction.Fraction;
 
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
+import com.sandflow.smpte.mxf.adapters.ASCIICharacterAdapter;
 import com.sandflow.smpte.mxf.adapters.ASCIIStringAdapter;
 import com.sandflow.smpte.mxf.adapters.AUIDAdapter;
 import com.sandflow.smpte.mxf.adapters.BooleanAdapter;
@@ -67,7 +68,9 @@ import com.sandflow.smpte.mxf.adapters.UInt64Adapter;
 import com.sandflow.smpte.mxf.adapters.UInt8Adapter;
 import com.sandflow.smpte.mxf.adapters.ULAdapter;
 import com.sandflow.smpte.mxf.adapters.UMIDAdapter;
+import com.sandflow.smpte.mxf.adapters.UTF16CharacterAdapter;
 import com.sandflow.smpte.mxf.adapters.UTF16StringAdapter;
+import com.sandflow.smpte.mxf.adapters.UTF8CharacterAdapter;
 import com.sandflow.smpte.mxf.adapters.UTF8StringAdapter;
 import com.sandflow.smpte.mxf.adapters.UUIDAdapter;
 import com.sandflow.smpte.mxf.adapters.VersionAdapter;
@@ -289,11 +292,11 @@ public class ClassGenerator {
       this.typeName = "String";
 
       if (def.getIdentification().equals(Character_UL)) {
-        this.adapterName = UTF16StringAdapter.class.getName();
+        this.adapterName = UTF16CharacterAdapter.class.getName();
       } else if (def.getIdentification().equals(Char_UL)) {
-        this.adapterName = ASCIIStringAdapter.class.getName();
+        this.adapterName = ASCIICharacterAdapter.class.getName();
       } else if (def.getIdentification().equals(UTF8Character_UL)) {
-        this.adapterName = UTF8StringAdapter.class.getName();
+        this.adapterName = UTF8CharacterAdapter.class.getName();
       } else {
         throw new VisitorException("Unknown character type " + def.getIdentification());
       }
