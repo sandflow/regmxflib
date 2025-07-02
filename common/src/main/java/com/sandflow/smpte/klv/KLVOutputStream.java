@@ -117,16 +117,14 @@ public class KLVOutputStream extends CountingOutputStream {
       throw new IllegalArgumentException("Length cannot be negative");
     }
 
-    /* short form */
-    /* TODO: should be enabled unless ASDCPLib does not support it */
+    /* long form and at least 4 bytes for compatibility with ASDCPLib */
     // if (l < 0x80) {
-    //   this.write((int) l);
-    //   return;
+    // this.write((int) l);
+    // return;
     // }
 
-    /* long form */
-    int n = 0;
-    long tmp = l;
+    int n = 3;
+    long tmp = l >> (n * 8);
     while (tmp > 0) {
       tmp >>= 8;
       n++;

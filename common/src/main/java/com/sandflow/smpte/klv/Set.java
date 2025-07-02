@@ -70,7 +70,7 @@ public class Set implements Group {
 
   }
 
-  public static void toStreamAsLocalSet(Group g, LocalTagRegister reg, MXFOutputStream mos)
+  public static void toStreamAsLocalSet(Group g, LocalTagResolver tags, MXFOutputStream mos)
       throws EOFException, IOException {
     if (g == null || !g.getKey().isGroup()) {
       throw new IllegalArgumentException("Not a group");
@@ -83,9 +83,13 @@ public class Set implements Group {
     MXFOutputStream mbos = new MXFOutputStream(bos);
 
     for (Triplet t : g.getItems()) {
-      mbos.writeUnsignedShort((int) reg.getOrMakeLocalTag(t.getKey()));
+      Long localTag = tags.getLocalTag(t.getKey());
+      if (localTag == null) {
+        throw new RuntimeException();
+      }
+      mbos.writeUnsignedShort((int) localTag.longValue());
       if (isBERLocalLength) {
-        mbos.writeBERLength(t.getLength());
+        mbos.writeBER4Length(t.getLength());
       } else {
         mbos.writeUnsignedShort((int) t.getLength());
       }

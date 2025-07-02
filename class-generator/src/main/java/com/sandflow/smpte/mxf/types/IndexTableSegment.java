@@ -330,7 +330,6 @@ public class IndexTableSegment {
           this.SliceCount != null ? this.SliceCount : 0,
           this.PositionTableCount != null ? this.PositionTableCount : 0);
       imos.flush();
-      ctx.getLocalTag(IndexEntryArray_AUID);
       s.addItem(new MemoryTriplet(IndexEntryArray_AUID, ibos.toByteArray()));
     }
     LocalSetItemAdapter.toSetItem(this.EditUnitByteCount, EditUnitByteCount_AUID,

@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.numbers.fraction.Fraction;
 
 import com.sandflow.smpte.klv.LocalTagRegister;
+import com.sandflow.smpte.klv.LocalTagResolver;
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.RandomIndexPack.PartitionOffset;
@@ -231,22 +232,6 @@ public class StreamingWriter {
         return null;
       }
 
-      @Override
-      public int getLocalTag(AUID auid) {
-        Long localTag = reg.getLocalTag(auid);
-
-        if (localTag == null) {
-          localTag = StaticLocalTags.register().getLocalTag(auid);
-        }
-
-        if (localTag == null) {
-          localTag = reg.getOrMakeLocalTag(auid);
-        } else {
-          reg.add(localTag, auid);
-        }
-
-        return (int) (localTag & 0xFFFFFFFF);
-      }
 
       @Override
       public void putSet(Set set) {
@@ -260,15 +245,40 @@ public class StreamingWriter {
 
     };
 
-    /* serialize the header metadata sets */
+    /* collect the header metadata sets */
     this.preface.serialize(ctx);
 
     /* serialize the header */
+    LocalTagResolver tags = new LocalTagResolver() {
+      @Override
+      public Long getLocalTag(AUID auid) {
+        Long localTag = reg.getLocalTag(auid);
+
+        if (localTag == null) {
+          localTag = StaticLocalTags.register().getLocalTag(auid);
+        }
+
+        if (localTag == null) {
+          localTag = reg.getOrMakeLocalTag(auid);
+        } else {
+          reg.add(localTag, auid);
+        }
+
+        return localTag;
+      }
+
+      @Override
+      public AUID getAUID(long localtag) {
+        throw new UnsupportedOperationException("Unimplemented method 'getAUID'");
+      }
+
+    };
+
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     MXFOutputStream mos = new MXFOutputStream(bos);
     mos.writeTriplet(PrimerPack.createTriplet(reg));
     for (Set set : sets) {
-      Set.toStreamAsLocalSet(set, reg, mos);
+      Set.toStreamAsLocalSet(set, tags, mos);
     }
 
     /* required 8 KB fill item per ST 2067-5 */
@@ -372,11 +382,6 @@ public class StreamingWriter {
       }
 
       @Override
-      public int getLocalTag(AUID auid) {
-        return (int) (StaticLocalTags.register().getLocalTag(auid).longValue() & 0xFFFFFFF);
-      }
-
-      @Override
       public void putSet(Set set) {
         if (ars.get() != null) {
           throw new RuntimeException("Index Table Segment already serialized");
@@ -393,8 +398,24 @@ public class StreamingWriter {
     }
 
     /* serialize the header */
+    LocalTagResolver tags = new LocalTagResolver() {
+      @Override
+      public Long getLocalTag(AUID auid) {
+        Long localTag = StaticLocalTags.register().getLocalTag(auid);
+        if (localTag == null) {
+          throw new RuntimeException();
+        }
+        return localTag;
+      }
+
+      @Override
+      public AUID getAUID(long localtag) {
+        throw new UnsupportedOperationException("Unimplemented method 'getAUID'");
+      }
+
+    };
     MXFOutputStream mos = new MXFOutputStream(new ByteArrayOutputStream());
-    Set.toStreamAsLocalSet(ars.get(), reg, mos);
+    Set.toStreamAsLocalSet(ars.get(), tags, mos);
 
     byte[] itsBytes = ((ByteArrayOutputStream) mos.stream()).toByteArray();
 
