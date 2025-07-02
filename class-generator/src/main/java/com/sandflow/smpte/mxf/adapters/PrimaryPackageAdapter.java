@@ -41,12 +41,13 @@ public class PrimaryPackageAdapter {
   public static final Integer ITEM_LENGTH = 16;
 
   private static final AUID PACKAGEID_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01010101.01011510.00000000");
-  
 
   public static UMID fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     UUID uuid = is.readUUID();
     var s = ctx.getSet(uuid);
-    /* TODO: check if no set found */
+    if (s == null) {
+      throw new RuntimeException();
+    }
     Triplet t = s.getItem(PACKAGEID_AUID);
     MXFInputStream mis = new MXFInputStream(t.getValueAsStream());
     return mis.readUMID();
@@ -54,7 +55,11 @@ public class PrimaryPackageAdapter {
 
   public static void toStream(UMID packageID, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
     /* TODO: check if no package found */
-    os.writeUUID(ctx.getPackageInstanceID(packageID));
+    UUID instanceID = ctx.getPackageInstanceID(packageID);
+    if (instanceID == null) {
+      throw new RuntimeException();
+    }
+    os.writeUUID(instanceID);
   }
 
 }

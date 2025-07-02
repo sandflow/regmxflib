@@ -69,17 +69,15 @@ public class StreamingReader extends InputStream {
     }
 
     this.elementInfo = MXFFiles.nextElement(this.mis);
-
     if (this.elementInfo == null) {
       this.state = State.DONE;
       return false;
     }
 
-
-    /* find track info */
     this.trackInfo = info.getTrackInfo(this.elementInfo.key().asUL());
-
-    /* TODO: error if no track info found */
+    if (this.trackInfo == null) {
+      throw new RuntimeException();
+    }
 
     this.remainingElementBytes = this.elementInfo.length();
 

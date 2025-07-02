@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import com.sandflow.smpte.klv.LocalTagRegister;
 import com.sandflow.smpte.klv.Set;
@@ -161,18 +162,13 @@ public class StreamingFileInfo implements HeaderInfo {
       }
 
       for (FileDescriptor fd : fds) {
-        Track foundTrack = null;
+        Optional<Track> foundTrack = fp.PackageTracks.stream().filter(t-> t.TrackID == fd.LinkedTrackID).findFirst();
 
-        for (Track t : fp.PackageTracks) {
-          if (t.TrackID == fd.LinkedTrackID) {
-            foundTrack = t;
-            break;
-          }
+        if (! foundTrack.isPresent()) {
+          throw new RuntimeException();
         }
 
-        /* TODO: handle missing Track */
-
-        tracks.add(new TrackInfo(fd, foundTrack, ed));
+        tracks.add(new TrackInfo(fd, foundTrack.get(), ed));
       }
     }
 
@@ -201,7 +197,9 @@ public class StreamingFileInfo implements HeaderInfo {
 
     this.preface = readHeaderMetadataFrom(mis, pp.getHeaderByteCount(), evthandler);
 
-    /* TODO: handle NULL preface */
+    if (this.preface == null) {
+      throw new RuntimeException();
+    }
 
     /* we can only handle a single essence container at this point */
     if (this.preface.ContentStorageObject.EssenceDataObjects.size() != 1) {

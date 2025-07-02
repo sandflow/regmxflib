@@ -69,7 +69,6 @@ public class StreamingWriter {
    */
   private long cbeUnitSize;
 
-
   public enum EssenceKind {
     VIDEO,
     AUDIO
@@ -110,7 +109,6 @@ public class StreamingWriter {
    */
   private long nextBPos = 0;
 
-
   private State state;
   private MXFOutputStream essenceStream;
   private RandomIndexPack rip = new RandomIndexPack();
@@ -130,15 +128,22 @@ public class StreamingWriter {
    */
   private long indexStartPosition;
 
+  /* TODO: document single container */
+
   StreamingWriter(OutputStream os, EssenceInfo essence) throws IOException, KLVException {
-    /* TOOD: check for null */
+    if (os == null) {
+      throw new IllegalArgumentException("Output stream must not be null");
+    }
     this.fos = new MXFOutputStream(os);
-    /* TODO: document single container */
     this.essenceStream = new MXFOutputStream(fos);
-    /* TODO: check for null */
+
+    if (essence == null) {
+      throw new IllegalArgumentException("Essence info must not be null");
+    }
     this.essenceInfo = essence;
 
-    AUID dataDefinition = essence.essenceKind == EssenceKind.AUDIO ? Labels.SoundEssenceTrack : Labels.PictureEssenceTrack;
+    AUID dataDefinition = essence.essenceKind == EssenceKind.AUDIO ? Labels.SoundEssenceTrack
+        : Labels.PictureEssenceTrack;
 
     this.elementKey = MXFFiles.makeEssenceElementKey(this.essenceInfo.essenceKey, elementCount, elementId);
 
@@ -154,12 +159,14 @@ public class StreamingWriter {
     sp.PackageName = "Top-level File Package";
     sp.EssenceDescription = desc;
     long trackNum = MXFFiles.getTrackNumber(this.elementKey);
-    PackageHelper.initSingleTrackPackage(sp, essence.editRate(), /* 24L */ null, UMID.NULL_UMID, trackNum, null, dataDefinition);
+    PackageHelper.initSingleTrackPackage(sp, essence.editRate(), /* 24L */ null, UMID.NULL_UMID, trackNum, null,
+        dataDefinition);
 
     /* Material Package */
     var mp = new MaterialPackage();
     mp.PackageName = "Material Package";
-    PackageHelper.initSingleTrackPackage(mp, essence.editRate(), /* 24L */ null, sp.PackageID, null, 1L, dataDefinition);
+    PackageHelper.initSingleTrackPackage(mp, essence.editRate(), /* 24L */ null, sp.PackageID, null, 1L,
+        dataDefinition);
 
     /* TODO: return better error when InstanceID is null */
     /* EssenceDataObject */
@@ -231,7 +238,6 @@ public class StreamingWriter {
         }
         return null;
       }
-
 
       @Override
       public void putSet(Set set) {
@@ -360,7 +366,7 @@ public class StreamingWriter {
         e.TemporalOffset = 0;
         its.IndexEntryArray.add(e);
       }
-      its.VBEByteCount = this.nextBPos - this.vbeBytePositions.get( this.vbeBytePositions.size() - 1);
+      its.VBEByteCount = this.nextBPos - this.vbeBytePositions.get(this.vbeBytePositions.size() - 1);
       /*
        * TODO: VBEByteCount
        */
@@ -427,13 +433,11 @@ public class StreamingWriter {
    * Client API
    */
 
-
-
   /**
    * creates a clip-wrapped essence container with constant size units
    * 
    * @param unitCount Number of units in the essence container
-   * @param unitSize Size in bytes of each element
+   * @param unitSize  Size in bytes of each element
    */
   public OutputStream createClipWrappedCBE(long unitCount, long unitSize) throws IOException, KLVException {
     if (this.state != State.START) {
@@ -454,8 +458,9 @@ public class StreamingWriter {
 
   /**
    * Starts a frame-wrapped essence container
-   * @throws KLVException 
-   * @throws IOException 
+   * 
+   * @throws KLVException
+   * @throws IOException
    */
   public void startVBEFrameWrapped() throws IOException, KLVException {
     if (this.state != State.START) {
@@ -522,7 +527,6 @@ public class StreamingWriter {
 
     /* add an entry to the index table if we have VBE essence */
     this.vbeBytePositions.add(this.essenceStream.getWrittenCount());
-
 
     /* start the essence element if frame-wrapping */
     if (this.unitWrapping == UnitWrapping.FRAME) {
