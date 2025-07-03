@@ -709,7 +709,8 @@ public class ClassGenerator {
             g.getTypeInformation(def);
           } else if (def instanceof PropertyDefinition) {
             var propDef = (PropertyDefinition) def;
-            if (propDef.getLocalIdentification() != 0) {
+            /* DEVIATION: some elements have local tags > 0x8000 */
+            if (propDef.getLocalIdentification() != 0 && propDef.getLocalIdentification() < 0x8000) {
               propList.add(propDef);
             }
           }

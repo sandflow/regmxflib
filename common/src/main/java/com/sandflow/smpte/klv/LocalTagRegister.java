@@ -75,27 +75,6 @@ public class LocalTagRegister implements LocalTagResolver {
   }
 
   /**
-   * Returns the Local Tag corresponding to a AUID, potentially allocating a
-   * dynamic Local Tag if no Local Tag exists
-   *
-   * @param auid
-   * @return Local tag
-   */
-  public long getOrMakeLocalTag(AUID auid) {
-    Entry e = auidToEntry.get(auid);
-    if (e != null) {
-      return e.localTag();
-    }
-    /* EXCEPTION: some register entries have local tags above 0x8000 */
-    /* look for the next available dynamic tag */
-    while (this.tagToEntry.containsKey(this.nextLocalTag)) {
-      this.nextLocalTag++;
-    }
-    this.add(this.nextLocalTag, auid);
-    return this.nextLocalTag++;
-  }
-
-  /**
    * Adds a Local Tag to the registry.
    *
    * @param localtag Local Tag

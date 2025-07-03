@@ -256,6 +256,9 @@ public class StreamingWriter {
 
     /* serialize the header */
     LocalTagResolver tags = new LocalTagResolver() {
+
+      long nextDynamicTag = 0x8000L;
+
       @Override
       public Long getLocalTag(AUID auid) {
         Long localTag = reg.getLocalTag(auid);
@@ -265,10 +268,10 @@ public class StreamingWriter {
         }
 
         if (localTag == null) {
-          localTag = reg.getOrMakeLocalTag(auid);
-        } else {
-          reg.add(localTag, auid);
+          localTag = nextDynamicTag++;
         }
+        
+        reg.add(localTag, auid);
 
         return localTag;
       }
