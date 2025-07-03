@@ -252,7 +252,7 @@ public class StreamingWriter {
     };
 
     /* collect the header metadata sets */
-    this.preface.serialize(ctx);
+    this.preface.toSet(ctx);
 
     /* serialize the header */
     LocalTagResolver tags = new LocalTagResolver() {
@@ -400,7 +400,7 @@ public class StreamingWriter {
 
     };
 
-    its.serialize(ctx);
+    its.toSet(ctx);
 
     if (ars.get() == null) {
       throw new RuntimeException("Index Table Segment not serialized");

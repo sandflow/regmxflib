@@ -106,22 +106,22 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
     return null;
   }
 
-  void writeToSet(Set s, MXFOutputContext ctx) throws IOException {
+  void addItemsToSet(Set s, MXFOutputContext ctx) throws IOException {
 {{#if parentClassName}}
-    super.writeToSet(s, ctx);{{/if}}
+    super.addItemsToSet(s, ctx);{{/if}}
 {{#each members}}{{#unless isInherited}}
     SetItemAdapter.toSetItem(this.{{symbol}}, {{symbol}}_AUID, {{adapterName}}::toStream, s, ctx);{{/unless}}{{/each}}
   }
 
-  public void serialize(MXFOutputContext ctx) throws IOException {
+  public void toSet(MXFOutputContext ctx) throws IOException {
     Set s = new Set(KEY);
-    this.writeToSet(s, ctx);
+    this.addItemsToSet(s, ctx);
     ctx.putSet(s);
   }
 
   public static void toStream({{className}} value, MXFOutputStream mos, MXFOutputContext ctx) throws IOException {
     mos.writeUUID(value.InstanceID);
-    value.serialize(ctx);
+    value.toSet(ctx);
   }
 
   /**

@@ -292,7 +292,7 @@ public class IndexTableSegment {
     return null;
   }
 
-  void writeToSet(Set s, MXFOutputContext ctx) throws IOException {
+  void addItemsToSet(Set s, MXFOutputContext ctx) throws IOException {
 
     SetItemAdapter.toSetItem(this.SliceCount, SliceCount_AUID,
         com.sandflow.smpte.mxf.adapters.UInt8Adapter::toStream, s, ctx);
@@ -338,15 +338,15 @@ public class IndexTableSegment {
         com.sandflow.smpte.mxf.adapters.UInt32Adapter::toStream, s, ctx);
   }
 
-  public void serialize(MXFOutputContext ctx) throws IOException {
+  public void toSet(MXFOutputContext ctx) throws IOException {
     Set s = new Set(KEY);
-    this.writeToSet(s, ctx);
+    this.addItemsToSet(s, ctx);
     ctx.putSet(s);
   }
 
   public static void toStream(IndexTableSegment value, MXFOutputStream mos, MXFOutputContext ctx) throws IOException {
     mos.writeUUID(value.InstanceID);
-    value.serialize(ctx);
+    value.toSet(ctx);
   }
 
   /**
