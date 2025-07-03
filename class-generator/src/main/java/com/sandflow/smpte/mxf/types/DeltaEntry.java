@@ -44,8 +44,7 @@ public class DeltaEntry {
   public Short Slice;
   public Long ElementDelta;
 
-
-  public static DeltaEntry fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
+  public static DeltaEntry fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     var r = new DeltaEntry();
 
     r.PosTableIndex = is.readByte();
@@ -58,15 +57,13 @@ public class DeltaEntry {
   public DeltaEntry() {
   }
 
-
-
   public DeltaEntry(Byte posTableIndex, Short slice, Long elementDelta) {
     PosTableIndex = posTableIndex;
     Slice = slice;
     ElementDelta = elementDelta;
   }
 
-  public static void toStream(DeltaEntry value, MXFOutputStream os, MXFOutputContext ctx)  throws IOException {
+  public static void toStream(DeltaEntry value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
 
     os.writeByte(value.PosTableIndex);
     os.writeUnsignedByte(value.Slice);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Pierre-Anthony Lemieux (pal@sandflow.com)
+ * Copyright (c) Sandflow Consulting, LLC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,6 +23,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/**
+* @author Pierre-Anthony Lemieux
+*/
+
 package com.sandflow.smpte.util;
 
 import java.io.FilterInputStream;

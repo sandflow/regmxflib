@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Pierre-Anthony Lemieux <pal@sandflow.com>
+ * Copyright (c) Sandflow Consulting, LLC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,6 +23,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/**
+* @author Pierre-Anthony Lemieux
+*/
+
 package com.sandflow.smpte.mxf;
 
 import java.io.DataOutputStream;
@@ -166,130 +171,137 @@ class StreamingWriterTest {
   }
 
   /*
-  <r0:RGBADescriptor>
-      <r1:InstanceID>urn:uuid:888c7510-06d5-4ccf-976c-627199e435d6</r1:InstanceID>
-      <r1:SubDescriptors>
-        <r0:JPEG2000SubDescriptor>
-            <r1:InstanceID>urn:uuid:a08c380b-b8ad-4662-9435-deb72176b11f</r1:InstanceID>
-            <r1:Rsiz>1798</r1:Rsiz>
-            <r1:Xsiz>640</r1:Xsiz>
-            <r1:Ysiz>360</r1:Ysiz>
-            <r1:XOsiz>0</r1:XOsiz>
-            <r1:YOsiz>0</r1:YOsiz>
-            <r1:XTsiz>640</r1:XTsiz>
-            <r1:YTsiz>360</r1:YTsiz>
-            <r1:XTOsiz>0</r1:XTOsiz>
-            <r1:YTOsiz>0</r1:YTOsiz>
-            <r1:Csiz>3</r1:Csiz>
-            <r1:PictureComponentSizing>
-              <r2:J2KComponentSizing>
-                  <r2:Ssiz>15</r2:Ssiz>
-                  <r2:XRSiz>1</r2:XRSiz>
-                  <r2:YRSiz>1</r2:YRSiz>
-              </r2:J2KComponentSizing>
-              <r2:J2KComponentSizing>
-                  <r2:Ssiz>15</r2:Ssiz>
-                  <r2:XRSiz>1</r2:XRSiz>
-                  <r2:YRSiz>1</r2:YRSiz>
-              </r2:J2KComponentSizing>
-              <r2:J2KComponentSizing>
-                  <r2:Ssiz>15</r2:Ssiz>
-                  <r2:XRSiz>1</r2:XRSiz>
-                  <r2:YRSiz>1</r2:YRSiz>
-              </r2:J2KComponentSizing>
-            </r1:PictureComponentSizing>
-            <r1:CodingStyleDefault>01040001010503030001778888888888</r1:CodingStyleDefault>
-            <r1:QuantizationDefault>20909898a09898a09898a0989898909098</r1:QuantizationDefault>
-            <r1:J2CLayout>
-              <r2:RGBAComponent>
-                  <r2:Code>CompRed</r2:Code>
-                  <r2:ComponentSize>16</r2:ComponentSize>
-              </r2:RGBAComponent>
-              <r2:RGBAComponent>
-                  <r2:Code>CompGreen</r2:Code>
-                  <r2:ComponentSize>16</r2:ComponentSize>
-              </r2:RGBAComponent>
-              <r2:RGBAComponent>
-                  <r2:Code>CompBlue</r2:Code>
-                  <r2:ComponentSize>16</r2:ComponentSize>
-              </r2:RGBAComponent>
-              <r2:RGBAComponent>
-                  <r2:Code>CompNull</r2:Code>
-                  <r2:ComponentSize>0</r2:ComponentSize>
-              </r2:RGBAComponent>
-              <r2:RGBAComponent>
-                  <r2:Code>CompNull</r2:Code>
-                  <r2:ComponentSize>0</r2:ComponentSize>
-              </r2:RGBAComponent>
-              <r2:RGBAComponent>
-                  <r2:Code>CompNull</r2:Code>
-                  <r2:ComponentSize>0</r2:ComponentSize>
-              </r2:RGBAComponent>
-              <r2:RGBAComponent>
-                  <r2:Code>CompNull</r2:Code>
-                  <r2:ComponentSize>0</r2:ComponentSize>
-              </r2:RGBAComponent>
-              <r2:RGBAComponent>
-                  <r2:Code>CompNull</r2:Code>
-                  <r2:ComponentSize>0</r2:ComponentSize>
-              </r2:RGBAComponent>
-            </r1:J2CLayout>
-        </r0:JPEG2000SubDescriptor>
-      </r1:SubDescriptors>
-      <r1:LinkedTrackID>2</r1:LinkedTrackID>
-      <r1:SampleRate>24/1</r1:SampleRate>
-      <r1:EssenceLength>24</r1:EssenceLength>
-      <r1:ContainerFormat>urn:smpte:ul:060e2b34.0401010d.0d010301.020c0600<!--MXFGCP1FrameWrappedPictureElement--></r1:ContainerFormat>
-      <r1:FrameLayout>FullFrame</r1:FrameLayout>
-      <r1:StoredWidth>640</r1:StoredWidth>
-      <r1:StoredHeight>360</r1:StoredHeight>
-      <r1:DisplayF2Offset>0</r1:DisplayF2Offset>
-      <r1:ImageAspectRatio>640/360</r1:ImageAspectRatio>
-      <r1:TransferCharacteristic>urn:smpte:ul:060e2b34.04010101.04010101.01020000<!--TransferCharacteristic_ITU709--></r1:TransferCharacteristic>
-      <r1:PictureCompression>urn:smpte:ul:060e2b34.0401010d.04010202.0301050f<!--J2K_2KIMF_SingleMultiTileReversibleProfile_M6S0--></r1:PictureCompression>
-      <r1:ColorPrimaries>urn:smpte:ul:060e2b34.04010106.04010101.03030000<!--ColorPrimaries_ITU709--></r1:ColorPrimaries>
-      <r1:VideoLineMap>
-        <r2:Int32>0</r2:Int32>
-        <r2:Int32>0</r2:Int32>
-      </r1:VideoLineMap>
-      <r1:ComponentMaxRef>65535</r1:ComponentMaxRef>
-      <r1:ComponentMinRef>0</r1:ComponentMinRef>
-      <r1:ScanningDirection>ScanningDirection_LeftToRightTopToBottom</r1:ScanningDirection>
-      <r1:PixelLayout>
-        <r2:RGBAComponent>
-            <r2:Code>CompRed</r2:Code>
-            <r2:ComponentSize>16</r2:ComponentSize>
-        </r2:RGBAComponent>
-        <r2:RGBAComponent>
-            <r2:Code>CompGreen</r2:Code>
-            <r2:ComponentSize>16</r2:ComponentSize>
-        </r2:RGBAComponent>
-        <r2:RGBAComponent>
-            <r2:Code>CompBlue</r2:Code>
-            <r2:ComponentSize>16</r2:ComponentSize>
-        </r2:RGBAComponent>
-        <r2:RGBAComponent>
-            <r2:Code>CompNull</r2:Code>
-            <r2:ComponentSize>0</r2:ComponentSize>
-        </r2:RGBAComponent>
-        <r2:RGBAComponent>
-            <r2:Code>CompNull</r2:Code>
-            <r2:ComponentSize>0</r2:ComponentSize>
-        </r2:RGBAComponent>
-        <r2:RGBAComponent>
-            <r2:Code>CompNull</r2:Code>
-            <r2:ComponentSize>0</r2:ComponentSize>
-        </r2:RGBAComponent>
-        <r2:RGBAComponent>
-            <r2:Code>CompNull</r2:Code>
-            <r2:ComponentSize>0</r2:ComponentSize>
-        </r2:RGBAComponent>
-        <r2:RGBAComponent>
-            <r2:Code>CompNull</r2:Code>
-            <r2:ComponentSize>0</r2:ComponentSize>
-        </r2:RGBAComponent>
-      </r1:PixelLayout>
-  </r0:RGBADescriptor>
+   * <r0:RGBADescriptor>
+   * <r1:InstanceID>urn:uuid:888c7510-06d5-4ccf-976c-627199e435d6</r1:InstanceID>
+   * <r1:SubDescriptors>
+   * <r0:JPEG2000SubDescriptor>
+   * <r1:InstanceID>urn:uuid:a08c380b-b8ad-4662-9435-deb72176b11f</r1:InstanceID>
+   * <r1:Rsiz>1798</r1:Rsiz>
+   * <r1:Xsiz>640</r1:Xsiz>
+   * <r1:Ysiz>360</r1:Ysiz>
+   * <r1:XOsiz>0</r1:XOsiz>
+   * <r1:YOsiz>0</r1:YOsiz>
+   * <r1:XTsiz>640</r1:XTsiz>
+   * <r1:YTsiz>360</r1:YTsiz>
+   * <r1:XTOsiz>0</r1:XTOsiz>
+   * <r1:YTOsiz>0</r1:YTOsiz>
+   * <r1:Csiz>3</r1:Csiz>
+   * <r1:PictureComponentSizing>
+   * <r2:J2KComponentSizing>
+   * <r2:Ssiz>15</r2:Ssiz>
+   * <r2:XRSiz>1</r2:XRSiz>
+   * <r2:YRSiz>1</r2:YRSiz>
+   * </r2:J2KComponentSizing>
+   * <r2:J2KComponentSizing>
+   * <r2:Ssiz>15</r2:Ssiz>
+   * <r2:XRSiz>1</r2:XRSiz>
+   * <r2:YRSiz>1</r2:YRSiz>
+   * </r2:J2KComponentSizing>
+   * <r2:J2KComponentSizing>
+   * <r2:Ssiz>15</r2:Ssiz>
+   * <r2:XRSiz>1</r2:XRSiz>
+   * <r2:YRSiz>1</r2:YRSiz>
+   * </r2:J2KComponentSizing>
+   * </r1:PictureComponentSizing>
+   * <r1:CodingStyleDefault>01040001010503030001778888888888</r1:
+   * CodingStyleDefault>
+   * <r1:QuantizationDefault>20909898a09898a09898a0989898909098</r1:
+   * QuantizationDefault>
+   * <r1:J2CLayout>
+   * <r2:RGBAComponent>
+   * <r2:Code>CompRed</r2:Code>
+   * <r2:ComponentSize>16</r2:ComponentSize>
+   * </r2:RGBAComponent>
+   * <r2:RGBAComponent>
+   * <r2:Code>CompGreen</r2:Code>
+   * <r2:ComponentSize>16</r2:ComponentSize>
+   * </r2:RGBAComponent>
+   * <r2:RGBAComponent>
+   * <r2:Code>CompBlue</r2:Code>
+   * <r2:ComponentSize>16</r2:ComponentSize>
+   * </r2:RGBAComponent>
+   * <r2:RGBAComponent>
+   * <r2:Code>CompNull</r2:Code>
+   * <r2:ComponentSize>0</r2:ComponentSize>
+   * </r2:RGBAComponent>
+   * <r2:RGBAComponent>
+   * <r2:Code>CompNull</r2:Code>
+   * <r2:ComponentSize>0</r2:ComponentSize>
+   * </r2:RGBAComponent>
+   * <r2:RGBAComponent>
+   * <r2:Code>CompNull</r2:Code>
+   * <r2:ComponentSize>0</r2:ComponentSize>
+   * </r2:RGBAComponent>
+   * <r2:RGBAComponent>
+   * <r2:Code>CompNull</r2:Code>
+   * <r2:ComponentSize>0</r2:ComponentSize>
+   * </r2:RGBAComponent>
+   * <r2:RGBAComponent>
+   * <r2:Code>CompNull</r2:Code>
+   * <r2:ComponentSize>0</r2:ComponentSize>
+   * </r2:RGBAComponent>
+   * </r1:J2CLayout>
+   * </r0:JPEG2000SubDescriptor>
+   * </r1:SubDescriptors>
+   * <r1:LinkedTrackID>2</r1:LinkedTrackID>
+   * <r1:SampleRate>24/1</r1:SampleRate>
+   * <r1:EssenceLength>24</r1:EssenceLength>
+   * <r1:ContainerFormat>urn:smpte:ul:060e2b34.0401010d.0d010301.020c0600<!--
+   * MXFGCP1FrameWrappedPictureElement--></r1:ContainerFormat>
+   * <r1:FrameLayout>FullFrame</r1:FrameLayout>
+   * <r1:StoredWidth>640</r1:StoredWidth>
+   * <r1:StoredHeight>360</r1:StoredHeight>
+   * <r1:DisplayF2Offset>0</r1:DisplayF2Offset>
+   * <r1:ImageAspectRatio>640/360</r1:ImageAspectRatio>
+   * <r1:TransferCharacteristic>urn:smpte:ul:060e2b34.04010101.04010101.01020000<!
+   * --TransferCharacteristic_ITU709--></r1:TransferCharacteristic>
+   * <r1:PictureCompression>urn:smpte:ul:060e2b34.0401010d.04010202.0301050f<!--
+   * J2K_2KIMF_SingleMultiTileReversibleProfile_M6S0--></r1:PictureCompression>
+   * <r1:ColorPrimaries>urn:smpte:ul:060e2b34.04010106.04010101.03030000<!--
+   * ColorPrimaries_ITU709--></r1:ColorPrimaries>
+   * <r1:VideoLineMap>
+   * <r2:Int32>0</r2:Int32>
+   * <r2:Int32>0</r2:Int32>
+   * </r1:VideoLineMap>
+   * <r1:ComponentMaxRef>65535</r1:ComponentMaxRef>
+   * <r1:ComponentMinRef>0</r1:ComponentMinRef>
+   * <r1:ScanningDirection>ScanningDirection_LeftToRightTopToBottom</r1:
+   * ScanningDirection>
+   * <r1:PixelLayout>
+   * <r2:RGBAComponent>
+   * <r2:Code>CompRed</r2:Code>
+   * <r2:ComponentSize>16</r2:ComponentSize>
+   * </r2:RGBAComponent>
+   * <r2:RGBAComponent>
+   * <r2:Code>CompGreen</r2:Code>
+   * <r2:ComponentSize>16</r2:ComponentSize>
+   * </r2:RGBAComponent>
+   * <r2:RGBAComponent>
+   * <r2:Code>CompBlue</r2:Code>
+   * <r2:ComponentSize>16</r2:ComponentSize>
+   * </r2:RGBAComponent>
+   * <r2:RGBAComponent>
+   * <r2:Code>CompNull</r2:Code>
+   * <r2:ComponentSize>0</r2:ComponentSize>
+   * </r2:RGBAComponent>
+   * <r2:RGBAComponent>
+   * <r2:Code>CompNull</r2:Code>
+   * <r2:ComponentSize>0</r2:ComponentSize>
+   * </r2:RGBAComponent>
+   * <r2:RGBAComponent>
+   * <r2:Code>CompNull</r2:Code>
+   * <r2:ComponentSize>0</r2:ComponentSize>
+   * </r2:RGBAComponent>
+   * <r2:RGBAComponent>
+   * <r2:Code>CompNull</r2:Code>
+   * <r2:ComponentSize>0</r2:ComponentSize>
+   * </r2:RGBAComponent>
+   * <r2:RGBAComponent>
+   * <r2:Code>CompNull</r2:Code>
+   * <r2:ComponentSize>0</r2:ComponentSize>
+   * </r2:RGBAComponent>
+   * </r1:PixelLayout>
+   * </r0:RGBADescriptor>
    */
 
   @Test
@@ -304,7 +316,6 @@ class StreamingWriterTest {
     InputStream is = ClassLoader.getSystemResourceAsStream("j2c-frames/counter-00006.j2c");
     byte[] j2cFrame = is.readAllBytes();
     is.close();
-
 
     RGBADescriptor d = new RGBADescriptor();
     d.InstanceID = UUID.fromRandom();
@@ -381,28 +392,31 @@ class StreamingWriterTest {
   }
 
   /*
-  <r0:IABEssenceDescriptor>
-    <r1:InstanceID>urn:uuid:8b34fae4-33d1-430f-9b78-8b58c2b698cd</r1:InstanceID>
-    <r1:SubDescriptors>
-      <r0:IABSoundfieldLabelSubDescriptor>
-        <r1:InstanceID>urn:uuid:359dea8e-868c-4768-a750-a83620fd165e</r1:InstanceID>
-        <r1:MCALabelDictionaryID>urn:smpte:ul:060e2b34.0401010d.03020221.00000000<!--IABSoundfield--></r1:MCALabelDictionaryID>
-        <r1:MCALinkID>urn:uuid:6370bd8b-49cd-4e72-a151-cbbb90039d04</r1:MCALinkID>
-        <r1:MCATagSymbol>IAB</r1:MCATagSymbol>
-        <r1:MCATagName>IAB</r1:MCATagName>
-        <r1:RFC5646SpokenLanguage>en</r1:RFC5646SpokenLanguage>
-      </r0:IABSoundfieldLabelSubDescriptor>
-    </r1:SubDescriptors>
-    <r1:LinkedTrackID>2</r1:LinkedTrackID>
-    <r1:SampleRate>24/1</r1:SampleRate>
-    <r1:EssenceLength>2</r1:EssenceLength>
-    <r1:ContainerFormat>urn:smpte:ul:060e2b34.0401010d.0d010301.021d0101<!--IMF_IABEssenceClipWrappedContainer--></r1:ContainerFormat>
-    <r1:AudioSampleRate>48000/1</r1:AudioSampleRate>
-    <r1:Locked>False</r1:Locked>
-    <r1:ChannelCount>0</r1:ChannelCount>
-    <r1:QuantizationBits>24</r1:QuantizationBits>
-    <r1:SoundCompression>urn:smpte:ul:060e2b34.04010105.0e090604.00000000<!--ImmersiveAudioCoding--></r1:SoundCompression>
-  </r0:IABEssenceDescriptor>
+   * <r0:IABEssenceDescriptor>
+   * <r1:InstanceID>urn:uuid:8b34fae4-33d1-430f-9b78-8b58c2b698cd</r1:InstanceID>
+   * <r1:SubDescriptors>
+   * <r0:IABSoundfieldLabelSubDescriptor>
+   * <r1:InstanceID>urn:uuid:359dea8e-868c-4768-a750-a83620fd165e</r1:InstanceID>
+   * <r1:MCALabelDictionaryID>urn:smpte:ul:060e2b34.0401010d.03020221.00000000<!--
+   * IABSoundfield--></r1:MCALabelDictionaryID>
+   * <r1:MCALinkID>urn:uuid:6370bd8b-49cd-4e72-a151-cbbb90039d04</r1:MCALinkID>
+   * <r1:MCATagSymbol>IAB</r1:MCATagSymbol>
+   * <r1:MCATagName>IAB</r1:MCATagName>
+   * <r1:RFC5646SpokenLanguage>en</r1:RFC5646SpokenLanguage>
+   * </r0:IABSoundfieldLabelSubDescriptor>
+   * </r1:SubDescriptors>
+   * <r1:LinkedTrackID>2</r1:LinkedTrackID>
+   * <r1:SampleRate>24/1</r1:SampleRate>
+   * <r1:EssenceLength>2</r1:EssenceLength>
+   * <r1:ContainerFormat>urn:smpte:ul:060e2b34.0401010d.0d010301.021d0101<!--
+   * IMF_IABEssenceClipWrappedContainer--></r1:ContainerFormat>
+   * <r1:AudioSampleRate>48000/1</r1:AudioSampleRate>
+   * <r1:Locked>False</r1:Locked>
+   * <r1:ChannelCount>0</r1:ChannelCount>
+   * <r1:QuantizationBits>24</r1:QuantizationBits>
+   * <r1:SoundCompression>urn:smpte:ul:060e2b34.04010105.0e090604.00000000<!--
+   * ImmersiveAudioCoding--></r1:SoundCompression>
+   * </r0:IABEssenceDescriptor>
    */
 
   @Test

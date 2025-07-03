@@ -53,7 +53,7 @@ public class IndexEntry {
     return 11 + 4 * nsl + 8 * npe;
   }
 
-  public static IndexEntry fromStream(MXFInputStream is, MXFInputContext ctx, short nsl, short npe)  throws IOException {
+  public static IndexEntry fromStream(MXFInputStream is, MXFInputContext ctx, short nsl, short npe) throws IOException {
     var r = new IndexEntry();
 
     r.TemporalOffset = is.readByte();
@@ -86,7 +86,7 @@ public class IndexEntry {
     StreamOffset = streamOffset;
   }
 
-  public static void toStream(IndexEntry value, MXFOutputStream os, MXFOutputContext ctx)  throws IOException {
+  public static void toStream(IndexEntry value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
 
     os.writeByte(value.TemporalOffset);
     os.writeByte(value.KeyFrameOffset);

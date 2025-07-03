@@ -1,4 +1,3 @@
-package com.sandflow.smpte.mxf.types;
 /*
  * Copyright (c) Sandflow Consulting, LLC
  * All rights reserved.
@@ -29,6 +28,8 @@ package com.sandflow.smpte.mxf.types;
 * @author Pierre-Anthony Lemieux
 */
 
+package com.sandflow.smpte.mxf.types;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -37,14 +38,14 @@ import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFOutputStream;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 
-
 public class IndexEntryArray extends ArrayList<IndexEntry> {
 
   public IndexEntryArray() {
     super();
   }
 
-  public static IndexEntryArray fromStream(MXFInputStream is, MXFInputContext ctx, short nsl, short npe)  throws IOException {
+  public static IndexEntryArray fromStream(MXFInputStream is, MXFInputContext ctx, short nsl, short npe)
+      throws IOException {
     int itemcount = (int) (is.readInt() & 0xfffffffL);
     @SuppressWarnings("unused")
     int itemlength = (int) (is.readInt() & 0xfffffffL);
@@ -58,7 +59,8 @@ public class IndexEntryArray extends ArrayList<IndexEntry> {
     return items;
   }
 
-  public static void toStream(IndexEntryArray v, MXFOutputStream os, MXFOutputContext ctx, short nsl, short npe)  throws IOException {
+  public static void toStream(IndexEntryArray v, MXFOutputStream os, MXFOutputContext ctx, short nsl, short npe)
+      throws IOException {
     os.writeUnsignedInt(v.size());
     os.writeUnsignedInt(com.sandflow.smpte.mxf.types.IndexEntry.getLength(nsl, npe));
 
@@ -67,4 +69,4 @@ public class IndexEntryArray extends ArrayList<IndexEntry> {
     }
   }
 
- }
+}

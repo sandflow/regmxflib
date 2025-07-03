@@ -24,6 +24,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+* @author Pierre-Anthony Lemieux
+*/
+
 package com.sandflow.smpte.mxf;
 
 import java.io.IOException;
@@ -162,9 +166,9 @@ public class StreamingFileInfo implements HeaderInfo {
       }
 
       for (FileDescriptor fd : fds) {
-        Optional<Track> foundTrack = fp.PackageTracks.stream().filter(t-> t.TrackID == fd.LinkedTrackID).findFirst();
+        Optional<Track> foundTrack = fp.PackageTracks.stream().filter(t -> t.TrackID == fd.LinkedTrackID).findFirst();
 
-        if (! foundTrack.isPresent()) {
+        if (!foundTrack.isPresent()) {
           throw new RuntimeException();
         }
 
