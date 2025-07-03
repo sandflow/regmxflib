@@ -45,7 +45,6 @@ public class StreamingReader extends InputStream {
     }
     this.info = info;
 
-    /* TODO: handle byte ordering */
     this.mis = new MXFInputStream(is);
 
     this.state = State.READY;

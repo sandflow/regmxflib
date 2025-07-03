@@ -104,9 +104,10 @@ public class KLVOutputStream extends CountingOutputStream {
   }
 
   /**
-   * Writes a single BER-encoded length. The maximum length of the encoded length
-   * os 8 bytes.
-   * 
+   * Writes a single BER-encoded length. The maximum length of the encoded
+   * length is 8 bytes. DEVIATION: the minimum length is 4 bytes for
+   * compatibility with ASDCPLib
+   *
    * @return Length
    * @throws EOFException
    * @throws IOException
@@ -117,7 +118,6 @@ public class KLVOutputStream extends CountingOutputStream {
       throw new IllegalArgumentException("Length cannot be negative");
     }
 
-    /* long form and at least 4 bytes for compatibility with ASDCPLib */
     // if (l < 0x80) {
     // this.write((int) l);
     // return;
@@ -173,9 +173,13 @@ public class KLVOutputStream extends CountingOutputStream {
     this.write(t.getValue());
   }
 
+  /**
+   * This is for compatibility with ASDCPLib, which expects BER Lenghts to be 4
+   * bytes for Partition Packs
+   *
+   */
   public void writeBER4Triplet(Triplet triplet) throws IOException {
     writeAUID(triplet.getKey());
-    /* TODO: super ugly for compatibility with ASDCPLib */
     writeBER4Length(triplet.getLength());
     write(triplet.getValue());
   }

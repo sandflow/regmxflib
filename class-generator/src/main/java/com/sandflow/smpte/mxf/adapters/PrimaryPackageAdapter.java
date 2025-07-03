@@ -54,7 +54,6 @@ public class PrimaryPackageAdapter {
   }
 
   public static void toStream(UMID packageID, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
-    /* TODO: check if no package found */
     UUID instanceID = ctx.getPackageInstanceID(packageID);
     if (instanceID == null) {
       throw new RuntimeException();
