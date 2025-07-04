@@ -240,7 +240,7 @@ public class RandomAccessFileInfo implements HeaderInfo {
         /* read Index Segments until the IndexByteCount is exceeded */
         while (mis.getReadCount() < pp.getIndexByteCount()) {
           IndexTableSegment its = IndexTableSegment.fromSet(
-              Set.fromLocalSet(mis.readTriplet(), StaticLocalTags.register()),
+              Set.fromLocalSet(mis.readTriplet(), StaticLocalTags.getRegister()),
               new MXFInputContext() {
                 @Override
                 public Set getSet(UUID uuid) {

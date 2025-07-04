@@ -53,7 +53,7 @@ public class StaticLocalTags {
     StaticLocalTags.reg.add(localTag, auid);
   }
 
-  public static LocalTagResolver register() {
+  public static LocalTagResolver getRegister() {
     return StaticLocalTags.reg;
   }
 
