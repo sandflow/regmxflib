@@ -36,6 +36,7 @@ import java.io.InputStream;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.HeaderInfo.TrackInfo;
 import com.sandflow.smpte.mxf.MXFFiles.ElementInfo;
+import com.sandflow.smpte.util.AUID;
 import com.sandflow.util.events.EventHandler;
 
 /**
@@ -56,7 +57,7 @@ public class StreamingReader extends InputStream {
   private ElementInfo elementInfo;
   private long remainingElementBytes = 0;
   private TrackInfo trackInfo;
-
+  private AUID elementKey;
   /**
    * Creates a new StreamingReader from an InputStream.
    *
@@ -64,7 +65,7 @@ public class StreamingReader extends InputStream {
    * @param evthandler Event handler for reporting parsing events or
    *                   inconsistencies.
    */
-  StreamingReader(HeaderInfo info, InputStream is, EventHandler evthandler)
+  public StreamingReader(HeaderInfo info, InputStream is, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
     if (is == null) {
       throw new NullPointerException("InputStream cannot be null");
@@ -103,16 +104,26 @@ public class StreamingReader extends InputStream {
       return false;
     }
 
+    this.elementKey = this.elementInfo.key();
     this.trackInfo = info.getTrackInfo(this.elementInfo.key().asUL());
-    if (this.trackInfo == null) {
-      throw new RuntimeException();
-    }
 
     this.remainingElementBytes = this.elementInfo.length();
 
     this.state = State.IN_PAYLOAD;
 
     return true;
+  }
+
+  /**
+   * Returns the key identifying the current essence unit.
+   *
+   * @return Essence element key.
+   */
+  public AUID getElementKey() {
+    if (this.state != State.IN_PAYLOAD) {
+      throw new RuntimeException();
+    }
+    return this.elementKey;
   }
 
   /**

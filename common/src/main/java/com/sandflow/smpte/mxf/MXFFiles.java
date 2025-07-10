@@ -148,19 +148,19 @@ public class MXFFiles {
   }
 
   public static ElementInfo nextElement(InputStream is) throws IOException, KLVException {
-    AUID elementKey;
-    long elementLength;
-
     MXFInputStream mis = new MXFInputStream(is);
 
-    /* skip over partitions */
-    while (true) {
-      elementKey = mis.readAUID();
-      elementLength = mis.readBERLength();
+    AUID elementKey = mis.readAUID();
+    long elementLength = mis.readBERLength();
 
-      if (elementKey.isUUID()) {
-        /* skip KLVs that do not have a UL key */
+    /* skip over non-GC items */
+    while (true) {
+
+      if (elementKey.isUUID() || FillItem.isInstance(elementKey)) {
+        /* skip over Fill items and KLVs that do not have a UL key */
         mis.skipFully(elementLength);
+        elementKey = mis.readAUID();
+        elementLength = mis.readBERLength();
         continue;
       }
 
@@ -169,6 +169,7 @@ public class MXFFiles {
         break;
       }
 
+      /* found a partition */
       /* partition pack is fixed length so that cast is ok */
       byte[] value = new byte[(int) elementLength];
       mis.readFully(value);
@@ -179,24 +180,25 @@ public class MXFFiles {
         return null;
       }
 
-      /* do we have header metadata and/or an index table to skip? */
+      long headerAndIndexBytes = pp.getHeaderByteCount() + pp.getIndexByteCount();
 
-      if (pp.getHeaderByteCount() + pp.getIndexByteCount() > 0) {
-        /* skip the optional fill item that follows the partition pack */
+      /*
+       * skip the optional fill item and any index and header bytes that follows the
+       * partition pack. There is no way to know for sure whether there is a fill item
+       * after the partition pack, so we need to make a speculative read.
+       */
+      elementKey = mis.readAUID();
+
+      if (FillItem.isInstance(elementKey)) {
+        elementLength = mis.readBERLength();
+        mis.skipFully(elementLength + headerAndIndexBytes);
         elementKey = mis.readAUID();
-        if (FillItem.isInstance(elementKey)) {
-          elementLength = mis.readBERLength();
-          mis.skipFully(elementLength);
-        }
-        mis.skipFully(pp.getHeaderByteCount() + pp.getIndexByteCount() - UL.SIZE);
+
+      } else if (headerAndIndexBytes > 0) {
+        mis.skipFully(headerAndIndexBytes - UL.SIZE);
+        elementKey = mis.readAUID();
       }
 
-    }
-
-    /* skip over any fill items */
-    while (FillItem.isInstance(elementKey)) {
-      mis.skipFully(elementLength);
-      elementKey = mis.readAUID();
       elementLength = mis.readBERLength();
     }
 

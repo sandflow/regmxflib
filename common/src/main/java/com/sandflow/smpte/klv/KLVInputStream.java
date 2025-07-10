@@ -271,6 +271,12 @@ public class KLVInputStream extends CountingInputStream {
   }
 
   public long skipFully(long n) throws IOException {
+    if (n < 0)
+      throw new IllegalArgumentException("Cannot skip over negative legnths");
+
+    if (n == 0)
+      return 0;
+
     byte[] buf = new byte[1024];
     long r = n;
     while (r > 0) {

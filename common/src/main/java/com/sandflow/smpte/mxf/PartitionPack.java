@@ -42,8 +42,7 @@ import java.util.Collection;
  */
 public class PartitionPack {
 
-  private static final UL KEY = new UL(new byte[] { 0x06, 0x0e, 0x2b, 0x34, 0x02, 0x05, 0x01, 0x01, 0x0d, 0x01, 0x02,
-      0x01, 0x01, 0x00, 0x00, 0x00 });
+  private static final UL KEY = UL.fromURN("urn:smpte:ul:060e2b34.02050101.0d010201.01000000");
   private static final int PARTITION_STATUS_OCTET = 14;
   private static final int PARTITION_KIND_OCTET = 13;
 

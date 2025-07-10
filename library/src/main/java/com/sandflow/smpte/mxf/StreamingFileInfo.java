@@ -33,6 +33,7 @@ package com.sandflow.smpte.mxf;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -103,7 +104,7 @@ public class StreamingFileInfo implements HeaderInfo {
         } else {
           MXFEvent.handle(evthandler, new MXFEvent(
               MXFEvent.EventCodes.GROUP_READ_FAILED,
-              String.format("Failed to read Group: {0}", t.getKey().toString())));
+              String.format("Failed to read Group: %s", t.getKey().toString())));
         }
       } catch (KLVException ke) {
         MXFEvent.handle(evthandler, new MXFEvent(
@@ -158,11 +159,11 @@ public class StreamingFileInfo implements HeaderInfo {
       }
 
       /* do we have a multi-descriptor */
-      FileDescriptor fds[] = null;
+      List<FileDescriptor> fds;
       if (fp.EssenceDescription instanceof MultipleDescriptor) {
-        fds = ((MultipleDescriptor) fp.EssenceDescription).SubDescriptors.toArray(fds);
+        fds = ((MultipleDescriptor) fp.EssenceDescription).FileDescriptors;
       } else {
-        fds = new FileDescriptor[] { (FileDescriptor) fp.EssenceDescription };
+        fds = Collections.singletonList((FileDescriptor) fp.EssenceDescription);
       }
 
       for (FileDescriptor fd : fds) {
@@ -182,7 +183,7 @@ public class StreamingFileInfo implements HeaderInfo {
   private final Preface preface;
   private final List<TrackInfo> tracks;
 
-  StreamingFileInfo(InputStream is, EventHandler evthandler)
+  public StreamingFileInfo(InputStream is, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
     MXFInputStream mis = new MXFInputStream(is);
 
