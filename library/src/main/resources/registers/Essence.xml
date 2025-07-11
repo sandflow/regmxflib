@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2024 SMPTE All rights reserved.
+Copyright (c) 2025 SMPTE All rights reserved.
 
 The latest version of this document can be retrieved at
 
@@ -472,8 +472,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
             <DefiningDocument>SMPTE RDD 44</DefiningDocument>
             <IsDeprecated>false</IsDeprecated>
         </Entry>
-        <Entry>
-            <Register>Essence</Register>
+		<Entry>
+			<Register>Essence</Register>
             <NamespaceName>http://www.smpte-ra.org/reg/2088/2019/13/1/aaf</NamespaceName>
             <Symbol>FrameWrappedDNxPackedPictureElement</Symbol>
             <UL>urn:smpte:ul:060e2b34.01020101.0d010301.157f187f</UL>
@@ -483,8 +483,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
             <DefiningDocument>SMPTE RDD 50</DefiningDocument>
             <IsDeprecated>false</IsDeprecated>
         </Entry>
-        <Entry>
-            <Register>Essence</Register>
+		<Entry>
+			<Register>Essence</Register>
             <NamespaceName>http://www.smpte-ra.org/reg/2088/2019/13/1/aaf</NamespaceName>
             <Symbol>ClipWrappedDNxPackedPictureElement</Symbol>
             <UL>urn:smpte:ul:060e2b34.01020101.0d010301.157f197f</UL>
