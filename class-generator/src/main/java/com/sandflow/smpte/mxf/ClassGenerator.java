@@ -174,6 +174,7 @@ public class ClassGenerator {
     private static final AUID TimeStamp_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.03010700.00000000");
     private static final AUID VersionType_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.03010300.00000000");
     private static final UL ObjectClass_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.06010104.01010000");
+    private static final UL PICTUREDESCRIPTOR_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.01012700");
 
     String typeName;
     String adapterName;
@@ -204,7 +205,8 @@ public class ClassGenerator {
 
       data.put("className", def.getSymbol());
       data.put("identification", def.getIdentification().toString());
-      if (!def.isConcrete()) {
+      /* DEVIATION: PictureDescriptor is marked Abstract but should be Concrete */
+      if (!def.isConcrete() && !PICTUREDESCRIPTOR_UL.equalsIgnoreVersion(def.getIdentification())) {
         data.put("isAbstract", "1");
       }
       data.put("description", def.getDescription());

@@ -53,7 +53,10 @@ public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
     var items = new {{adapterName}}();
 
     for (int i = 0; i < itemcount; i++) {
-      items.add({{itemAdapterName}}.fromStream(is, ctx));
+      {{itemTypeName}} value = {{itemAdapterName}}.fromStream(is, ctx);
+      if (value != null) {
+        items.add(value);
+      }
     }
 
     return items;

@@ -76,6 +76,8 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
   public static {{className}} fromSet(Set s, MXFInputContext ctx) {
     Class<?> clazz = ClassFactory.getClass(s.getKey());
     if (clazz == null) {
+      /* TODO: record error */
+      System.err.println("Class not found: "+ s.getKey().toString());
       return null;
     }
     try {
@@ -85,6 +87,7 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
       return obj;
     } catch (Exception e) {
       /* TODO: log error */
+      System.out.println(e.getMessage());
     }
 
     return null;
