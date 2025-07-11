@@ -170,7 +170,8 @@ public class StreamingFileInfo implements HeaderInfo {
         Optional<Track> foundTrack = fp.PackageTracks.stream().filter(t -> t.TrackID == fd.LinkedTrackID).findFirst();
 
         if (!foundTrack.isPresent()) {
-          throw new RuntimeException();
+          /* can simply be a timecode track */
+          continue;
         }
 
         tracks.add(new TrackInfo(fd, foundTrack.get(), ed));
