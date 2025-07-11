@@ -166,6 +166,8 @@ public class StreamingFileInfo implements HeaderInfo {
         fds = Collections.singletonList((FileDescriptor) fp.EssenceDescription);
       }
 
+      /* TODO: error if no descriptors are present */
+
       for (FileDescriptor fd : fds) {
         Optional<Track> foundTrack = fp.PackageTracks.stream().filter(t -> t.TrackID == fd.LinkedTrackID).findFirst();
 
