@@ -32,25 +32,14 @@ package com.sandflow.smpte.mxf;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
 
 import com.sandflow.smpte.klv.LocalTagRegister;
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
-import com.sandflow.smpte.mxf.types.EssenceData;
-import com.sandflow.smpte.mxf.types.FileDescriptor;
 import com.sandflow.smpte.mxf.types.MaterialPackage;
-import com.sandflow.smpte.mxf.types.MultipleDescriptor;
-import com.sandflow.smpte.mxf.types.Package;
 import com.sandflow.smpte.mxf.types.Preface;
-import com.sandflow.smpte.mxf.types.SourcePackage;
-import com.sandflow.smpte.mxf.types.Track;
-import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.EventHandler;
 
@@ -139,52 +128,7 @@ public class StreamingFileInfo implements HeaderInfo {
     return null;
   }
 
-  private static List<TrackInfo> extractTracks(Preface preface) {
-    ArrayList<TrackInfo> tracks = new ArrayList<>();
-
-    /* collect tracks that are stored in essence containers */
-    for (EssenceData ed : preface.ContentStorageObject.EssenceDataObjects) {
-
-      /* retrieve the File Package */
-      SourcePackage fp = null;
-      for (Package p : preface.ContentStorageObject.Packages) {
-        if (p.PackageID.equals(ed.LinkedPackageID)) {
-          fp = (SourcePackage) p;
-          break;
-        }
-      }
-
-      if (fp == null) {
-        throw new RuntimeException("No file packages found");
-      }
-
-      /* do we have a multi-descriptor */
-      List<FileDescriptor> fds;
-      if (fp.EssenceDescription instanceof MultipleDescriptor) {
-        fds = ((MultipleDescriptor) fp.EssenceDescription).FileDescriptors;
-      } else {
-        fds = Collections.singletonList((FileDescriptor) fp.EssenceDescription);
-      }
-
-      /* TODO: error if no descriptors are present */
-
-      for (FileDescriptor fd : fds) {
-        Optional<Track> foundTrack = fp.PackageTracks.stream().filter(t -> t.TrackID == fd.LinkedTrackID).findFirst();
-
-        if (!foundTrack.isPresent()) {
-          /* can simply be a timecode track */
-          continue;
-        }
-
-        tracks.add(new TrackInfo(fd, foundTrack.get(), ed));
-      }
-    }
-
-    return tracks;
-  }
-
   private final Preface preface;
-  private final List<TrackInfo> tracks;
 
   public StreamingFileInfo(InputStream is, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
@@ -219,8 +163,6 @@ public class StreamingFileInfo implements HeaderInfo {
       throw new RuntimeException("Only one material package supported");
     }
 
-    this.tracks = extractTracks(this.preface);
-
     /*
      * skip over index tables, if any
      */
@@ -230,33 +172,8 @@ public class StreamingFileInfo implements HeaderInfo {
   }
 
   @Override
-  public TrackInfo getTrack(int i) {
-    return this.tracks.get(i);
-  }
-
-  @Override
-  public int getTrackCount() {
-    return this.tracks.size();
-  }
-
-  @Override
   public Preface getPreface() {
     return this.preface;
-  }
-
-  @Override
-  public TrackInfo getTrackInfo(UL elementKey) {
-    long trackNum = MXFFiles.getTrackNumber(elementKey);
-
-    /* find track info */
-    for (int i = 0; i < this.tracks.size(); i++) {
-      TrackInfo info = this.tracks.get(i);
-      if (info.track().EssenceTrackNumber == trackNum) {
-        return info;
-      }
-    }
-
-    return null;
   }
 
 }

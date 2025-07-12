@@ -129,10 +129,13 @@ public class RandomAccessFileInfo implements HeaderInfo {
   }
 
   private final HeaderInfo basicInfo;
-  private Long bodySID = null;
-  private Long indexSID = null;
+  private Long ecSID = null;
+  private Long ecIndexSID = null;
   private Index euToECPosition;
   private final ECToFilePositionMapper ecToFilePositions = new ECToFilePositionMapper();
+
+  private Long gsSID = null;
+  private ECToFilePositionMapper gsToFilePositions = null;
 
   RandomAccessFileInfo(RandomAccessInputSource raip, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
@@ -180,8 +183,34 @@ public class RandomAccessFileInfo implements HeaderInfo {
         throw new RuntimeException();
       }
 
-      /* skip generic stream partition */
+      /* process generic stream partition */
       if (pp.getStatus() == Status.STREAM) {
+        if (this.gsSID == null) {
+          /* we have never seen this generic stream before */
+          this.gsSID = pp.getBodySID();
+          if (this.gsSID == 0) {
+            throw new RuntimeException();
+          }
+        } else if (this.gsSID != pp.getBodySID()) {
+          /* support only one generic stream */
+          throw new RuntimeException();
+        }
+
+        if (pp.getBodyOffset() == 0) {
+          /* restart a new mapper */
+          this.gsToFilePositions = new ECToFilePositionMapper();
+        }
+
+        /* skip over the optional fill item and map the generic stream position */
+        long pos = raip.position();
+        t = mis.readTriplet();
+        FillItem fi = FillItem.fromTriplet(t);
+        if (fi == null) {
+          this.gsToFilePositions.addPartition(pp.getBodyOffset(), pos);
+        } else {
+          this.gsToFilePositions.addPartition(pp.getBodyOffset(), raip.position());
+        }
+
         continue;
       }
 
@@ -228,9 +257,9 @@ public class RandomAccessFileInfo implements HeaderInfo {
 
         /* we only support indexing a single EC */
         /* TODO: confirm that indexSID and bodySID are consistent */
-        if (this.indexSID == null) {
-          this.indexSID = pp.getIndexSID();
-        } else if (this.indexSID != pp.getIndexSID()) {
+        if (this.ecIndexSID == null) {
+          this.ecIndexSID = pp.getIndexSID();
+        } else if (this.ecIndexSID != pp.getIndexSID()) {
           throw new RuntimeException();
         }
 
@@ -291,9 +320,9 @@ public class RandomAccessFileInfo implements HeaderInfo {
 
       /* save the essence container offset */
       if (pp.getBodySID() != 0) {
-        if (this.bodySID == null) {
-          this.bodySID = pp.getBodySID();
-        } else if (this.bodySID != pp.getBodySID()) {
+        if (this.ecSID == null) {
+          this.ecSID = pp.getBodySID();
+        } else if (this.ecSID != pp.getBodySID()) {
           throw new RuntimeException();
         }
 
@@ -307,20 +336,6 @@ public class RandomAccessFileInfo implements HeaderInfo {
     raip.position(headerMetadataPartition.getThisPartition());
     this.basicInfo = new StreamingFileInfo(raip, evthandler);
 
-    /* TODO: check for consistent bodySID */
-    // this.bodySID =
-    // this.preface.ContentStorageObject.EssenceDataObjects.get(0).EssenceStreamID;
-
-  }
-
-  @Override
-  public TrackInfo getTrack(int i) {
-    return this.basicInfo.getTrack(i);
-  }
-
-  @Override
-  public int getTrackCount() {
-    return this.basicInfo.getTrackCount();
   }
 
   @Override
@@ -328,21 +343,29 @@ public class RandomAccessFileInfo implements HeaderInfo {
     return this.basicInfo.getPreface();
   }
 
-  public long ecFromEUPosition(long position) {
+  public Long getGenericStreamSID() {
+    return this.ecSID;
+  }
+
+  public long gsToFilePosition(long position) {
+    /* check for no generic stream */
+    return this.gsToFilePosition(position);
+  }
+
+  public long euToECPosition(long position) {
+    /* check for no index */
     return this.euToECPosition.getECPosition(position);
   }
 
-  public long fileFromECPosition(long position) {
+  public long ecToFilePositions(long position) {
+    /* check for no ec */
     return this.ecToFilePositions.getFilePosition(position);
   }
 
-  public long getSize() {
+  public long getEUCount() {
+    /* check for no index */
     return this.euToECPosition.length();
   }
 
-  @Override
-  public TrackInfo getTrackInfo(UL elementKey) {
-    return this.basicInfo.getTrackInfo(elementKey);
-  }
 
 }

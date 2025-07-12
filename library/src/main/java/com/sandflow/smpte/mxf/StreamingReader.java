@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.sandflow.smpte.klv.exceptions.KLVException;
-import com.sandflow.smpte.mxf.HeaderInfo.TrackInfo;
+import com.sandflow.smpte.mxf.ECTracks.TrackInfo;
 import com.sandflow.smpte.mxf.MXFFiles.ElementInfo;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.util.events.EventHandler;
@@ -53,10 +53,8 @@ public class StreamingReader extends InputStream {
 
   private MXFInputStream mis;
   protected State state;
-  private final HeaderInfo info;
   private ElementInfo elementInfo;
   private long remainingElementBytes = 0;
-  private TrackInfo trackInfo;
   private AUID elementKey;
   /**
    * Creates a new StreamingReader from an InputStream.
@@ -65,16 +63,11 @@ public class StreamingReader extends InputStream {
    * @param evthandler Event handler for reporting parsing events or
    *                   inconsistencies.
    */
-  public StreamingReader(HeaderInfo info, InputStream is, EventHandler evthandler)
+  public StreamingReader(InputStream is, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
     if (is == null) {
       throw new NullPointerException("InputStream cannot be null");
     }
-
-    if (info == null) {
-      throw new NullPointerException("Info cannot be null");
-    }
-    this.info = info;
 
     this.mis = new MXFInputStream(is);
 
@@ -105,7 +98,6 @@ public class StreamingReader extends InputStream {
     }
 
     this.elementKey = this.elementInfo.key();
-    this.trackInfo = info.getTrackInfo(this.elementInfo.key().asUL());
 
     this.remainingElementBytes = this.elementInfo.length();
 
@@ -124,18 +116,6 @@ public class StreamingReader extends InputStream {
       throw new RuntimeException();
     }
     return this.elementKey;
-  }
-
-  /**
-   * Returns metadata about the current essence unit's track.
-   *
-   * @return TrackInfo object associated with the current unit.
-   */
-  public TrackInfo getElementTrackInfo() {
-    if (this.state != State.IN_PAYLOAD) {
-      throw new RuntimeException();
-    }
-    return this.trackInfo;
   }
 
   /**

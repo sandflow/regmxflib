@@ -66,11 +66,12 @@ class StreamingReaderTest {
     assertNotNull(is);
 
     StreamingFileInfo info = new StreamingFileInfo(is, null);
-    assertEquals(1, info.getTrackCount());
-    RGBADescriptor d = (RGBADescriptor) info.getTrack(0).descriptor();
+    ECTracks tracks = new ECTracks(info.getPreface());
+    assertEquals(1, tracks.getTrackCount());
+    RGBADescriptor d = (RGBADescriptor) tracks.getTrackInfo(0).descriptor();
     assertEquals(640L, d.StoredWidth);
 
-    StreamingReader sr = new StreamingReader(info, is, null);
+    StreamingReader sr = new StreamingReader(is, null);
     ArrayList<Long> measuredSizes = new ArrayList<>();
     while (sr.nextElement()) {
       measuredSizes.add(sr.getElementLength());
@@ -84,13 +85,14 @@ class StreamingReaderTest {
     InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/audio.mxf");
 
     StreamingFileInfo info = new StreamingFileInfo(is, null);
-    assertEquals(1, info.getTrackCount());
+    ECTracks tracks = new ECTracks(info.getPreface());
+    assertEquals(1, tracks.getTrackCount());
 
-    StreamingReader sr = new StreamingReader(info, is, null);
+    StreamingReader sr = new StreamingReader(is, null);
 
     int i = 0;
     while (sr.nextElement()) {
-      WAVEPCMDescriptor d = (WAVEPCMDescriptor) sr.getElementTrackInfo().descriptor();
+      WAVEPCMDescriptor d = (WAVEPCMDescriptor) tracks.getTrackInfo(sr.getElementKey()).descriptor();
       assertEquals(d.AverageBytesPerSecond, 288000);
       i++;
       assertEquals(288000, sr.getElementLength());

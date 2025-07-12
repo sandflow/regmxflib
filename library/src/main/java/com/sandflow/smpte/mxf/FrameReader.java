@@ -42,7 +42,7 @@ public class FrameReader extends StreamingReader {
 
   FrameReader(RandomAccessFileInfo info, RandomAccessInputSource source)
       throws IOException, KLVException, MXFException {
-    super(info, source, null);
+    super(source, null);
 
     this.info = info;
     this.source = source;
@@ -51,11 +51,11 @@ public class FrameReader extends StreamingReader {
   }
 
   public long getSize() {
-    return this.info.getSize();
+    return this.info.getEUCount();
   }
 
   public void seek(long euPosition) throws IOException, KLVException {
-    long filePosition = this.info.fileFromECPosition(this.info.ecFromEUPosition(euPosition));
+    long filePosition = this.info.ecToFilePositions(this.info.euToECPosition(euPosition));
     this.source.position(filePosition);
     this.state = State.READY;
   }

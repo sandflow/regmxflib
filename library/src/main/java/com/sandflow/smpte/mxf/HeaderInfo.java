@@ -38,25 +38,7 @@ import com.sandflow.smpte.util.UL;
 
 public interface HeaderInfo {
 
-    /**
-     * Represents information associated with an Essence Track.
-     *
-     * @param descriptor File descriptor associated with the track.
-     * @param track      Track metadata.
-     * @param container  Essence container reference.
-     */
-    public record TrackInfo(
-            FileDescriptor descriptor,
-            Track track,
-            EssenceData container) {
-    }
-
-    TrackInfo getTrack(int i);
-
-    int getTrackCount();
 
     Preface getPreface();
-
-    TrackInfo getTrackInfo(UL elementKey);
 
 }

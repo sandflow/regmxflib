@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import com.sandflow.smpte.mxf.ECTracks;
 import com.sandflow.smpte.mxf.StreamingFileInfo;
 import com.sandflow.smpte.mxf.StreamingReader;
 import com.sandflow.smpte.util.AUID;
@@ -75,15 +76,19 @@ public class RegMXFDump {
       }
     };
 
+    OutputStreamWriter osw = new OutputStreamWriter(System.out);
+
     FileInputStream f = new FileInputStream(args[0]);
     StreamingFileInfo sfi = new StreamingFileInfo(f, evthandler);
-    OutputStreamWriter osw = new OutputStreamWriter(System.out);
-    for (int i = 0; i < sfi.getTrackCount(); i++) {
-      JSONSerializer.serialize(sfi.getTrack(i).descriptor(), osw);
+    ECTracks tracks = new ECTracks(sfi.getPreface());
+
+    for (int i = 0; i < tracks.getTrackCount(); i++) {
+      JSONSerializer.serialize(tracks.getTrackInfo(i).descriptor(), osw);
       osw.write("\n");
     }
     osw.flush();
-    StreamingReader sr = new StreamingReader(sfi, f, evthandler);
+
+    StreamingReader sr = new StreamingReader(f, evthandler);
 
     Map<AUID, ElementStat> stats = new HashMap<>();
 

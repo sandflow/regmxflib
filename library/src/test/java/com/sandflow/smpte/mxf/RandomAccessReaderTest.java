@@ -50,10 +50,11 @@ class RandomAccessReaderTest {
     FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
 
     RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
-    assertEquals(1, fi.getTrackCount());
-    RGBADescriptor d = (RGBADescriptor) fi.getTrack(0).descriptor();
+    ECTracks tracks = new ECTracks(fi.getPreface());
+    assertEquals(1, tracks.getTrackCount());
+    RGBADescriptor d = (RGBADescriptor) tracks.getTrackInfo(0).descriptor();
     assertEquals(640L, d.StoredWidth);
-    assertEquals(24, fi.getSize());
+    assertEquals(24, fi.getEUCount());
 
     FrameReader fr = new FrameReader(fi, rais);
     for (int i = 0; i < fr.getSize(); i++) {
@@ -69,8 +70,9 @@ class RandomAccessReaderTest {
     FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
 
     RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
-    assertEquals(1, fi.getTrackCount());
-    assertEquals(48000, fi.getSize());
+    ECTracks tracks = new ECTracks(fi.getPreface());
+    assertEquals(1, tracks.getTrackCount());
+    assertEquals(48000, fi.getEUCount());
 
     ClipReader fr = new ClipReader(fi, rais);
     fr.seek(24000);
@@ -87,8 +89,9 @@ class RandomAccessReaderTest {
     FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
 
     RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
-    assertEquals(1, fi.getTrackCount());
-    assertEquals(2, fi.getSize());
+    ECTracks tracks = new ECTracks(fi.getPreface());
+    assertEquals(1, tracks.getTrackCount());
+    assertEquals(2, fi.getEUCount());
 
     byte[] buffer = new byte[iaFrameMagic.length];
 
