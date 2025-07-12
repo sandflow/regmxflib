@@ -105,7 +105,9 @@ public class JSONSerializer {
 
   public static void serialize(Object obj, Writer w)
       throws IOException, IllegalArgumentException, IllegalAccessException {
-    if (obj instanceof Collection) {
+    if (obj == null) {
+      w.write("null");
+    } else if (obj instanceof Collection) {
       w.write("[");
       boolean first = true;
       for (Object item : (Collection<?>) obj) {
@@ -122,9 +124,10 @@ public class JSONSerializer {
     } else if (NUMBERS.contains(obj.getClass())) {
       w.write(obj.toString());
     } else {
-      w.write("{");
+      w.write("{\n");
       boolean first = true;
       Class<?> clazz = obj.getClass();
+      w.write(String.format("\"+class\": \"%s\",\n", clazz.getName()));
       while (clazz != Object.class) {
         for (Field field : clazz.getDeclaredFields()) {
           if (Modifier.isFinal(field.getModifiers()))

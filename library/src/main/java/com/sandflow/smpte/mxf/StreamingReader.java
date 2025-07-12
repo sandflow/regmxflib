@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.sandflow.smpte.klv.exceptions.KLVException;
-import com.sandflow.smpte.mxf.ECTracks.TrackInfo;
 import com.sandflow.smpte.mxf.MXFFiles.ElementInfo;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.util.events.EventHandler;
@@ -104,6 +103,14 @@ public class StreamingReader extends InputStream {
     this.state = State.IN_PAYLOAD;
 
     return true;
+  }
+
+  /**
+   * Returns SID of the current essence container or generic stream
+   * @return SID
+   */
+  public long getSID() {
+    return this.elementInfo.sid();
   }
 
   /**

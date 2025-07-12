@@ -25,7 +25,6 @@
  */
 package com.sandflow.smpte.mxf;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -144,12 +143,13 @@ public class MXFFiles {
         (essenceKey.getValueOctet(15) & 0xFF);
   }
 
-  static public record ElementInfo(AUID key, long length) {
+  static public record ElementInfo(AUID key, long length, long sid) {
   }
 
   public static ElementInfo nextElement(InputStream is) throws IOException, KLVException {
     MXFInputStream mis = new MXFInputStream(is);
 
+    long sid = 0;
     AUID elementKey = mis.readAUID();
     long elementLength = mis.readBERLength();
 
@@ -180,6 +180,8 @@ public class MXFFiles {
         return null;
       }
 
+      sid = pp.getBodySID();
+
       long headerAndIndexBytes = pp.getHeaderByteCount() + pp.getIndexByteCount();
 
       /*
@@ -202,7 +204,7 @@ public class MXFFiles {
       elementLength = mis.readBERLength();
     }
 
-    return new ElementInfo(elementKey, elementLength);
+    return new ElementInfo(elementKey, elementLength, sid);
   }
 
 }

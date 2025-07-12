@@ -57,7 +57,7 @@ class RandomAccessReaderTest {
     assertEquals(24, fi.getEUCount());
 
     FrameReader fr = new FrameReader(fi, rais);
-    for (int i = 0; i < fr.getSize(); i++) {
+    for (int i = 0; i < fi.getEUCount(); i++) {
       fr.seek(i);
       assertTrue(fr.nextElement());
     }

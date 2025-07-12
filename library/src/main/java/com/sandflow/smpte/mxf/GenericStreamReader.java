@@ -30,11 +30,27 @@
 
 package com.sandflow.smpte.mxf;
 
-import com.sandflow.smpte.mxf.types.Preface;
+import java.io.IOException;
 
-public interface HeaderInfo {
+import com.sandflow.smpte.klv.exceptions.KLVException;
+import com.sandflow.smpte.util.RandomAccessInputSource;
 
+public class GenericStreamReader extends StreamingReader {
 
-    Preface getPreface();
+  final RandomAccessFileInfo info;
+  final RandomAccessInputSource source;
 
+  GenericStreamReader(RandomAccessFileInfo info, RandomAccessInputSource source)
+      throws IOException, KLVException, MXFException {
+    super(source, null);
+
+    this.info = info;
+    this.source = source;
+  }
+
+  public void seek(long gsSID, long position) throws IOException, KLVException {
+    long filePosition = this.info.gsToFilePosition(gsSID, position);
+    this.source.position(filePosition);
+    this.state = State.READY;
+  }
 }

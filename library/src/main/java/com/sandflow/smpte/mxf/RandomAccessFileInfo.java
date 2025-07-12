@@ -32,6 +32,10 @@ package com.sandflow.smpte.mxf;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TreeMap;
 
 import com.sandflow.smpte.klv.Set;
@@ -41,7 +45,6 @@ import com.sandflow.smpte.mxf.PartitionPack.Status;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.mxf.types.Preface;
 import com.sandflow.smpte.util.RandomAccessInputSource;
-import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.EventHandler;
 
@@ -107,7 +110,7 @@ public class RandomAccessFileInfo implements HeaderInfo {
   /**
    * Maps Essence Container offset to file offsets
    */
-  private class ECToFilePositionMapper {
+  private class FilePositionMapper {
     final private TreeMap<Long, Long> ecToFileOffsets = new TreeMap<>();
 
     void addPartition(long ecPosition, long filePosition) {
@@ -132,10 +135,9 @@ public class RandomAccessFileInfo implements HeaderInfo {
   private Long ecSID = null;
   private Long ecIndexSID = null;
   private Index euToECPosition;
-  private final ECToFilePositionMapper ecToFilePositions = new ECToFilePositionMapper();
+  private final FilePositionMapper ecToFilePositions = new FilePositionMapper();
 
-  private Long gsSID = null;
-  private ECToFilePositionMapper gsToFilePositions = null;
+  private Map<Long, FilePositionMapper> gsToFilePositions = new HashMap<>();
 
   RandomAccessFileInfo(RandomAccessInputSource raip, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
@@ -185,20 +187,16 @@ public class RandomAccessFileInfo implements HeaderInfo {
 
       /* process generic stream partition */
       if (pp.getStatus() == Status.STREAM) {
-        if (this.gsSID == null) {
-          /* we have never seen this generic stream before */
-          this.gsSID = pp.getBodySID();
-          if (this.gsSID == 0) {
-            throw new RuntimeException();
-          }
-        } else if (this.gsSID != pp.getBodySID()) {
-          /* support only one generic stream */
+        if (pp.getBodySID() == 0) {
           throw new RuntimeException();
+          /* TODO: warning and continue */
         }
 
-        if (pp.getBodyOffset() == 0) {
-          /* restart a new mapper */
-          this.gsToFilePositions = new ECToFilePositionMapper();
+        FilePositionMapper gs = this.gsToFilePositions.get(pp.getBodySID());
+
+        if (gs == null || pp.getBodyOffset() == 0) {
+          gs = new FilePositionMapper();
+          this.gsToFilePositions.put(pp.getBodySID(), gs);
         }
 
         /* skip over the optional fill item and map the generic stream position */
@@ -206,9 +204,9 @@ public class RandomAccessFileInfo implements HeaderInfo {
         t = mis.readTriplet();
         FillItem fi = FillItem.fromTriplet(t);
         if (fi == null) {
-          this.gsToFilePositions.addPartition(pp.getBodyOffset(), pos);
+          gs.addPartition(pp.getBodyOffset(), pos);
         } else {
-          this.gsToFilePositions.addPartition(pp.getBodyOffset(), raip.position());
+          gs.addPartition(pp.getBodyOffset(), raip.position());
         }
 
         continue;
@@ -343,13 +341,13 @@ public class RandomAccessFileInfo implements HeaderInfo {
     return this.basicInfo.getPreface();
   }
 
-  public Long getGenericStreamSID() {
-    return this.ecSID;
+  public Collection<Long> getGenericStreams() {
+    return Collections.unmodifiableSet(this.gsToFilePositions.keySet());
   }
 
-  public long gsToFilePosition(long position) {
+  public long gsToFilePosition(long gsSID, long position) {
     /* check for no generic stream */
-    return this.gsToFilePosition(position);
+    return this.gsToFilePositions.get(gsSID).getFilePosition(position);
   }
 
   public long euToECPosition(long position) {
