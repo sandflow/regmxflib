@@ -44,6 +44,7 @@ import org.apache.commons.numbers.fraction.Fraction;
 import com.sandflow.smpte.klv.LocalTagRegister;
 import com.sandflow.smpte.klv.LocalTagResolver;
 import com.sandflow.smpte.klv.Set;
+import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.RandomIndexPack.PartitionOffset;
 import com.sandflow.smpte.mxf.helpers.IdentificationHelper;
@@ -260,6 +261,8 @@ public class StreamingWriter {
     LinkedList<Set> sets = new LinkedList<>();
     MXFOutputContext ctx = new MXFOutputContext() {
 
+      long nextDynamicTag = 0x8000L;
+
       @Override
       public UUID getPackageInstanceID(UMID packageID) {
         for (var p : preface.ContentStorageObject.Packages) {
@@ -277,6 +280,23 @@ public class StreamingWriter {
         } else {
           sets.add(set);
         }
+
+        /* allocate dynamic tags */
+
+        for (Triplet t : set.getItems()) {
+          Long localTag = reg.getLocalTag(t.getKey());
+
+          if (localTag == null) {
+            localTag = StaticLocalTags.register().getLocalTag(t.getKey());
+
+            if (localTag == null) {
+              localTag = nextDynamicTag++;
+            }
+
+            reg.add(localTag, t.getKey());
+          }
+        }
+
       }
 
     };
@@ -287,21 +307,13 @@ public class StreamingWriter {
     /* serialize the header */
     LocalTagResolver tags = new LocalTagResolver() {
 
-      long nextDynamicTag = 0x8000L;
-
       @Override
       public Long getLocalTag(AUID auid) {
         Long localTag = reg.getLocalTag(auid);
 
         if (localTag == null) {
-          localTag = StaticLocalTags.register().getLocalTag(auid);
+         throw new RuntimeException();
         }
-
-        if (localTag == null) {
-          localTag = nextDynamicTag++;
-        }
-
-        reg.add(localTag, auid);
 
         return localTag;
       }

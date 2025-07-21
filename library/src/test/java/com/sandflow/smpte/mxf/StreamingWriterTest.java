@@ -166,6 +166,7 @@ class StreamingWriterTest {
       samples[5] = samples[2];
       dos.write(samples);
     }
+    dos.flush();
     sw.finish();
 
   }

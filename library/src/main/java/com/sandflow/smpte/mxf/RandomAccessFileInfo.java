@@ -31,7 +31,6 @@
 package com.sandflow.smpte.mxf;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,63 +48,6 @@ import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.EventHandler;
 
 public class RandomAccessFileInfo implements HeaderInfo {
-
-  interface Index {
-    long getECPosition(long editUnitIndex);
-
-    long length();
-  }
-
-  static class CBECLipIndex implements Index {
-    private long cbeSize;
-    private long length;
-
-    CBECLipIndex(long cbeSize, long length) {
-      if (length <= 0) {
-        throw new IllegalArgumentException();
-      }
-
-      if (length <= 0) {
-        throw new IllegalArgumentException();
-      }
-      this.cbeSize = cbeSize;
-      this.length = length;
-    }
-
-    @Override
-    public long getECPosition(long editUnit) {
-      if (editUnit >= this.length) {
-        throw new IllegalArgumentException();
-      }
-      return this.cbeSize * editUnit;
-    }
-
-    @Override
-    public long length() {
-      return this.length;
-    }
-  }
-
-  static class VBEIndex implements Index {
-    private ArrayList<Long> positions = new ArrayList<>();
-
-    protected void addECPosition(long ecPosition) {
-      this.positions.add(ecPosition);
-    }
-
-    @Override
-    public long getECPosition(long editUnit) {
-      if (editUnit >= this.positions.size()) {
-        throw new IllegalArgumentException();
-      }
-      return (long) this.positions.get((int) editUnit);
-    }
-
-    @Override
-    public long length() {
-      return this.positions.size();
-    }
-  }
 
   /**
    * Maps Essence Container offset to file offsets
@@ -134,7 +76,7 @@ public class RandomAccessFileInfo implements HeaderInfo {
   private final HeaderInfo basicInfo;
   private Long ecSID = null;
   private Long ecIndexSID = null;
-  private Index euToECPosition;
+  private ECIndex euToECPosition;
   private final FilePositionMapper ecToFilePositions = new FilePositionMapper();
 
   private Map<Long, FilePositionMapper> gsToFilePositions = new HashMap<>();
@@ -290,7 +232,7 @@ public class RandomAccessFileInfo implements HeaderInfo {
               throw new RuntimeException("Only one VBE permitted.");
             }
 
-            this.euToECPosition = new CBECLipIndex(its.EditUnitByteCount, its.IndexDuration);
+            this.euToECPosition = new CBEClipIndex(its.EditUnitByteCount, its.IndexDuration);
           } else {
             /* we have a VBE index table */
             VBEIndex vbeIndex;

@@ -91,7 +91,7 @@ public class OP1aHelper {
 
   final List<UL> elementKeys;
 
-  OP1aHelper(EssenceContainerInfo ecInfo) throws IOException, KLVException {
+  public OP1aHelper(EssenceContainerInfo ecInfo) throws IOException, KLVException {
     if (ecInfo == null) {
       throw new IllegalArgumentException("Essence info must not be null");
     }
@@ -120,14 +120,14 @@ public class OP1aHelper {
 
       UL elementKey = MXFFiles.makeEssenceElementKey(ecInfo.tracks().get(i).essenceKey(), trackCount, i);
 
-      this.elementKeys.set(i, elementKey);
+      this.elementKeys.add(elementKey);
 
       sp.PackageTracks.add(PackageHelper.makeTimelineTrack(ecInfo.editRate(), null, UMID.NULL_UMID,
           (long) MXFFiles.getTrackNumber(elementKey), null, (long) i,
           ecInfo.tracks().get(i).dataDefinition()));
 
       mp.PackageTracks
-          .add(PackageHelper.makeTimelineTrack(ecInfo.editRate(), /* 24L */ null, sp.PackageID, null, 1L, null,
+          .add(PackageHelper.makeTimelineTrack(ecInfo.editRate(), /* 24L */ null, sp.PackageID, null, (long) i, null,
               ecInfo.tracks().get(i).dataDefinition()));
     }
 

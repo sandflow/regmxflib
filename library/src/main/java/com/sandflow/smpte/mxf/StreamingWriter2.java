@@ -31,67 +31,46 @@
 package com.sandflow.smpte.mxf;
 
 import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Function;
-
-import javax.management.RuntimeErrorException;
 
 import org.apache.commons.numbers.fraction.Fraction;
 
 import com.sandflow.smpte.klv.LocalTagRegister;
 import com.sandflow.smpte.klv.LocalTagResolver;
 import com.sandflow.smpte.klv.Set;
+import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.RandomIndexPack.PartitionOffset;
-import com.sandflow.smpte.mxf.helpers.IdentificationHelper;
 import com.sandflow.smpte.mxf.helpers.IndexSegmentHelper;
-import com.sandflow.smpte.mxf.helpers.OP1aHelper.EssenceContainerInfo;
-import com.sandflow.smpte.mxf.helpers.PackageHelper;
-import com.sandflow.smpte.mxf.types.AUIDSet;
-import com.sandflow.smpte.mxf.types.ContentStorage;
 import com.sandflow.smpte.mxf.types.EssenceData;
-import com.sandflow.smpte.mxf.types.EssenceDataStrongReferenceSet;
-import com.sandflow.smpte.mxf.types.EssenceDescriptor;
 import com.sandflow.smpte.mxf.types.FileDescriptor;
-import com.sandflow.smpte.mxf.types.IdentificationStrongReferenceVector;
-import com.sandflow.smpte.mxf.types.IndexEntry;
-import com.sandflow.smpte.mxf.types.IndexEntryArray;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
-import com.sandflow.smpte.mxf.types.MaterialPackage;
 import com.sandflow.smpte.mxf.types.MultipleDescriptor;
-import com.sandflow.smpte.mxf.types.PackageStrongReferenceSet;
+import com.sandflow.smpte.mxf.types.Package;
 import com.sandflow.smpte.mxf.types.Preface;
-import com.sandflow.smpte.mxf.types.Sequence;
 import com.sandflow.smpte.mxf.types.SourcePackage;
 import com.sandflow.smpte.mxf.types.TimelineTrack;
 import com.sandflow.smpte.mxf.types.Track;
-import com.sandflow.smpte.mxf.types.Package;
-import com.sandflow.smpte.mxf.types.Version;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UMID;
 import com.sandflow.smpte.util.UUID;
 
-public class StreamingWriter2 extends OutputStream {
+public class StreamingWriter2 {
 
-  private abstract class EssenceContainerWriter {
+  private abstract class ContainerWriter extends OutputStream {
 
     private final long bodySID;
     private final long indexSID;
+    private long bytesToWrite;
 
-    EssenceContainerWriter(long bodySID, long indexSID) {
+    ContainerWriter(long bodySID, long indexSID) {
       this.bodySID = bodySID;
       this.indexSID = indexSID;
     }
@@ -104,65 +83,121 @@ public class StreamingWriter2 extends OutputStream {
       return this.bodySID;
     }
 
+    boolean isActive() {
+      return StreamingWriter2.this.currentContainer == this;
+    }
+
+    long getBytesToWrite() {
+      return bytesToWrite;
+    }
+
+    void setBytesToWrite(long bytesToWrite) {
+      this.bytesToWrite = bytesToWrite;
+    }
+
     abstract byte[] drainIndexSegments() throws IOException;
 
-    abstract long getBodyOffset();
+    abstract long getECOffset();
 
-    abstract void addIndexEntry();
+    abstract long getDuration();
 
-    abstract void nextElement(UL elementKey, long elementLength) throws IOException;
-  }
-
-  class ClipCBEWriter extends EssenceContainerWriter {
-
-    private CBEClipIndex index;
-    private final long accessUnitSize;
-
-    ClipCBEWriter(long bodySID, long indexSID, long accessUnitSize) {
-      super(bodySID, indexSID);
-      this.accessUnitSize = accessUnitSize;
+    @Override
+    public void write(int b) throws IOException {
+      if (!this.isActive()) {
+        throw new RuntimeException();
+      }
+      if (this.bytesToWrite - 1 < 0)
+        throw new RuntimeException();
+      StreamingWriter2.this.fos.write(b);
+      this.bytesToWrite--;
     }
 
     @Override
-    void addIndexEntry() {
-      /* does nothing */
-    }
-
-    @Override
-    void nextElement(UL elementKey, long elementLength) throws IOException {
-      if (elementLength % this.accessUnitSize != 0) {
+    public void write(byte[] b, int off, int len) throws IOException {
+      if (!this.isActive()) {
+        throw new RuntimeException();
+      }
+      if (this.bytesToWrite - len < 0) {
         throw new RuntimeException();
       }
 
-      StreamingWriter2.this.essenceStream.writeUL(elementKey);
-      StreamingWriter2.this.essenceStream.writeBERLength(elementLength);
-      StreamingWriter2.this.remainingElementBytes = elementLength;
-
-      this.index = new CBEClipIndex(this.accessUnitSize, elementLength / this.accessUnitSize);
+      StreamingWriter2.this.fos.write(b, off, len);
+      this.bytesToWrite -= len;
     }
 
+    @Override
+    public void close() throws IOException {
+      /*
+       * do nothing: it is the responsibility of the caller to close the
+       * underlying RandomAccessInputSource
+       */
+    }
+  }
+
+  class GCClipCBEWriter extends ContainerWriter {
+
+    enum State {
+      READY,
+      WRITTEN,
+      DRAINED
+    }
+
+    private long accessUnitSize;
+    private long accessUnitCount;
+    private State state = State.READY;
+
+    GCClipCBEWriter(long bodySID, long indexSID) {
+      super(bodySID, indexSID);
+    }
+
+    public void nextClip(UL elementKey, long accessUnitSize, long accessUnitCount) throws IOException {
+      /* TODO check parameter validity */
+
+      if (!this.isActive()) {
+        throw new RuntimeException();
+      }
+
+      if (this.state != State.READY) {
+        throw new RuntimeException();
+      }
+
+      long clipSize = accessUnitCount * accessUnitSize;
+
+      StreamingWriter2.this.fos.writeUL(elementKey);
+      StreamingWriter2.this.fos.writeBERLength(clipSize);
+      this.setBytesToWrite(clipSize);
+
+      this.accessUnitCount = accessUnitCount;
+      this.accessUnitSize = accessUnitSize;
+
+      this.state = State.WRITTEN;
+    }
 
     @Override
-    long getBodyOffset() {
+    long getECOffset() {
       return 0L;
     }
 
     @Override
+    long getDuration() {
+      return this.accessUnitCount;
+    }
+
+    @Override
     byte[] drainIndexSegments() throws IOException {
-      if (this.index == null) {
+      if (this.state != State.WRITTEN) {
         return null;
       }
+      this.state = State.DRAINED;
 
       var its = new IndexTableSegment();
       its.InstanceID = UUID.fromRandom();
       its.IndexEditRate = StreamingWriter2.this.getECEditRate(this.getBodySID());
       its.IndexStartPosition = 0L;
-      its.IndexDuration = this.index.getLength();
+      its.IndexDuration = this.accessUnitCount;
       its.IndexStreamID = this.getIndexSID();
       its.EssenceStreamID = this.getBodySID();
       its.EditUnitByteCount = this.accessUnitSize;
-
-      this.index = null;
 
       return IndexSegmentHelper.toBytes(its);
     }
@@ -180,56 +215,76 @@ public class StreamingWriter2 extends OutputStream {
   private final MXFOutputStream fos;
 
   private State state = State.INIT;
-  private MXFOutputStream essenceStream;
-  private long remainingElementBytes;
   private RandomIndexPack rip = new RandomIndexPack();
   private final java.util.Set<Long> sids = new HashSet<>();
-  private final java.util.Map<Long, EssenceContainerWriter> ecs = new HashMap<>();
-  private EssenceContainerWriter currentEC;
-  java.util.Set<UL> ecLabels = new HashSet<>();
-  private Preface preface;
+  private final java.util.Map<Long, ContainerWriter> ecs = new HashMap<>();
+  private ContainerWriter currentContainer;
+  private final Preface preface;
 
   /**
    * current partition
    */
   private PartitionPack curPartition;
 
-  StreamingWriter2(OutputStream os) throws IOException, KLVException {
+  public StreamingWriter2(OutputStream os, Preface preface) throws IOException, KLVException {
     if (os == null) {
       throw new IllegalArgumentException("Output stream must not be null");
     }
     this.fos = new MXFOutputStream(os);
-    this.essenceStream = new MXFOutputStream(fos);
+
+    if (preface == null) {
+      throw new RuntimeException();
+    }
+
+    this.preface = preface;
   }
 
-  private AUID getOP() {
-    return this.preface.OperationalPattern;
+  private UL getOP() {
+    if (!this.preface.OperationalPattern.isUL()) {
+      throw new RuntimeException();
+    }
+    return this.preface.OperationalPattern.asUL();
   }
 
   private Fraction getECEditRate(long sid) {
 
     Optional<EssenceData> ed = this.preface.ContentStorageObject.EssenceDataObjects.stream()
-      .filter(e -> e.EssenceStreamID == sid)
-      .findAny();
+        .filter(e -> e.EssenceStreamID == sid)
+        .findAny();
 
     if (!ed.isPresent())
       return null;
 
     Optional<Package> p = this.preface.ContentStorageObject.Packages.stream()
-      .filter(e -> e.PackageID.equals(ed.get().LinkedPackageID))
-      .findFirst();
+        .filter(e -> e.PackageID.equals(ed.get().LinkedPackageID))
+        .findFirst();
 
     if (!p.isPresent())
       return null;
 
     Optional<Track> t = p.get().PackageTracks.stream()
-      .filter(e -> e instanceof TimelineTrack)
-      .findFirst();
+        .filter(e -> e instanceof TimelineTrack)
+        .findFirst();
 
-    if (! t.isPresent())
+    if (!t.isPresent())
       return null;
 
     return ((TimelineTrack) t.get()).EditRate;
+  }
+
+  private Package getPackageByID(UMID id) {
+    return this.preface.ContentStorageObject.Packages.stream()
+        .filter(p -> id == p.PackageID)
+        .findFirst()
+        .orElse(null);
+  }
+
+  private SourcePackage getPackageBySID(long sid) {
+    return (SourcePackage) this.preface.ContentStorageObject.EssenceDataObjects.stream()
+        .filter(e -> e.EssenceStreamID == sid)
+        .map(e -> getPackageByID(e.LinkedPackageID))
+        .findFirst()
+        .orElse(null);
   }
 
   private java.util.Set<UL> getECLabels() {
@@ -275,50 +330,57 @@ public class StreamingWriter2 extends OutputStream {
   /**
    * Write the header partition
    *
-   * @param headerMetadata Header metadata
    * @throws IOException
    * @throws KLVException
    */
-  public void start(Preface headerMetadata) throws IOException, KLVException {
+  public void start() throws IOException, KLVException {
     if (this.state != State.INIT) {
       throw new RuntimeException();
     }
 
-    if (headerMetadata == null) {
-      throw new RuntimeException();
-    }
-
-    this.preface = headerMetadata;
-
     /* TODO: fill in ecLabels */
 
     /* serialize the header metadata */
-    byte[] hmb = serializeHeaderMetadata(headerMetadata);
+    byte[] hmb = serializeHeaderMetadata(this.preface);
 
-    /* write the header parition */
+    /* write the header partition */
     startPartition(0, 0, hmb.length, 0, 0L, PartitionPack.Kind.HEADER, PartitionPack.Status.OPEN_INCOMPLETE);
     this.fos.write(hmb);
 
     this.state = State.START;
   }
 
-  public void startPartition(long sid) throws IOException, KLVException {
-    /* TODO: check that we are not in the middle of an element */
+  public ContainerWriter startPartition(long sid) throws IOException, KLVException {
+    this.closeCurrentPartition();
 
-    EssenceContainerWriter ec = this.ecs.get(sid);
-
-    /* TODO: check that we found an ec */
-
-    /* do we need to create an index partition for the current essence container */
-    if (this.currentEC != null && this.currentEC.getBodySID() != 0) {
-      this.writeIndexPartition();
+    ContainerWriter cw = this.ecs.get(sid);
+    if (cw == null) {
+      throw new RuntimeException();
     }
 
-    /* close the current partition */
-
     /* start a new partition */
-    startPartition(sid, ec.getIndexSID(), 0, 0, ec.getBodyOffset(), PartitionPack.Kind.BODY,
+    startPartition(sid, cw.getIndexSID(), 0, 0, cw.getECOffset(), PartitionPack.Kind.BODY,
         PartitionPack.Status.CLOSED_COMPLETE);
+
+    this.currentContainer = cw;
+
+    return cw;
+  }
+
+  private void closeCurrentPartition() throws IOException, KLVException {
+    if (this.currentContainer == null) {
+      return;
+    }
+
+    /* are we done with the current partition? */
+    /* TODO: replace with state check */
+    if (this.currentContainer.getBytesToWrite() != 0) {
+      throw new RuntimeException();
+    }
+    /* do we need to create an index partition for the current essence container */
+    if (this.currentContainer.getIndexSID() != 0) {
+      this.writeIndexPartition();
+    }
   }
 
   /**
@@ -327,7 +389,7 @@ public class StreamingWriter2 extends OutputStream {
    * @param unitCount Number of units in the essence container
    * @param unitSize  Size in bytes of each element
    */
-  public void addCBEClipWrappedEC(long bodySID, long indexSID, long unitCount, long unitSize)
+  public GCClipCBEWriter addCBEClipWrappedGC(long bodySID, long indexSID)
       throws IOException, KLVException {
     /* TODO: check for valid SIDs */
 
@@ -339,133 +401,49 @@ public class StreamingWriter2 extends OutputStream {
       throw new RuntimeException();
     }
 
+    /* TODO: check for valid information in the preface */
+
     this.sids.add(bodySID);
     this.sids.add(indexSID);
 
-    this.ecs.put(bodySID, new ClipCBEWriter(bodySID, indexSID, unitSize));
+    GCClipCBEWriter w = new GCClipCBEWriter(bodySID, indexSID);
+
+    this.ecs.put(bodySID, w);
+
+    return w;
   }
 
-  /**
-   * Starts a frame-wrapped essence container
-   * 
-   * @throws KLVException
-   * @throws IOException
-   */
-  public void startVBEFrameWrapped() throws IOException, KLVException {
-    if (this.state != State.START) {
-      /* TODO: improve exception */
-      throw new RuntimeException("START");
-    }
-    this.unitWrapping = UnitWrapping.FRAME;
-    this.unitSizing = UnitSizing.VBE;
-    this.state = State.CONTAINER;
-
-    this.startEssencePartition();
-  }
-
-  /**
-   * Starts a clip-wrapped essence container with variable size elements
-   * 
-   * @param totalSize Size in bytes of the essence container
-   */
-  public void startVBEClipWrapped(long totalSize) throws IOException, KLVException {
-    if (this.state != State.START) {
-      /* TODO: improve exception */
-      throw new RuntimeException("START");
-    }
-    this.unitWrapping = UnitWrapping.CLIP;
-    this.unitSizing = UnitSizing.VBE;
-    this.state = State.CONTAINER;
-
-    this.startEssencePartition();
-
-    this.essenceStream.writeUL(this.elementKey);
-    this.essenceStream.writeBERLength(totalSize);
-  }
-
-  /*
-   * Adds a single unit to a clip- and frame-wrapped VBE essence container
-   */
-  public OutputStream nextUnit(long unitSize) throws IOException, KLVException {
-    if (this.state != State.CONTAINER) {
-      /* TODO: improve exception */
-      throw new RuntimeException("DONE");
-    }
-
-    if (this.unitSizing == UnitSizing.CBE) {
-      throw new RuntimeException("Cannot be called for CBE units");
-    }
-
-    /* check if the previous unit landed where it was expected */
-    if (this.nextTPos != 0 && this.essenceStream.getWrittenCount() != this.nextBPos) {
-      throw new RuntimeException("Number of bytes written does not match the size of the unit.");
-    }
-
-    /* do we need to start a new essence partition */
-    /*
-     * TODO: this should allow the partition to go slightly beyond its requested
-     * duration
-     */
-    if (this.unitWrapping == UnitWrapping.FRAME && this.nextTPos != 0 &&
-        (this.essenceInfo.partitionDuration() != null && this.nextTPos % this.essenceInfo.partitionDuration() == 0)) {
-
-      this.writeIndexPartition();
-      this.startEssencePartition();
-
-    }
-
-    /* add an entry to the index table if we have VBE essence */
-    this.vbeBytePositions.add(this.essenceStream.getWrittenCount());
-
-    /* start the essence element if frame-wrapping */
-    if (this.unitWrapping == UnitWrapping.FRAME) {
-      this.essenceStream.writeUL(this.elementKey);
-      this.essenceStream.writeBERLength(unitSize);
-    }
-
-    /* update the expected position of the next Unit */
-    this.nextBPos = this.essenceStream.getWrittenCount() + unitSize;
-
-    /* update the temporal positions */
-    this.tPos = this.nextTPos;
-    this.nextTPos += 1;
-
-    return this.essenceStream;
-  }
-
-  public void finish(Preface headerMetadata) throws IOException, KLVException {
-    if (this.state != State.CONTAINER) {
-      /* TODO: improve exception */
-      throw new RuntimeException("DONE");
-    }
-
-    this.writeIndexPartition();
+  public void finish() throws IOException, KLVException {
+    this.closeCurrentPartition();
 
     /* update header metadata */
+    for (ContainerWriter cw : this.ecs.values()) {
+      SourcePackage sp = getPackageBySID(cw.getBodySID());
 
-    for (var p : headerMetadata.ContentStorageObject.Packages) {
-      for (var t : p.PackageTracks) {
-        Sequence s = (Sequence) t.TrackSegment;
-        s.ComponentLength = this.tPos;
-        for (var c : s.ComponentObjects) {
-          c.ComponentLength = this.tPos;
+      if (sp == null) {
+        continue;
+      }
+
+      FileDescriptor fd = (FileDescriptor) sp.EssenceDescription;
+
+      fd.EssenceLength = cw.getDuration();
+
+      if (fd instanceof MultipleDescriptor) {
+        for (FileDescriptor cfd : ((MultipleDescriptor) fd).FileDescriptors) {
+          cfd.EssenceLength = cw.getDuration();
         }
       }
 
-      if (p instanceof SourcePackage) {
-        SourcePackage sp = (SourcePackage) p;
-        if (sp.EssenceDescription instanceof FileDescriptor) {
-          FileDescriptor fd = (FileDescriptor) sp.EssenceDescription;
-          fd.EssenceLength = this.tPos;
-        }
+      for (var t : sp.PackageTracks) {
+        t.TrackSegment.ComponentLength = cw.getDuration();
       }
     }
 
     /* header metadata */
-    byte[] headerbytes = serializeHeaderMetadata(headerMetadata);
+    byte[] headerbytes = serializeHeaderMetadata(this.preface);
 
     /* write the footer partition */
-    startPartition(0, 0, headerbytes.length, 0, PartitionPack.Kind.FOOTER, PartitionPack.Status.CLOSED_COMPLETE);
+    startPartition(0, 0, headerbytes.length, 0, 0, PartitionPack.Kind.FOOTER, PartitionPack.Status.CLOSED_COMPLETE);
     fos.write(headerbytes);
 
     /* write the RIP */
@@ -476,46 +454,17 @@ public class StreamingWriter2 extends OutputStream {
     this.state = State.DONE;
   }
 
-  @Override
-  public void write(int b) throws IOException {
-    if (this.state != State.ELEMENT) {
-      throw new RuntimeException();
-    }
-    if (this.remainingElementBytes - 1 < 0)
-      throw new RuntimeException();
-    this.fos.write(b);
-    this.remainingElementBytes--;
-  }
-
-  @Override
-  public void write(byte[] b, int off, int len) throws IOException {
-    if (this.state != State.ELEMENT) {
-      throw new RuntimeException();
-    }
-
-    if (this.remainingElementBytes - len < 0) {
-      throw new RuntimeException();
-    }
-
-    this.fos.write(b, off, len);
-    this.remainingElementBytes -= len;
-  }
-
-  @Override
-  public void close() throws IOException {
-    /*
-     * do nothing: it is the responsibility of the caller to close the
-     * underlying RandomAccessInputSource
-     */
-  }
-
   /**
    * PRIVATE API
    */
 
-  private static byte[] serializeHeaderMetadata(Preface preface) throws IOException {
+  private byte[] serializeHeaderMetadata(Preface preface) throws IOException {
+    /* write */
+    LocalTagRegister reg = new LocalTagRegister();
     LinkedList<Set> sets = new LinkedList<>();
     MXFOutputContext ctx = new MXFOutputContext() {
+
+      long nextDynamicTag = 0x8000L;
 
       @Override
       public UUID getPackageInstanceID(UMID packageID) {
@@ -534,32 +483,40 @@ public class StreamingWriter2 extends OutputStream {
         } else {
           sets.add(set);
         }
+
+        /* allocate dynamic tags */
+
+        for (Triplet t : set.getItems()) {
+          Long localTag = reg.getLocalTag(t.getKey());
+
+          if (localTag == null) {
+            localTag = StaticLocalTags.register().getLocalTag(t.getKey());
+
+            if (localTag == null) {
+              localTag = nextDynamicTag++;
+            }
+
+            reg.add(localTag, t.getKey());
+          }
+        }
+
       }
 
     };
 
     /* collect the header metadata sets */
-    preface.toSet(ctx);
+    this.preface.toSet(ctx);
 
     /* serialize the header */
-    LocalTagRegister reg = new LocalTagRegister();
     LocalTagResolver tags = new LocalTagResolver() {
-
-      long nextDynamicTag = 0x8000L;
 
       @Override
       public Long getLocalTag(AUID auid) {
         Long localTag = reg.getLocalTag(auid);
 
         if (localTag == null) {
-          localTag = StaticLocalTags.register().getLocalTag(auid);
+          throw new RuntimeException();
         }
-
-        if (localTag == null) {
-          localTag = nextDynamicTag++;
-        }
-
-        reg.add(localTag, auid);
 
         return localTag;
       }
@@ -601,8 +558,8 @@ public class StreamingWriter2 extends OutputStream {
     pp.setIndexSID(indexSID);
     pp.setIndexByteCount(indexSize);
     pp.setHeaderByteCount(headerSize);
-    pp.setOperationalPattern(this.operationalPattern);
-    pp.setEssenceContainers(this.ecLabels);
+    pp.setOperationalPattern(this.getOP());
+    pp.setEssenceContainers(this.getECLabels());
     pp.setThisPartition(this.fos.getWrittenCount());
     if (kind == PartitionPack.Kind.FOOTER) {
       pp.setFooterPartition(pp.getThisPartition());
@@ -621,120 +578,22 @@ public class StreamingWriter2 extends OutputStream {
     this.curPartition = pp;
   }
 
-  /*
-   * TODO: clip wrapped essence containers can be partitioned, but probably should
-   * be tested
-   */
-
-  private void startEssencePartition() throws IOException, KLVException {
-    startPartition(BODY_SID, 0, 0, 0, PartitionPack.Kind.BODY, PartitionPack.Status.CLOSED_COMPLETE);
-
-    /* initialize the index table */
-    this.indexStartPosition = this.nextTPos;
-    if (this.unitSizing == UnitSizing.VBE) {
-      this.vbeBytePositions = new ArrayList<>();
-    } else {
-      this.vbeBytePositions = null;
-    }
-  }
-
   private void writeIndexPartition() throws IOException, KLVException {
-    /* TODO: handle multile index table segments */
-
-    var its = new IndexTableSegment();
-    its.InstanceID = UUID.fromRandom();
-    its.IndexEditRate = this.currentEC.getEditRate();
-    its.IndexStartPosition = this.indexStartPosition;
-    its.IndexDuration = this.nextTPos - its.IndexStartPosition;
-    its.IndexStreamID = INDEX_SID;
-    its.EssenceStreamID = BODY_SID;
-
-    if (this.unitSizing == UnitSizing.VBE) {
-      its.EditUnitByteCount = 0L;
-      its.IndexEntryArray = new IndexEntryArray();
-      for (var offset : this.vbeBytePositions) {
-        var e = new IndexEntry();
-        e.TemporalOffset = 0;
-        e.Flags = (byte) 0x80;
-        e.StreamOffset = offset;
-        e.KeyFrameOffset = 0;
-        e.TemporalOffset = 0;
-        its.IndexEntryArray.add(e);
-      }
-      its.VBEByteCount = this.nextBPos - this.vbeBytePositions.get(this.vbeBytePositions.size() - 1);
-      /*
-       * TODO: VBEByteCount
-       */
-    } else {
-      its.EditUnitByteCount = this.cbeUnitSize;
-    }
-
-    /* serialize the index table segment */
-    /*
-     * the AtomicReference is necessary since the variable is initialized in the
-     * inline MXFOutputContext
-     */
-    AtomicReference<Set> ars = new AtomicReference<>();
-    MXFOutputContext ctx = new MXFOutputContext() {
-
-      @Override
-      public UUID getPackageInstanceID(UMID packageID) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public void putSet(Set set) {
-        if (ars.get() != null) {
-          throw new RuntimeException("Index Table Segment already serialized");
-        }
-        ars.set(set);
-      }
-
-    };
-
-    its.toSet(ctx);
-
-    if (ars.get() == null) {
-      throw new RuntimeException("Index Table Segment not serialized");
-    }
-
-    /* serialize the header */
-    LocalTagResolver tags = new LocalTagResolver() {
-      @Override
-      public Long getLocalTag(AUID auid) {
-        Long localTag = StaticLocalTags.register().getLocalTag(auid);
-        if (localTag == null) {
-          throw new RuntimeException();
-        }
-        return localTag;
-      }
-
-      @Override
-      public AUID getAUID(long localtag) {
-        throw new UnsupportedOperationException("Unimplemented method 'getAUID'");
-      }
-
-    };
-    MXFOutputStream mos = new MXFOutputStream(new ByteArrayOutputStream());
-    Set.toStreamAsLocalSet(ars.get(), tags, mos);
-
-    byte[] itsBytes = ((ByteArrayOutputStream) mos.stream()).toByteArray();
-
-    startPartition(0, INDEX_SID, 0, itsBytes.length, PartitionPack.Kind.BODY, PartitionPack.Status.CLOSED_COMPLETE);
+    byte[] itsBytes = this.currentContainer.drainIndexSegments();
+    startPartition(
+        this.currentContainer.getBodySID(),
+        this.currentContainer.getIndexSID(),
+        0L,
+        (long) itsBytes.length,
+        this.currentContainer.getECOffset(),
+        PartitionPack.Kind.BODY,
+        PartitionPack.Status.CLOSED_COMPLETE);
     fos.write(itsBytes);
   }
 
   /**
    * GETTERS/SETTERS
    */
-
-  public EssenceContainerInfo getEssenceInfo() {
-    return essenceInfo;
-  }
-
-  public long gettPos() {
-    return tPos;
-  }
 
   public boolean isDone() {
     return this.state == State.DONE;
