@@ -45,6 +45,9 @@ public class PartitionPack {
   private static final UL KEY = UL.fromURN("urn:smpte:ul:060e2b34.02050101.0d010201.01000000");
   private static final int PARTITION_STATUS_OCTET = 14;
   private static final int PARTITION_KIND_OCTET = 13;
+  private static final int PARTITION_KIND_HEADER = 2;
+  private static final int PARTITION_KIND_BODY = 3;
+  private static final int PARTITION_KIND_FOOTER = 4;
 
   PartitionPack() {
     this.majorVersion = 1;
@@ -75,7 +78,14 @@ public class PartitionPack {
    * @return true if the key is a Partition Pack key, false otherwise
    */
   public static boolean isInstance(AUID key) {
-    return KEY.equalsWithMask(key, 0xfef9 /* 11111110 11111001 */);
+    if (!key.isUL())
+     return false;
+    if (!KEY.equalsWithMask(key, 0xfef9 /* 11111110 11111001 */))
+      return false;
+    UL ul = key.asUL();
+    return ul.getValueOctet(PARTITION_KIND_OCTET) == PARTITION_KIND_BODY ||
+      ul.getValueOctet(PARTITION_KIND_OCTET) == PARTITION_KIND_HEADER ||
+      ul.getValueOctet(PARTITION_KIND_OCTET) == PARTITION_KIND_FOOTER;
   }
 
   /**
@@ -150,16 +160,16 @@ public class PartitionPack {
         return null;
     }
 
-    switch (triplet.getKey().asUL().getValueOctet(13)) {
-      case 0x02:
+    switch (triplet.getKey().asUL().getValueOctet(PARTITION_KIND_OCTET)) {
+      case PARTITION_KIND_HEADER:
         pp.setKind(Kind.HEADER);
 
         break;
-      case 0x03:
+      case PARTITION_KIND_BODY:
         pp.setKind(Kind.BODY);
 
         break;
-      case 0x04:
+      case PARTITION_KIND_FOOTER:
         pp.setKind(Kind.FOOTER);
         if (pp.getStatus() == Status.OPEN_COMPLETE
             || pp.getStatus() == Status.OPEN_INCOMPLETE) {

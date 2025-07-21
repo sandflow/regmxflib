@@ -183,7 +183,7 @@ public class OP1aHelper {
     }
   }
 
-  public Preface getHeaderMetadata() {
+  public Preface getPreface() {
     return this.preface;
   }
 

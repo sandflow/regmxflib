@@ -40,6 +40,7 @@ import java.util.Collections;
 import org.apache.commons.numbers.fraction.Fraction;
 import org.junit.jupiter.api.Test;
 
+import com.sandflow.smpte.mxf.StreamingWriter2.GCClipCBEWriter;
 import com.sandflow.smpte.mxf.helpers.OP1aHelper;
 import com.sandflow.smpte.mxf.types.AudioChannelLabelSubDescriptor;
 import com.sandflow.smpte.mxf.types.SoundfieldGroupLabelSubDescriptor;
@@ -131,13 +132,13 @@ class StreamingWriter2Test {
 
     OutputStream os = new FileOutputStream("target/test-output/cbe.mxf");
 
-    StreamingWriter2 sw = new StreamingWriter2(os, header.getHeaderMetadata());
+    StreamingWriter2 sw = new StreamingWriter2(os, header.getPreface());
 
-    StreamingWriter2.GCClipCBEWriter ec =  sw.addCBEClipWrappedGC(1, 2);
+    GCClipCBEWriter ec =  sw.addCBEClipWrappedGC(1, 2);
 
     sw.start();
 
-    sw.startPartition(1);
+    sw.startPartition(ec);
 
     ec.nextClip(essenceKey, 6, sampleCount);
 

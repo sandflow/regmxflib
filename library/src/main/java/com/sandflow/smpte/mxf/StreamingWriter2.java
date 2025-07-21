@@ -341,7 +341,7 @@ public class StreamingWriter2 {
     /* TODO: fill in ecLabels */
 
     /* serialize the header metadata */
-    byte[] hmb = serializeHeaderMetadata(this.preface);
+    byte[] hmb = serializePreface(this.preface);
 
     /* write the header partition */
     startPartition(0, 0, hmb.length, 0, 0L, PartitionPack.Kind.HEADER, PartitionPack.Status.OPEN_INCOMPLETE);
@@ -350,21 +350,18 @@ public class StreamingWriter2 {
     this.state = State.START;
   }
 
-  public ContainerWriter startPartition(long sid) throws IOException, KLVException {
-    this.closeCurrentPartition();
-
-    ContainerWriter cw = this.ecs.get(sid);
+  void startPartition(ContainerWriter cw) throws IOException, KLVException {
     if (cw == null) {
       throw new RuntimeException();
     }
 
+    this.closeCurrentPartition();
+
     /* start a new partition */
-    startPartition(sid, cw.getIndexSID(), 0, 0, cw.getECOffset(), PartitionPack.Kind.BODY,
+    startPartition(cw.getBodySID(), 0, 0, 0, cw.getECOffset(), PartitionPack.Kind.BODY,
         PartitionPack.Status.CLOSED_COMPLETE);
 
     this.currentContainer = cw;
-
-    return cw;
   }
 
   private void closeCurrentPartition() throws IOException, KLVException {
@@ -440,7 +437,7 @@ public class StreamingWriter2 {
     }
 
     /* header metadata */
-    byte[] headerbytes = serializeHeaderMetadata(this.preface);
+    byte[] headerbytes = serializePreface(this.preface);
 
     /* write the footer partition */
     startPartition(0, 0, headerbytes.length, 0, 0, PartitionPack.Kind.FOOTER, PartitionPack.Status.CLOSED_COMPLETE);
@@ -458,7 +455,7 @@ public class StreamingWriter2 {
    * PRIVATE API
    */
 
-  private byte[] serializeHeaderMetadata(Preface preface) throws IOException {
+  private byte[] serializePreface(Preface preface) throws IOException {
     /* write */
     LocalTagRegister reg = new LocalTagRegister();
     LinkedList<Set> sets = new LinkedList<>();
