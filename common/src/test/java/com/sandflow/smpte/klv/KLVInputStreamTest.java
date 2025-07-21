@@ -25,45 +25,25 @@
  */
 package com.sandflow.smpte.klv;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 
 import org.junit.jupiter.api.Test;
 
-class KLVOutputStreamTest {
+class KLVInputStreamTest {
 
   @Test
-  void testWriteBER4Length() throws Exception {
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    KLVOutputStream kos = new KLVOutputStream(bos);
-    kos.writeBER4Length(0xf345);
-    assertArrayEquals(bos.toByteArray(), new byte[] { (byte) 0x83, 0x00, (byte) 0xf3, 0x45 });
+  void testReadLong() throws Exception {
+    byte[] NEG_ONE = new byte[] {(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF};
+    var kis = new KLVInputStream(new ByteArrayInputStream(NEG_ONE));
+    assertEquals(-1L, kis.readLong());
   }
 
   @Test
-  void testWriteBER4LengthOutOfRange() throws Exception {
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    KLVOutputStream kos = new KLVOutputStream(bos);
-    assertThrowsExactly(IllegalArgumentException.class, () -> kos.writeBER4Length(0x01122345));
-  }
-
-  @Test
-  void testWriteLong() throws Exception {
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    KLVOutputStream kos = new KLVOutputStream(bos);
-    kos.writeLong(0xFFFFFFFFFFFFFFFFL);
-    assertArrayEquals(bos.toByteArray(), new byte[] { (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-        (byte) 0xFF, (byte) 0xFF, (byte) 0xFF });
-  }
-
-  @Test
-  void testWriteUnsignedByte() throws Exception {
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    KLVOutputStream kos = new KLVOutputStream(bos);
-    kos.writeUnsignedByte((short) 255);
-    assertArrayEquals(bos.toByteArray(), new byte[] { (byte) 0xFF });
+  void testReadUnsignedByte() throws Exception {
+    var kis = new KLVInputStream(new ByteArrayInputStream(new byte[] {(byte) 0xFF}));
+    assertEquals(255, kis.readUnsignedByte());
   }
 
 }

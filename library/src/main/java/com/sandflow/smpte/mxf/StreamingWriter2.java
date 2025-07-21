@@ -581,7 +581,7 @@ public class StreamingWriter2 {
   private void writeIndexPartition() throws IOException, KLVException {
     byte[] itsBytes = this.currentContainer.drainIndexSegments();
     startPartition(
-        this.currentContainer.getBodySID(),
+        0,
         this.currentContainer.getIndexSID(),
         0L,
         (long) itsBytes.length,

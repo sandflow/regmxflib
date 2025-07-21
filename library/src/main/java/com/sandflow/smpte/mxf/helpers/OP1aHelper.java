@@ -30,28 +30,16 @@
 
 package com.sandflow.smpte.mxf.helpers;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.numbers.fraction.Fraction;
 
-import com.sandflow.smpte.klv.LocalTagRegister;
-import com.sandflow.smpte.klv.LocalTagResolver;
-import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.exceptions.KLVException;
-import com.sandflow.smpte.mxf.FillItem;
 import com.sandflow.smpte.mxf.Labels;
 import com.sandflow.smpte.mxf.MXFFiles;
-import com.sandflow.smpte.mxf.MXFOutputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
-import com.sandflow.smpte.mxf.PartitionPack;
-import com.sandflow.smpte.mxf.PrimerPack;
-import com.sandflow.smpte.mxf.StaticLocalTags;
 import com.sandflow.smpte.mxf.types.AUIDSet;
 import com.sandflow.smpte.mxf.types.ContentStorage;
 import com.sandflow.smpte.mxf.types.EssenceData;
@@ -114,20 +102,22 @@ public class OP1aHelper {
     PackageHelper.initPackage(mp, "Material Package");
 
     for (byte i = 0; i < trackCount; i++) {
+      long trackId = (long) i + 1;
+
       FileDescriptor d = ecInfo.tracks().get(i).descriptor();
       d.EssenceLength = 0L;
-      d.LinkedTrackID = ecInfo.tracks().size() > 1 ? (long) i : null;
+      d.LinkedTrackID = ecInfo.tracks().size() > 1 ? trackId : null;
 
-      UL elementKey = MXFFiles.makeEssenceElementKey(ecInfo.tracks().get(i).essenceKey(), trackCount, i);
+      UL elementKey = MXFFiles.makeEssenceElementKey(ecInfo.tracks().get(i).essenceKey(), trackCount, (byte) trackId);
 
       this.elementKeys.add(elementKey);
 
       sp.PackageTracks.add(PackageHelper.makeTimelineTrack(ecInfo.editRate(), null, UMID.NULL_UMID,
-          (long) MXFFiles.getTrackNumber(elementKey), null, (long) i,
+          (long) MXFFiles.getTrackNumber(elementKey), null, trackId,
           ecInfo.tracks().get(i).dataDefinition()));
 
       mp.PackageTracks
-          .add(PackageHelper.makeTimelineTrack(ecInfo.editRate(), /* 24L */ null, sp.PackageID, null, (long) i, null,
+          .add(PackageHelper.makeTimelineTrack(ecInfo.editRate(), /* 24L */ null, sp.PackageID, null, trackId, trackId,
               ecInfo.tracks().get(i).dataDefinition()));
     }
 

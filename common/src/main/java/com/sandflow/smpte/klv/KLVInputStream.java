@@ -267,7 +267,7 @@ public class KLVInputStream extends CountingInputStream {
       b7 = readUnsignedByte();
     }
 
-    return b0 + (b1 << 8) + (b2 << 16) + (b3 << 24) + (b4 << 32) + (b5 << 40) + (b6 << 48) + (b7 << 56);
+    return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24) | (b4 << 32) | (b5 << 40) | (b6 << 48) | (b7 << 56);
   }
 
   public long skipFully(long n) throws IOException {

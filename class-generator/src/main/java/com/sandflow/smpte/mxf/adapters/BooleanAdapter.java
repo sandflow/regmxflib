@@ -41,7 +41,7 @@ public class BooleanAdapter {
   }
 
   public static void toStream(boolean value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
-    os.writeByte(value ? 1 : 0);
+    os.writeByte((byte) (value ? 1 : 0));
   }
 
 }
