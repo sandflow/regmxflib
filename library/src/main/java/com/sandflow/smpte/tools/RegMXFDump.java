@@ -114,7 +114,7 @@ public class RegMXFDump {
           continue;
         } else if (!PartitionPack.isInstance(elementKey)) {
           /* we have reached something other than a partition */
-          osw.write(String.format("{\"key\": \"%s\", \"length\": %d bytes},\n", elementKey, elementLength));
+          osw.write(String.format("{\"key\": \"%s\", \"length\": %d},\n", elementKey, elementLength));
           osw.flush();
           mis.skipFully(elementLength);
           continue;
@@ -127,7 +127,8 @@ public class RegMXFDump {
         PartitionPack pp = PartitionPack.fromTriplet(new MemoryTriplet(elementKey, value));
 
         JSONSerializer.serialize(pp, osw);
-        osw.write("\n");
+        osw.flush();
+        osw.write(",\n");
 
         mis.resetCount();
 
