@@ -73,6 +73,7 @@ public class StreamingWriter2 {
     private final long bodySID;
     private final long indexSID;
     private long bytesToWrite;
+    private long ecOffset = 0;
 
     ContainerWriter(long bodySID, long indexSID) {
       this.bodySID = bodySID;
@@ -101,7 +102,9 @@ public class StreamingWriter2 {
 
     abstract byte[] drainIndexSegments() throws IOException;
 
-    abstract long getECOffset();
+    long getECOffset() {
+      return this.ecOffset;
+    }
 
     abstract long getDuration();
 
@@ -114,6 +117,7 @@ public class StreamingWriter2 {
         throw new RuntimeException();
       StreamingWriter2.this.fos.write(b);
       this.bytesToWrite--;
+      this.ecOffset++;
     }
 
     @Override
@@ -127,6 +131,7 @@ public class StreamingWriter2 {
 
       StreamingWriter2.this.fos.write(b, off, len);
       this.bytesToWrite -= len;
+      this.ecOffset += len;
     }
 
     @Override
@@ -175,11 +180,6 @@ public class StreamingWriter2 {
       this.accessUnitSize = accessUnitSize;
 
       this.state = State.WRITTEN;
-    }
-
-    @Override
-    long getECOffset() {
-      return 0L;
     }
 
     @Override
@@ -250,11 +250,6 @@ public class StreamingWriter2 {
     }
 
     @Override
-    long getECOffset() {
-      return 0L;
-    }
-
-    @Override
     long getDuration() {
       return this.auSizes.size();
     }
@@ -290,6 +285,91 @@ public class StreamingWriter2 {
 
         streamOffset += auSize;
       }
+
+      return IndexSegmentHelper.toBytes(its);
+    }
+
+  }
+
+  public class GCFrameVBEWriter extends ContainerWriter {
+
+    /*
+     * position of content packages within the essence container since the last
+     * index table was drained
+     */
+    private final List<Long> cpPositions = new ArrayList<>();
+
+    /*
+     * duration of the generic container
+     */
+    private long duration;
+
+    /*
+     * index in edit unit of the first content package within the essence
+     * container since the last index table was drained
+     */
+    private long cpFirstEditUnit = 0;
+
+    GCFrameVBEWriter(long bodySID, long indexSID) {
+      super(bodySID, indexSID);
+    }
+
+    public void nextContentPackage() {
+      cpPositions.add(this.getECOffset());
+      duration++;
+    }
+
+    public void nextElement(UL elementKey, long elementSize) throws IOException {
+      /* TODO check parameter validity */
+
+      if (!this.isActive()) {
+        throw new RuntimeException();
+      }
+
+      MXFOutputStream mos = new MXFOutputStream(StreamingWriter2.this.fos);
+
+      mos.writeUL(elementKey);
+      mos.writeBERLength(elementSize);
+      this.setBytesToWrite(elementSize);
+
+      mos.close();
+    }
+
+    @Override
+    long getDuration() {
+      return duration;
+    }
+
+    @Override
+    byte[] drainIndexSegments() throws IOException {
+      if (this.cpPositions.size() == 0) {
+        return null;
+      }
+
+      var its = new IndexTableSegment();
+      its.InstanceID = UUID.fromRandom();
+      its.IndexEditRate = StreamingWriter2.this.getECEditRate(this.getBodySID());
+      its.IndexStartPosition = cpFirstEditUnit;
+      its.IndexDuration = this.getDuration();
+      its.IndexStreamID = this.getIndexSID();
+      its.EssenceStreamID = this.getBodySID();
+      its.EditUnitByteCount = 0L;
+      its.VBEByteCount = this.getECOffset() - this.cpPositions.get(this.cpPositions.size() - 1);
+
+      its.IndexEntryArray = new IndexEntryArray();
+      for (var position : this.cpPositions) {
+        var e = new IndexEntry();
+        e.TemporalOffset = 0;
+        e.Flags = (byte) 0x80;
+        e.StreamOffset = position;
+        e.KeyFrameOffset = 0;
+        e.TemporalOffset = 0;
+
+        its.IndexEntryArray.add(e);
+      }
+
+      this.cpFirstEditUnit = this.duration;
+      this.cpPositions.clear();
 
       return IndexSegmentHelper.toBytes(its);
     }
@@ -533,6 +613,42 @@ public class StreamingWriter2 {
     return w;
   }
 
+  /**
+   * creates a framed-wrapped essence container with variable size access units
+   * 
+   * @param unitCount Number of units in the essence container
+   * @param unitSize  Size in bytes of each element
+   */
+  public GCFrameVBEWriter addVBEFrameWrappedGC(long bodySID, long indexSID)
+      throws IOException, KLVException {
+    /* TODO: check for valid SIDs */
+
+    if (this.sids.contains(bodySID)) {
+      throw new RuntimeException();
+    }
+
+    if (this.sids.contains(indexSID)) {
+      throw new RuntimeException();
+    }
+
+    /* TODO: check for valid information in the preface */
+
+    this.sids.add(bodySID);
+    this.sids.add(indexSID);
+
+    GCFrameVBEWriter w = new GCFrameVBEWriter(bodySID, indexSID);
+
+    this.ecs.put(bodySID, w);
+
+    return w;
+  }
+
+  /**
+   * Finish the file. No further writing is possible afterwards.
+   * 
+   * @throws IOException
+   * @throws KLVException
+   */
   public void finish() throws IOException, KLVException {
     this.closeCurrentPartition();
 
@@ -700,6 +816,10 @@ public class StreamingWriter2 {
 
   private void writeIndexPartition() throws IOException, KLVException {
     byte[] itsBytes = this.currentContainer.drainIndexSegments();
+    if (itsBytes == null) {
+      return;
+    }
+
     startPartition(
         0,
         this.currentContainer.getIndexSID(),

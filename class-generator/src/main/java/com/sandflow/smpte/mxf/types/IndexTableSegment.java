@@ -244,7 +244,8 @@ public class IndexTableSegment {
 
     if ((t = s.getItem(IndexEntryArray_AUID)) != null) {
       this.IndexEntryArray = com.sandflow.smpte.mxf.types.IndexEntryArray
-          .fromStream(new MXFInputStream(t.getValueAsStream()), ctx, this.SliceCount, this.PositionTableCount);
+          .fromStream(new MXFInputStream(t.getValueAsStream()), ctx, this.SliceCount == null ? 0 : this.SliceCount,
+              this.PositionTableCount == null ? 0 : this.PositionTableCount);
     }
 
     if ((t = s.getItem(EditUnitByteCount_AUID)) != null) {
@@ -271,6 +272,7 @@ public class IndexTableSegment {
       return obj;
     } catch (Exception e) {
       /* TODO: log error */
+      System.err.println(e.getMessage());
     }
 
     return null;

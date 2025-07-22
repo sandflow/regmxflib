@@ -32,17 +32,14 @@ package com.sandflow.smpte.tools;
 
 import java.io.EOFException;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Logger;
 
 import com.sandflow.smpte.klv.LocalTagRegister;
 import com.sandflow.smpte.klv.MemoryTriplet;
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
-import com.sandflow.smpte.mxf.ECTracks;
 import com.sandflow.smpte.mxf.FillItem;
 import com.sandflow.smpte.mxf.HeaderMetadataSet;
 import com.sandflow.smpte.mxf.MXFInputContext;
@@ -51,8 +48,6 @@ import com.sandflow.smpte.mxf.PartitionPack;
 import com.sandflow.smpte.mxf.PrimerPack;
 import com.sandflow.smpte.mxf.RandomIndexPack;
 import com.sandflow.smpte.mxf.StaticLocalTags;
-import com.sandflow.smpte.mxf.StreamingFileInfo;
-import com.sandflow.smpte.mxf.StreamingReader;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.mxf.types.Preface;
 import com.sandflow.smpte.util.AUID;
