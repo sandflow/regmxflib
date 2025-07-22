@@ -33,7 +33,9 @@ package com.sandflow.smpte.mxf.helpers;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.numbers.fraction.Fraction;
 
@@ -60,7 +62,7 @@ import com.sandflow.smpte.util.UUID;
 
 public class OP1aHelper {
 
-  public record TrackInfo(UL essenceKey,
+  public record TrackInfo(byte trackId, UL essenceKey,
       FileDescriptor descriptor,
       AUID dataDefinition) {
   }
@@ -77,7 +79,7 @@ public class OP1aHelper {
   private final long bodySID = 1;
   private final long indexSID = 127;
 
-  final List<UL> elementKeys;
+  final Map<Byte, UL> trackIDToElementKeys = new HashMap<>();
 
   public OP1aHelper(EssenceContainerInfo ecInfo) throws IOException, KLVException {
     if (ecInfo == null) {
@@ -90,9 +92,6 @@ public class OP1aHelper {
 
     final byte trackCount = (byte) ecInfo.tracks().size();
 
-    /* elementKeys */
-    this.elementKeys = new ArrayList<>(trackCount);
-
     /* File Package */
     SourcePackage sp = new SourcePackage();
     PackageHelper.initPackage(sp, "Top-level File Package");
@@ -102,22 +101,26 @@ public class OP1aHelper {
     PackageHelper.initPackage(mp, "Material Package");
 
     for (byte i = 0; i < trackCount; i++) {
-      long trackId = (long) i + 1;
+      byte trackId = ecInfo.tracks().get(i).trackId();
+      if (trackId < 1 || trackIDToElementKeys.containsKey(trackId)) {
+        throw new RuntimeException();
+      }
 
       FileDescriptor d = ecInfo.tracks().get(i).descriptor();
       d.EssenceLength = 0L;
-      d.LinkedTrackID = ecInfo.tracks().size() > 1 ? trackId : null;
+      d.LinkedTrackID = ecInfo.tracks().size() > 1 ? (long) trackId : null;
 
       UL elementKey = MXFFiles.makeEssenceElementKey(ecInfo.tracks().get(i).essenceKey(), trackCount, (byte) trackId);
 
-      this.elementKeys.add(elementKey);
+      this.trackIDToElementKeys.put(trackId, elementKey);
 
-      sp.PackageTracks.add(PackageHelper.makeTimelineTrack(ecInfo.editRate(), null, UMID.NULL_UMID,
-          (long) MXFFiles.getTrackNumber(elementKey), null, trackId,
+      sp.PackageTracks.add(PackageHelper.makeTimelineTrack(ecInfo.editRate(), -1L, UMID.NULL_UMID,
+          (long) MXFFiles.getTrackNumber(elementKey), null, (long) trackId,
           ecInfo.tracks().get(i).dataDefinition()));
 
       mp.PackageTracks
-          .add(PackageHelper.makeTimelineTrack(ecInfo.editRate(), /* 24L */ null, sp.PackageID, null, trackId, trackId,
+          .add(PackageHelper.makeTimelineTrack(ecInfo.editRate(), null, sp.PackageID, null, (long) trackId,
+              (long) trackId,
               ecInfo.tracks().get(i).dataDefinition()));
     }
 
@@ -185,6 +188,10 @@ public class OP1aHelper {
 
   public Preface getPreface() {
     return this.preface;
+  }
+
+  public UL getElementKey(byte trackId) {
+    return this.trackIDToElementKeys.get(trackId);
   }
 
 }

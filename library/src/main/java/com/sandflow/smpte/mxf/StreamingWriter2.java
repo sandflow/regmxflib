@@ -33,9 +33,11 @@ package com.sandflow.smpte.mxf;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -50,6 +52,8 @@ import com.sandflow.smpte.mxf.RandomIndexPack.PartitionOffset;
 import com.sandflow.smpte.mxf.helpers.IndexSegmentHelper;
 import com.sandflow.smpte.mxf.types.EssenceData;
 import com.sandflow.smpte.mxf.types.FileDescriptor;
+import com.sandflow.smpte.mxf.types.IndexEntry;
+import com.sandflow.smpte.mxf.types.IndexEntryArray;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.mxf.types.MultipleDescriptor;
 import com.sandflow.smpte.mxf.types.Package;
@@ -146,7 +150,7 @@ public class StreamingWriter2 {
     private long accessUnitCount;
     private State state = State.READY;
 
-    GCClipCBEWriter(long bodySID, long indexSID) {
+    public GCClipCBEWriter(long bodySID, long indexSID) {
       super(bodySID, indexSID);
     }
 
@@ -204,6 +208,95 @@ public class StreamingWriter2 {
 
   }
 
+  public class GCClipVBEWriter extends ContainerWriter {
+
+    enum State {
+      READY,
+      WRITTEN,
+      DRAINED
+    }
+
+    private State state = State.READY;
+
+    /**
+     * size in bytes of the VBE units within the current partition
+     */
+    private List<Long> auSizes = new ArrayList<>();
+
+    GCClipVBEWriter(long bodySID, long indexSID) {
+      super(bodySID, indexSID);
+    }
+
+    public void nextClip(UL elementKey, long clipSize) throws IOException {
+      /* TODO check parameter validity */
+
+      if (!this.isActive()) {
+        throw new RuntimeException();
+      }
+
+      if (this.state != State.READY) {
+        throw new RuntimeException();
+      }
+
+      StreamingWriter2.this.fos.writeUL(elementKey);
+      StreamingWriter2.this.fos.writeBERLength(clipSize);
+      this.setBytesToWrite(clipSize);
+
+      this.state = State.WRITTEN;
+    }
+
+    public void nextAccessUnit(int accessUnitSize) {
+      auSizes.add((long) accessUnitSize);
+    }
+
+    @Override
+    long getECOffset() {
+      return 0L;
+    }
+
+    @Override
+    long getDuration() {
+      return this.auSizes.size();
+    }
+
+    @Override
+    byte[] drainIndexSegments() throws IOException {
+      if (this.state != State.WRITTEN) {
+        return null;
+      }
+      this.state = State.DRAINED;
+
+      var its = new IndexTableSegment();
+      its.InstanceID = UUID.fromRandom();
+      its.IndexEditRate = StreamingWriter2.this.getECEditRate(this.getBodySID());
+      its.IndexStartPosition = 0L;
+      its.IndexDuration = this.getDuration();
+      its.IndexStreamID = this.getIndexSID();
+      its.EssenceStreamID = this.getBodySID();
+      its.EditUnitByteCount = 0L;
+      its.VBEByteCount = this.auSizes.get(this.auSizes.size() - 1);
+
+      long streamOffset = 0;
+      its.IndexEntryArray = new IndexEntryArray();
+      for (var auSize : this.auSizes) {
+        var e = new IndexEntry();
+        e.TemporalOffset = 0;
+        e.Flags = (byte) 0x80;
+        e.StreamOffset = streamOffset;
+        e.KeyFrameOffset = 0;
+        e.TemporalOffset = 0;
+
+        its.IndexEntryArray.add(e);
+
+        streamOffset += auSize;
+      }
+
+      return IndexSegmentHelper.toBytes(its);
+    }
+
+  }
+
+  /* TODO: clean-up states */
   private enum State {
     INIT,
     START,
@@ -404,6 +497,36 @@ public class StreamingWriter2 {
     this.sids.add(indexSID);
 
     GCClipCBEWriter w = new GCClipCBEWriter(bodySID, indexSID);
+
+    this.ecs.put(bodySID, w);
+
+    return w;
+  }
+
+  /**
+   * creates a clip-wrapped essence container with variable size access units
+   * 
+   * @param unitCount Number of units in the essence container
+   * @param unitSize  Size in bytes of each element
+   */
+  public GCClipVBEWriter addVBEClipWrappedGC(long bodySID, long indexSID)
+      throws IOException, KLVException {
+    /* TODO: check for valid SIDs */
+
+    if (this.sids.contains(bodySID)) {
+      throw new RuntimeException();
+    }
+
+    if (this.sids.contains(indexSID)) {
+      throw new RuntimeException();
+    }
+
+    /* TODO: check for valid information in the preface */
+
+    this.sids.add(bodySID);
+    this.sids.add(indexSID);
+
+    GCClipVBEWriter w = new GCClipVBEWriter(bodySID, indexSID);
 
     this.ecs.put(bodySID, w);
 

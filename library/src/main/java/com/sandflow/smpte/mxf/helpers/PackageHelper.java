@@ -65,11 +65,11 @@ public class PackageHelper {
       UMID sourcePackageID, Long essenceTrackNum, Long sourceTrackID, Long trackID, AUID dataDefinition) {
     var sc = new SourceClip();
     sc.InstanceID = UUID.fromRandom();
-    sc.ComponentLength = duration == null ? -1L : duration;
+    sc.ComponentLength = duration;
     sc.ComponentDataDefinition = dataDefinition;
     sc.StartPosition = 0L;
     sc.SourceTrackID = sourceTrackID == null ? 0 : sourceTrackID;
-    sc.SourcePackageID = sourcePackageID;
+    sc.SourcePackageID = sourcePackageID == null ? UMID.NULL_UMID : sourcePackageID;
 
     var seq = new Sequence();
     seq.InstanceID = UUID.fromRandom();

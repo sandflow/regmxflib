@@ -33,6 +33,7 @@ package com.sandflow.smpte.mxf;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.util.Collections;
@@ -43,6 +44,8 @@ import org.junit.jupiter.api.Test;
 import com.sandflow.smpte.mxf.StreamingWriter2.GCClipCBEWriter;
 import com.sandflow.smpte.mxf.helpers.OP1aHelper;
 import com.sandflow.smpte.mxf.types.AudioChannelLabelSubDescriptor;
+import com.sandflow.smpte.mxf.types.IABEssenceDescriptor;
+import com.sandflow.smpte.mxf.types.IABSoundfieldLabelSubDescriptor;
 import com.sandflow.smpte.mxf.types.SoundfieldGroupLabelSubDescriptor;
 import com.sandflow.smpte.mxf.types.SubDescriptorStrongReferenceVector;
 import com.sandflow.smpte.mxf.types.WAVEPCMDescriptor;
@@ -63,6 +66,7 @@ class StreamingWriter2Test {
     final int sampleCount = 48000;
     final Fraction sampleRate = Fraction.of(48000);
     final Fraction editRate = Fraction.of(48000);
+    final byte trackID = 1;
 
     SoundfieldGroupLabelSubDescriptor sg = new SoundfieldGroupLabelSubDescriptor();
     sg.InstanceID = UUID.fromRandom();
@@ -117,6 +121,7 @@ class StreamingWriter2Test {
     UL essenceKey = UL.fromURN("urn:smpte:ul:060e2b34.01020101.0d010301.16010200");
 
     OP1aHelper.TrackInfo ti = new OP1aHelper.TrackInfo(
+        trackID,
         essenceKey,
         d,
         Labels.SoundEssenceTrack);
@@ -130,17 +135,17 @@ class StreamingWriter2Test {
 
     /* start writing file */
 
-    OutputStream os = new FileOutputStream("target/test-output/cbe.mxf");
+    OutputStream os = new FileOutputStream("target/test-output/test-cbeclip.mch.mxf");
 
     StreamingWriter2 sw = new StreamingWriter2(os, header.getPreface());
 
-    GCClipCBEWriter ec =  sw.addCBEClipWrappedGC(1, 2);
+    GCClipCBEWriter ec = sw.addCBEClipWrappedGC(1, 2);
 
     sw.start();
 
     sw.startPartition(ec);
 
-    ec.nextClip(essenceKey, 6, sampleCount);
+    ec.nextClip(header.getElementKey(trackID), 6, sampleCount);
 
     DataOutputStream dos = new DataOutputStream(ec);
     byte[] samples = new byte[6];
@@ -153,8 +158,114 @@ class StreamingWriter2Test {
       samples[5] = samples[2];
       dos.write(samples);
     }
-    sw.finish();
 
+    sw.finish();
+  }
+
+  /*
+   * <r0:IABEssenceDescriptor>
+   * <r1:InstanceID>urn:uuid:8b34fae4-33d1-430f-9b78-8b58c2b698cd</r1:InstanceID>
+   * <r1:SubDescriptors>
+   * <r0:IABSoundfieldLabelSubDescriptor>
+   * <r1:InstanceID>urn:uuid:359dea8e-868c-4768-a750-a83620fd165e</r1:InstanceID>
+   * <r1:MCALabelDictionaryID>urn:smpte:ul:060e2b34.0401010d.03020221.00000000<!--
+   * IABSoundfield--></r1:MCALabelDictionaryID>
+   * <r1:MCALinkID>urn:uuid:6370bd8b-49cd-4e72-a151-cbbb90039d04</r1:MCALinkID>
+   * <r1:MCATagSymbol>IAB</r1:MCATagSymbol>
+   * <r1:MCATagName>IAB</r1:MCATagName>
+   * <r1:RFC5646SpokenLanguage>en</r1:RFC5646SpokenLanguage>
+   * </r0:IABSoundfieldLabelSubDescriptor>
+   * </r1:SubDescriptors>
+   * <r1:LinkedTrackID>2</r1:LinkedTrackID>
+   * <r1:SampleRate>24/1</r1:SampleRate>
+   * <r1:EssenceLength>2</r1:EssenceLength>
+   * <r1:ContainerFormat>urn:smpte:ul:060e2b34.0401010d.0d010301.021d0101<!--
+   * IMF_IABEssenceClipWrappedContainer--></r1:ContainerFormat>
+   * <r1:AudioSampleRate>48000/1</r1:AudioSampleRate>
+   * <r1:Locked>False</r1:Locked>
+   * <r1:ChannelCount>0</r1:ChannelCount>
+   * <r1:QuantizationBits>24</r1:QuantizationBits>
+   * <r1:SoundCompression>urn:smpte:ul:060e2b34.04010105.0e090604.00000000<!--
+   * ImmersiveAudioCoding--></r1:SoundCompression>
+   * </r0:IABEssenceDescriptor>
+   */
+
+  @Test
+  void testClipVBE() throws Exception {
+
+    final int frameCount = 480;
+    final Fraction sampleRate = Fraction.of(48000);
+    final Fraction editRate = Fraction.of(24000, 1001);
+    final byte trackID = 1;
+
+    /* read IA frame */
+
+    InputStream is = ClassLoader.getSystemResourceAsStream("ia-frames/0.iab");
+    byte[] iaFrame = is.readAllBytes();
+    is.close();
+
+    /* create descriptors */
+
+    IABSoundfieldLabelSubDescriptor sd = new IABSoundfieldLabelSubDescriptor();
+    sd.InstanceID = UUID.fromRandom();
+    sd.MCALabelDictionaryID = Labels.IABSoundfield;
+    sd.MCALinkID = UUID.fromRandom();
+    sd.MCATagSymbol = "IAB";
+    sd.MCATagName = "IAB";
+    sd.RFC5646SpokenLanguage = "en-us";
+
+    IABEssenceDescriptor d = new IABEssenceDescriptor();
+    d.InstanceID = UUID.fromRandom();
+    d.SampleRate = editRate;
+    d.AudioSampleRate = sampleRate;
+    d.Locked = false;
+    d.ChannelCount = 0L;
+    d.QuantizationBits = 24L;
+    d.SoundCompression = Labels.ImmersiveAudioCoding;
+    d.SubDescriptors = new SubDescriptorStrongReferenceVector();
+    d.SubDescriptors.add(sd);
+    d.ContainerFormat = Labels.IMF_IABEssenceClipWrappedContainer;
+
+    /* create header metadata */
+
+    OP1aHelper.TrackInfo ti = new OP1aHelper.TrackInfo(
+        trackID,
+        EssenceKeys.IMF_IABEssenceClipWrappedElement.asUL(),
+        d,
+        Labels.SoundEssenceTrack);
+
+    OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
+        Collections.singletonList(ti),
+        java.util.Set.of(Labels.IMF_IABTrackFileLevel0),
+        editRate);
+
+    OP1aHelper header = new OP1aHelper(eci);
+
+
+    /* Initialize the streaming writer */
+    OutputStream os = new FileOutputStream("target/test-output/clipvbe-test.iab.mxf");
+    StreamingWriter2 sw = new StreamingWriter2(os, header.getPreface());
+
+    /* configure the clip-wrapped generic container */
+
+    var gc = sw.addVBEClipWrappedGC(1L, 2L);
+
+    /* start writing file */
+
+    sw.start();
+
+    /* write @frameCount copies of the same IA Frame */
+
+    sw.startPartition(gc);
+    gc.nextClip(header.getElementKey(trackID), iaFrame.length * frameCount);
+    for (int i = 0; i < frameCount; i++) {
+      gc.nextAccessUnit(iaFrame.length);
+      gc.write(iaFrame);
+    }
+
+    /* complete the file */
+    sw.finish();
+    os.close();
   }
 
 }
