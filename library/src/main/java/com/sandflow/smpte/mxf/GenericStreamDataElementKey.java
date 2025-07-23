@@ -93,6 +93,16 @@ public class GenericStreamDataElementKey {
     OTHER;
   }
 
+  /**
+   * Creates a Generic Stream Data Element Key as specified in SMPTE ST 410
+   * 
+   * @param type KLV Type Feature
+   * @param bo Byte Order of Data Feature
+   * @param au Data Wrapped by Access Unit Feature
+   * @param multi Multi-KLV Feature
+   * @param es Wrapping Synchronized to Essence Feature
+   * @return Generic Stream Data Element Key (UL)
+   */
   public static UL make(KLVType type, ByteOrder bo, AccessUnitWrapping au, MultiKLVWrapping multi,
       EssenceSync es) {
     byte[] octets = DEFAULT_KEY.getValue().clone();
