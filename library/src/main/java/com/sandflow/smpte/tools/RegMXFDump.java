@@ -30,16 +30,28 @@
 
 package com.sandflow.smpte.tools;
 
+import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.OutputStreamWriter;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Logger;
 
-import com.sandflow.smpte.mxf.ECTracks;
-import com.sandflow.smpte.mxf.StreamingFileInfo;
-import com.sandflow.smpte.mxf.StreamingReader;
+import com.sandflow.smpte.klv.LocalTagRegister;
+import com.sandflow.smpte.klv.MemoryTriplet;
+import com.sandflow.smpte.klv.Set;
+import com.sandflow.smpte.klv.Triplet;
+import com.sandflow.smpte.mxf.FillItem;
+import com.sandflow.smpte.mxf.HeaderMetadataSet;
+import com.sandflow.smpte.mxf.MXFInputContext;
+import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.PartitionPack;
+import com.sandflow.smpte.mxf.PrimerPack;
+import com.sandflow.smpte.mxf.RandomIndexPack;
+import com.sandflow.smpte.mxf.StaticLocalTags;
+import com.sandflow.smpte.mxf.types.IndexTableSegment;
+import com.sandflow.smpte.mxf.types.Preface;
 import com.sandflow.smpte.util.AUID;
+import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.JSONSerializer;
 import com.sandflow.util.events.Event;
 import com.sandflow.util.events.EventHandler;
@@ -77,31 +89,140 @@ public class RegMXFDump {
     };
 
     OutputStreamWriter osw = new OutputStreamWriter(System.out);
+    osw.write("[\n");
 
     FileInputStream f = new FileInputStream(args[0]);
-    StreamingFileInfo sfi = new StreamingFileInfo(f, evthandler);
-    ECTracks tracks = new ECTracks(sfi.getPreface());
 
-    for (int i = 0; i < tracks.getTrackCount(); i++) {
-      JSONSerializer.serialize(tracks.getTrackInfo(i).descriptor(), osw);
-      osw.write("\n");
+    MXFInputStream mis = new MXFInputStream(f);
+
+    try {
+      while (true) {
+        AUID elementKey = mis.readAUID();
+        long elementLength = mis.readBERLength();
+
+        if (RandomIndexPack.getKey().equalsIgnoreVersion(elementKey)) {
+          byte[] value = new byte[(int) elementLength];
+          mis.readFully(value);
+          JSONSerializer.serialize(RandomIndexPack.fromTriplet(new MemoryTriplet(elementKey, value)), osw);
+          osw.flush();
+          osw.write(",\n");
+          continue;
+        } else if (!PartitionPack.isInstance(elementKey)) {
+          /* we have reached something other than a partition */
+          osw.write(String.format("{\"key\": \"%s\", \"length\": %d},\n", elementKey, elementLength));
+          osw.flush();
+          mis.skipFully(elementLength);
+          continue;
+        }
+
+        /* found a partition */
+        /* partition pack is fixed length so that cast is ok */
+        byte[] value = new byte[(int) elementLength];
+        mis.readFully(value);
+        PartitionPack pp = PartitionPack.fromTriplet(new MemoryTriplet(elementKey, value));
+
+        JSONSerializer.serialize(pp, osw);
+        osw.flush();
+        osw.write(",\n");
+
+        mis.resetCount();
+
+        /* read header metadata */
+        if (pp.getHeaderByteCount() > 0) {
+
+          /* look for the primer pack */
+          LocalTagRegister localreg = null;
+          for (Triplet t; (t = mis.readTriplet()) != null; mis.resetCount()) {
+
+            /* skip fill items, if any */
+            if (!FillItem.getKey().equalsIgnoreVersion(t.getKey())) {
+              localreg = PrimerPack.createLocalTagRegister(t);
+              break;
+            }
+          }
+
+          /*
+           * capture all local sets within the header metadata
+           */
+          HashMap<UUID, Set> setresolver = new HashMap<>();
+
+          while (mis.getReadCount() < pp.getHeaderByteCount()) {
+
+            Triplet t = mis.readTriplet();
+
+            /* skip fill items */
+            if (FillItem.isInstance(t.getKey())) {
+              continue;
+            }
+
+            Set s = Set.fromLocalSet(t, localreg);
+
+            if (s != null) {
+
+              UUID instanceID = HeaderMetadataSet.getInstanceID(s);
+              if (instanceID != null) {
+                setresolver.put(instanceID, s);
+              }
+
+            }
+
+          }
+
+          MXFInputContext mic = new MXFInputContext() {
+            @Override
+            public Set getSet(UUID uuid) {
+              return setresolver.get(uuid);
+            }
+          };
+
+          for (Set s : setresolver.values()) {
+            if (Preface.getKey().equalsIgnoreVersionAndGroupCoding(s.getKey())) {
+              JSONSerializer.serialize(Preface.fromSet(s, mic), osw);
+              osw.flush();
+              osw.write(",\n");
+            }
+          }
+        }
+
+        /* read indexes */
+        if (pp.getIndexByteCount() > 0) {
+          Triplet t;
+          for (; (t = mis.readTriplet()) != null; mis.resetCount()) {
+            /* skip fill items, if any */
+            if (!FillItem.getKey().equalsIgnoreVersion(t.getKey())) {
+              break;
+            }
+          }
+
+          while (true) {
+            IndexTableSegment its = IndexTableSegment.fromSet(
+                Set.fromLocalSet(t, StaticLocalTags.register()),
+                new MXFInputContext() {
+                  @Override
+                  public Set getSet(UUID uuid) {
+                    throw new UnsupportedOperationException("Unimplemented method 'getSet'");
+                  }
+                });
+
+            if (its != null) {
+              JSONSerializer.serialize(its, osw);
+              osw.write(",\n");
+              osw.flush();
+            }
+
+            if (mis.getReadCount() >= pp.getIndexByteCount())
+              break;
+
+            t = mis.readTriplet();
+          }
+
+        }
+      }
+
+    } catch (EOFException e) {
     }
+
+    osw.write("]\n");
     osw.flush();
-
-    StreamingReader sr = new StreamingReader(f, evthandler);
-
-    Map<AUID, ElementStat> stats = new HashMap<>();
-
-    while (sr.nextElement()) {
-      AUID key = sr.getElementKey();
-      ElementStat stat = stats.computeIfAbsent(key, k -> new ElementStat());
-      stat.totalCount++;
-      stat.totalLength += sr.getElementLength();
-    }
-
-    for (Map.Entry<AUID, ElementStat> entry : stats.entrySet()) {
-      System.out.println(entry.getKey() + " => " + entry.getValue().totalCount + ", "
-          + (entry.getValue().totalLength / entry.getValue().totalCount));
-    }
   }
 }

@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.sandflow.smpte.klv.exceptions.KLVException;
-import com.sandflow.smpte.mxf.ECTracks.TrackInfo;
+import com.sandflow.smpte.mxf.GCEssenceTracks.TrackInfo;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.RandomAccessInputSource;
 
@@ -61,7 +61,7 @@ public class ClipReader extends InputStream {
      * DEVIATION: Some versions of ASDCPLib index from the start of the K of the
      * clip instead of from the start of the V of the clip
      */
-    ECTracks tracks = new ECTracks(this.info.getPreface());
+    GCEssenceTracks tracks = new GCEssenceTracks(this.info.getPreface());
     TrackInfo ti = tracks.getTrackInfo(this.elementKey);
     if (ti != null && Labels.IMF_IABEssenceClipWrappedContainer.equals(ti.descriptor().ContainerFormat)
         && this.info.euToECPosition(0) != 0) {

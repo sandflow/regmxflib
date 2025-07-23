@@ -38,10 +38,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.commons.numbers.fraction.Fraction;
+
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.PartitionPack.Status;
+import com.sandflow.smpte.mxf.helpers.IndexSegmentHelper;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.mxf.types.Preface;
 import com.sandflow.smpte.util.RandomAccessInputSource;
@@ -50,17 +53,38 @@ import com.sandflow.util.events.EventHandler;
 
 public class RandomAccessFileInfo implements HeaderInfo {
 
-  interface Index {
+  interface ECIndex {
     long getECPosition(long editUnitIndex);
 
     long length();
   }
 
-  static class CBECLipIndex implements Index {
+  class VBEIndex implements ECIndex {
+    private ArrayList<Long> positions = new ArrayList<>();
+
+    protected void addECPosition(long ecPosition) {
+      this.positions.add(ecPosition);
+    }
+
+    @Override
+    public long getECPosition(long editUnit) {
+      if (editUnit >= this.positions.size()) {
+        throw new IllegalArgumentException();
+      }
+      return (long) this.positions.get((int) editUnit);
+    }
+
+    @Override
+    public long length() {
+      return this.positions.size();
+    }
+  }
+
+  class CBEClipIndex implements ECIndex {
     private long cbeSize;
     private long length;
 
-    CBECLipIndex(long cbeSize, long length) {
+    CBEClipIndex(long cbeSize, long length) {
       if (length <= 0) {
         throw new IllegalArgumentException();
       }
@@ -84,26 +108,26 @@ public class RandomAccessFileInfo implements HeaderInfo {
     public long length() {
       return this.length;
     }
-  }
 
-  static class VBEIndex implements Index {
-    private ArrayList<Long> positions = new ArrayList<>();
-
-    protected void addECPosition(long ecPosition) {
-      this.positions.add(ecPosition);
+    public long getLength() {
+      return length;
     }
 
-    @Override
-    public long getECPosition(long editUnit) {
-      if (editUnit >= this.positions.size()) {
-        throw new IllegalArgumentException();
-      }
-      return (long) this.positions.get((int) editUnit);
+    public long getCbeSize() {
+      return cbeSize;
     }
 
-    @Override
-    public long length() {
-      return this.positions.size();
+    public byte[] toBytes(long ecSID, long indexSID, Fraction editRate) throws IOException {
+      var its = new IndexTableSegment();
+      its.InstanceID = UUID.fromRandom();
+      its.IndexEditRate = editRate;
+      its.IndexStartPosition = 0L;
+      its.IndexDuration = this.length;
+      its.IndexStreamID = indexSID;
+      its.EssenceStreamID = ecSID;
+      its.EditUnitByteCount = this.cbeSize;
+
+      return IndexSegmentHelper.toBytes(its);
     }
   }
 
@@ -134,7 +158,7 @@ public class RandomAccessFileInfo implements HeaderInfo {
   private final HeaderInfo basicInfo;
   private Long ecSID = null;
   private Long ecIndexSID = null;
-  private Index euToECPosition;
+  private ECIndex euToECPosition;
   private final FilePositionMapper ecToFilePositions = new FilePositionMapper();
 
   private Map<Long, FilePositionMapper> gsToFilePositions = new HashMap<>();
@@ -290,7 +314,7 @@ public class RandomAccessFileInfo implements HeaderInfo {
               throw new RuntimeException("Only one VBE permitted.");
             }
 
-            this.euToECPosition = new CBECLipIndex(its.EditUnitByteCount, its.IndexDuration);
+            this.euToECPosition = new CBEClipIndex(its.EditUnitByteCount, its.IndexDuration);
           } else {
             /* we have a VBE index table */
             VBEIndex vbeIndex;
@@ -364,6 +388,5 @@ public class RandomAccessFileInfo implements HeaderInfo {
     /* check for no index */
     return this.euToECPosition.length();
   }
-
 
 }

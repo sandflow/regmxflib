@@ -43,6 +43,7 @@ import java.util.Set;
 import org.apache.commons.numbers.fraction.Fraction;
 
 import com.sandflow.smpte.util.AUID;
+import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UMID;
 import com.sandflow.smpte.util.UUID;
 
@@ -58,6 +59,7 @@ public class JSONSerializer {
       Boolean.class);
 
   static final private Set<Class<?>> PRIMITIVES = Set.of(
+      UL.class,
       UUID.class,
       AUID.class,
       UMID.class,
@@ -130,7 +132,7 @@ public class JSONSerializer {
       w.write(String.format("\"+class\": \"%s\",\n", clazz.getName()));
       while (clazz != Object.class) {
         for (Field field : clazz.getDeclaredFields()) {
-          if (Modifier.isFinal(field.getModifiers()))
+          if (Modifier.isStatic(field.getModifiers()))
             continue;
           field.setAccessible(true);
           Object v = field.get(obj);

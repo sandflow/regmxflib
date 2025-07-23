@@ -207,7 +207,7 @@ public class KLVOutputStream extends CountingOutputStream {
     this.write((byte) (v & 0xFF));
   }
 
-  public void writeByte(int v) throws IOException {
+  public void writeByte(byte v) throws IOException {
     this.write(v);
   }
 
@@ -217,38 +217,38 @@ public class KLVOutputStream extends CountingOutputStream {
 
   public void writeInt(int v) throws IOException {
     if (byteorder == ByteOrder.BIG_ENDIAN) {
-      writeByte((short) ((v >> 24) & 0xFF));
-      writeByte((short) ((v >> 16) & 0xFF));
-      writeByte((short) ((v >> 8) & 0xFF));
-      writeByte((short) (v & 0xFF));
+      write(((v >> 24) & 0xFF));
+      write(((v >> 16) & 0xFF));
+      write(((v >> 8) & 0xFF));
+      write((v & 0xFF));
     } else {
-      writeByte((short) (v & 0xFF));
-      writeByte((short) ((v >> 8) & 0xFF));
-      writeByte((short) ((v >> 16) & 0xFF));
-      writeByte((short) ((v >> 24) & 0xFF));
+      write((v & 0xFF));
+      write(((v >> 8) & 0xFF));
+      write(((v >> 16) & 0xFF));
+      write(((v >> 24) & 0xFF));
     }
   }
 
   public void writeLong(long v) throws IOException {
     if (byteorder == ByteOrder.BIG_ENDIAN) {
-      writeByte((short) ((v >> 56) & 0xFF));
-      writeByte((short) ((v >> 48) & 0xFF));
-      writeByte((short) ((v >> 40) & 0xFF));
-      writeByte((short) ((v >> 32) & 0xFF));
-      writeByte((short) ((v >> 24) & 0xFF));
-      writeByte((short) ((v >> 16) & 0xFF));
-      writeByte((short) ((v >> 8) & 0xFF));
-      writeByte((short) (v & 0xFF));
+      write((int) ((v >> 56) & 0xFF));
+      write((int) ((v >> 48) & 0xFF));
+      write((int) ((v >> 40) & 0xFF));
+      write((int) ((v >> 32) & 0xFF));
+      write((int) ((v >> 24) & 0xFF));
+      write((int) ((v >> 16) & 0xFF));
+      write((int) ((v >> 8) & 0xFF));
+      write((int) (v & 0xFF));
 
     } else {
-      writeByte((short) (v & 0xFF));
-      writeByte((short) ((v >> 8) & 0xFF));
-      writeByte((short) ((v >> 16) & 0xFF));
-      writeByte((short) ((v >> 24) & 0xFF));
-      writeByte((short) ((v >> 32) & 0xFF));
-      writeByte((short) ((v >> 40) & 0xFF));
-      writeByte((short) ((v >> 48) & 0xFF));
-      writeByte((short) ((v >> 56) & 0xFF));
+      write((int) (v & 0xFF));
+      write((int) ((v >> 8) & 0xFF));
+      write((int) ((v >> 16) & 0xFF));
+      write((int) ((v >> 24) & 0xFF));
+      write((int) ((v >> 32) & 0xFF));
+      write((int) ((v >> 40) & 0xFF));
+      write((int) ((v >> 48) & 0xFF));
+      write((int) ((v >> 56) & 0xFF));
     }
   }
 
@@ -258,11 +258,11 @@ public class KLVOutputStream extends CountingOutputStream {
 
   public void writeShort(int v) throws IOException {
     if (byteorder == ByteOrder.BIG_ENDIAN) {
-      this.writeByte((v >> 8) & 0xFF);
-      this.writeByte(v & 0xFF);
+      this.write((v >> 8) & 0xFF);
+      this.write(v & 0xFF);
     } else {
-      this.writeByte(v & 0xFF);
-      this.writeByte((v >> 8) & 0xFF);
+      this.write(v & 0xFF);
+      this.write((v >> 8) & 0xFF);
     }
   }
 

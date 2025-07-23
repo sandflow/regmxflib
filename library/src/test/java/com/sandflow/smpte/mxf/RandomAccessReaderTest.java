@@ -50,7 +50,7 @@ class RandomAccessReaderTest {
     FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
 
     RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
-    ECTracks tracks = new ECTracks(fi.getPreface());
+    GCEssenceTracks tracks = new GCEssenceTracks(fi.getPreface());
     assertEquals(1, tracks.getTrackCount());
     RGBADescriptor d = (RGBADescriptor) tracks.getTrackInfo(0).descriptor();
     assertEquals(640L, d.StoredWidth);
@@ -70,7 +70,7 @@ class RandomAccessReaderTest {
     FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
 
     RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
-    ECTracks tracks = new ECTracks(fi.getPreface());
+    GCEssenceTracks tracks = new GCEssenceTracks(fi.getPreface());
     assertEquals(1, tracks.getTrackCount());
     assertEquals(48000, fi.getEUCount());
 
@@ -89,7 +89,7 @@ class RandomAccessReaderTest {
     FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
 
     RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
-    ECTracks tracks = new ECTracks(fi.getPreface());
+    GCEssenceTracks tracks = new GCEssenceTracks(fi.getPreface());
     assertEquals(1, tracks.getTrackCount());
     assertEquals(2, fi.getEUCount());
 

@@ -43,9 +43,8 @@ import com.sandflow.smpte.mxf.types.Preface;
 import com.sandflow.smpte.mxf.types.SourcePackage;
 import com.sandflow.smpte.mxf.types.Track;
 import com.sandflow.smpte.util.AUID;
-import com.sandflow.smpte.util.UL;
 
-public class ECTracks {
+public class GCEssenceTracks {
 
   /**
    * Represents information associated with an Essence Track.
@@ -62,7 +61,7 @@ public class ECTracks {
 
   private final List<TrackInfo> tracks = new ArrayList<>();
 
-  public ECTracks(Preface preface) {
+  public GCEssenceTracks(Preface preface) {
     /* collect tracks that are stored in essence containers */
     for (EssenceData ed : preface.ContentStorageObject.EssenceDataObjects) {
 
