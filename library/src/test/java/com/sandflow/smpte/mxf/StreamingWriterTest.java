@@ -135,7 +135,8 @@ class StreamingWriterTest {
         trackID,
         essenceKey,
         d,
-        Labels.SoundEssenceTrack);
+        Labels.SoundEssenceTrack,
+        null);
 
     OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
         Collections.singletonList(ti),
@@ -243,7 +244,8 @@ class StreamingWriterTest {
         trackID,
         EssenceKeys.IMF_IABEssenceClipWrappedElement.asUL(),
         d,
-        Labels.SoundEssenceTrack);
+        Labels.SoundEssenceTrack,
+        null);
 
     OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
         Collections.singletonList(ti),
@@ -485,7 +487,8 @@ class StreamingWriterTest {
         trackID,
         EssenceKeys.FrameWrappedJPEG2000PictureElement.asUL(),
         d,
-        Labels.PictureEssenceTrack);
+        Labels.PictureEssenceTrack,
+        null);
 
     OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
         Collections.singletonList(ti),
@@ -589,7 +592,8 @@ class StreamingWriterTest {
         trackID,
         EssenceKeys.FrameWrappedJPEG2000PictureElement.asUL(),
         d,
-        Labels.PictureEssenceTrack);
+        Labels.PictureEssenceTrack,
+        null);
 
     OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
         Collections.singletonList(ti),

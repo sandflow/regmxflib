@@ -63,7 +63,7 @@ public class OP1aHelper {
 
   public record TrackInfo(byte trackId, UL essenceKey,
       FileDescriptor descriptor,
-      AUID dataDefinition) {
+      AUID dataDefinition, String trackName) {
   }
 
   public record EssenceContainerInfo(
@@ -120,12 +120,12 @@ public class OP1aHelper {
 
       sp.PackageTracks.add(PackageHelper.makeTimelineTrack(ecInfo.editRate(), -1L, UMID.NULL_UMID,
           (long) MXFFiles.getTrackNumber(elementKey), null, (long) trackId,
-          ecInfo.tracks().get(i).dataDefinition()));
+          ecInfo.tracks().get(i).dataDefinition(), ecInfo.tracks().get(i).trackName));
 
       mp.PackageTracks
           .add(PackageHelper.makeTimelineTrack(ecInfo.editRate(), null, sp.PackageID, null, (long) trackId,
               (long) trackId,
-              ecInfo.tracks().get(i).dataDefinition()));
+              ecInfo.tracks().get(i).dataDefinition(), ecInfo.tracks().get(i).trackName));
     }
 
     List<FileDescriptor> fds = ecInfo.tracks().stream().map(e -> e.descriptor()).filter(e -> e != null).toList();

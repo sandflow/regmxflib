@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 /**
  * Represent a SMPTE Universal Label (SMPTE ST 298)
  */
-public class UL {
+public class UL implements Cloneable {
 
     public final static int SIZE = 16;
     private final static Pattern URN_PATTERN = Pattern.compile("urn:smpte:ul:[a-fA-F0-9]{8}\\.[a-fA-F0-9]{8}\\.[a-fA-F0-9]{8}\\.[a-fA-F0-9]{8}");
@@ -331,6 +331,10 @@ public class UL {
      */
     public boolean isClass13() {
         return getValueOctet(8) == 13;
+    }
+
+    public UL clone() {
+        return new UL(this.getValue());
     }
 
 }

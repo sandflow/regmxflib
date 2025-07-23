@@ -30,23 +30,18 @@
 
 package com.sandflow.smpte.mxf;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
 import com.sandflow.smpte.mxf.helpers.OP1aHelper;
+import com.sandflow.smpte.mxf.types.PHDRMetadataTrackSubDescriptor;
 import com.sandflow.smpte.mxf.types.PictureDescriptor;
-import com.sandflow.smpte.mxf.types.RGBADescriptor;
-import com.sandflow.smpte.tools.RegMXFDump;
 import com.sandflow.smpte.util.UL;
 
 public class ReadWriteTest {
@@ -66,7 +61,7 @@ public class ReadWriteTest {
 
     StreamingReader inReader = new StreamingReader(is, null);
 
-    /* find the Picture Essence Descriptor */
+    /* find the Picture Essence Descriptor and PHDR subdescriptor */
 
     GCEssenceTracks inTracks = new GCEssenceTracks(inInfo.getPreface());
 
@@ -77,25 +72,36 @@ public class ReadWriteTest {
       }
     }
 
+    PHDRMetadataTrackSubDescriptor phdrSD = (PHDRMetadataTrackSubDescriptor) d.SubDescriptors.stream()
+        .filter(e -> e instanceof PHDRMetadataTrackSubDescriptor)
+        .findFirst()
+        .orElse(null);
+
     /* create header metadata */
+
+    final long PHDR_METADATA_SID = phdrSD.SimplePayloadSID;
+    final long IMG_BODY_SID = PHDR_METADATA_SID + 1;
+    final long IMG_INDEX_SID = IMG_BODY_SID + 1;
 
     final byte IMG_TRACKID = 1;
     final byte PHDR_TRACKID = 3;
 
-    OP1aHelper.TrackInfo phdrTrackInfo = new OP1aHelper.TrackInfo(
+    OP1aHelper.TrackInfo phdrMetadataTrackInfo = new OP1aHelper.TrackInfo(
         PHDR_TRACKID,
         EssenceKeys.PHDRImageMetadataItem.asUL(),
         null,
-        Labels.DataEssenceTrack);
+        Labels.DataEssenceTrack,
+        "PHDR Metadata Track");
 
-    OP1aHelper.TrackInfo imageTrackInfo = new OP1aHelper.TrackInfo(
+    OP1aHelper.TrackInfo phdrImageTrackInfo = new OP1aHelper.TrackInfo(
         IMG_TRACKID,
         EssenceKeys.FrameWrappedJPEG2000PictureElement.asUL(),
         d,
-        Labels.PictureEssenceTrack);
+        Labels.PictureEssenceTrack,
+        "PHDR Image Track");
 
     OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
-        List.of(phdrTrackInfo, imageTrackInfo),
+        List.of(phdrMetadataTrackInfo, phdrImageTrackInfo),
         null,
         d.SampleRate);
 
@@ -103,6 +109,12 @@ public class ReadWriteTest {
 
     UL imgElementKey = outHeader.getElementKey(IMG_TRACKID);
     UL phdrElementKey = outHeader.getElementKey(PHDR_TRACKID);
+    UL phdrMetadataKey = GenericStreamDataElementKey.make(
+        GenericStreamDataElementKey.KLVType.WRAPPED,
+        GenericStreamDataElementKey.ByteOrder.LITTLE_ENDIAN,
+        GenericStreamDataElementKey.AccessUnitWrapping.NO,
+        GenericStreamDataElementKey.MultiKLVWrapping.NO,
+        GenericStreamDataElementKey.EssenceSync.OTHER);
 
     /* create output file */
 
@@ -110,14 +122,18 @@ public class ReadWriteTest {
 
     StreamingWriter outWriter = new StreamingWriter(os, outHeader.getPreface());
 
-    var gc = outWriter.addVBEFrameWrappedGC(1, 2);
+    var gc = outWriter.addVBEFrameWrappedGC(IMG_BODY_SID, IMG_INDEX_SID);
+    var gs = outWriter.addGenericStream(PHDR_METADATA_SID);
+
+    byte[] phdrMetadataPayload = null;
 
     outWriter.start();
     outWriter.startPartition(gc);
     while (true) {
       gc.nextContentPackage();
 
-      if (! inReader.nextElement()) break;
+      if (!inReader.nextElement())
+        break;
 
       UL elementKey = inReader.getElementKey().asUL();
 
@@ -126,14 +142,22 @@ public class ReadWriteTest {
       } else if (elementKey.equalsWithMask(EssenceKeys.FrameWrappedJPEG2000PictureElement, 0b1111_1111_1111_1010)) {
         gc.nextElement(imgElementKey, inReader.getElementLength());
       } else {
-        break;
+        phdrMetadataPayload = inReader.readNBytes((int) inReader.getElementLength());
       }
 
-      byte[] buffer = new byte[(int) inReader.getElementLength()];
-      inReader.read(buffer);
+      byte[] buffer = inReader.readNBytes((int) inReader.getElementLength());
       gc.write(buffer);
-
     }
+
+    /* write the PHDR metadata partition */
+    if (phdrMetadataPayload != null) {
+      outWriter.startPartition(gs);
+      gs.nextElement(phdrMetadataKey, phdrMetadataPayload.length);
+      gs.write(phdrMetadataPayload);
+    }
+
     outWriter.finish();
+
+    inReader.close();
   }
 }
