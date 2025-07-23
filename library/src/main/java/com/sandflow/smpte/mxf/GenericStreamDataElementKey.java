@@ -32,34 +32,62 @@ package com.sandflow.smpte.mxf;
 
 import com.sandflow.smpte.util.UL;
 
+/**
+ * Generic Stream Data Element Key as specified in SMPTE ST 410
+ */
 public class GenericStreamDataElementKey {
 
-  private static UL NODE = UL.fromURN("urn:smpte:ul:060e2b34.0401010a.0d010501.01000000");
+  /**
+   * Generic Stream Data Element Key Value from SMPTE ST 410, Table 3
+   */
+  private static UL DEFAULT_KEY = UL.fromURN("urn:smpte:ul:060e2b34.0101010c.0d010501.01000000");
 
+  /**
+   * Data Arrangement Byte 12 as specified in SMPTE ST 410
+   */
   private static int DATA_KEY_DATA_OCTET = 11;
+
+  /**
+   * Wrapping Signaling Byte 13 as specified in SMPTE ST 410
+   */
   private static int DATA_KEY_WRAPPING_OCTET = 12;
 
+  /**
+   * See "KLV Type" Feature as specified in SMPTE ST 410
+   */
   public enum KLVType {
     INTRINSIC,
     WRAPPED;
   }
 
+  /**
+   * See "Byte Order of Data" Feature as specified in SMPTE ST 410
+   */
   public enum ByteOrder {
     LITTLE_ENDIAN,
     BIG_ENDIAN,
     UNKNOWN;
   }
 
+  /**
+   * See "Data Wrapped by Access Unit" Feature as specified in SMPTE ST 410
+   */
   public enum AccessUnitWrapping {
     YES,
     NO;
   }
 
+  /**
+   * See "Multi-KLV" Feature as specified in SMPTE ST 410
+   */
   public enum MultiKLVWrapping {
     YES,
     NO;
   }
 
+  /**
+   * See "Wrapping Synchronized to Essence" Feature as specified in SMPTE ST 410
+   */
   public enum EssenceSync {
     FRAME,
     OTHER;
@@ -67,7 +95,7 @@ public class GenericStreamDataElementKey {
 
   public static UL make(KLVType type, ByteOrder bo, AccessUnitWrapping au, MultiKLVWrapping multi,
       EssenceSync es) {
-    byte[] octets = NODE.getValue().clone();
+    byte[] octets = DEFAULT_KEY.getValue().clone();
 
     byte dataOctet = 0x01;
 

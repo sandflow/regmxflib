@@ -107,11 +107,11 @@ public class ReadWriteTest {
 
     OP1aHelper outHeader = new OP1aHelper(eci);
 
-    UL imgElementKey = outHeader.getElementKey(IMG_TRACKID);
-    UL phdrElementKey = outHeader.getElementKey(PHDR_TRACKID);
-    UL phdrMetadataKey = GenericStreamDataElementKey.make(
+    UL phdrImageElementKey = outHeader.getElementKey(IMG_TRACKID);
+    UL phdrMetadataElementKey = outHeader.getElementKey(PHDR_TRACKID);
+    UL phdrGSElementKey = GenericStreamDataElementKey.make(
         GenericStreamDataElementKey.KLVType.WRAPPED,
-        GenericStreamDataElementKey.ByteOrder.LITTLE_ENDIAN,
+        GenericStreamDataElementKey.ByteOrder.BIG_ENDIAN,
         GenericStreamDataElementKey.AccessUnitWrapping.NO,
         GenericStreamDataElementKey.MultiKLVWrapping.NO,
         GenericStreamDataElementKey.EssenceSync.OTHER);
@@ -138,11 +138,13 @@ public class ReadWriteTest {
       UL elementKey = inReader.getElementKey().asUL();
 
       if (elementKey.equalsWithMask(EssenceKeys.PHDRImageMetadataItem, 0b1111_1111_1111_1010)) {
-        gc.nextElement(phdrElementKey, inReader.getElementLength());
+        gc.nextElement(phdrMetadataElementKey, inReader.getElementLength());
       } else if (elementKey.equalsWithMask(EssenceKeys.FrameWrappedJPEG2000PictureElement, 0b1111_1111_1111_1010)) {
-        gc.nextElement(imgElementKey, inReader.getElementLength());
-      } else {
+        gc.nextElement(phdrImageElementKey, inReader.getElementLength());
+      } else if (phdrGSElementKey.equalsIgnoreVersion(elementKey)) {
         phdrMetadataPayload = inReader.readNBytes((int) inReader.getElementLength());
+      } else {
+        throw new RuntimeException();
       }
 
       byte[] buffer = inReader.readNBytes((int) inReader.getElementLength());
@@ -152,7 +154,7 @@ public class ReadWriteTest {
     /* write the PHDR metadata partition */
     if (phdrMetadataPayload != null) {
       outWriter.startPartition(gs);
-      gs.nextElement(phdrMetadataKey, phdrMetadataPayload.length);
+      gs.nextElement(phdrGSElementKey, phdrMetadataPayload.length);
       gs.write(phdrMetadataPayload);
     }
 
