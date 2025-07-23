@@ -413,6 +413,110 @@ class StreamingWriterTest {
    */
 
   @Test
+  void testPHDR() throws Exception {
+
+    final int frameCount = 24;
+    final Fraction sampleRate = Fraction.of(24);
+    final Fraction editRate = Fraction.of(24);
+    final byte trackID = 1;
+
+    /* read J2C frame */
+
+    InputStream is = ClassLoader.getSystemResourceAsStream("j2c-frames/counter-00006.j2c");
+    byte[] j2cFrame = is.readAllBytes();
+    is.close();
+
+    /* create descriptors */
+
+    RGBADescriptor d = new RGBADescriptor();
+    d.InstanceID = UUID.fromRandom();
+    d.SampleRate = sampleRate;
+    d.FrameLayout = LayoutType.FullFrame;
+    d.StoredWidth = 640L;
+    d.StoredHeight = 360L;
+    d.DisplayF2Offset = 0;
+    d.ImageAspectRatio = Fraction.of(640, 360);
+    d.TransferCharacteristic = Labels.TransferCharacteristic_ITU709.asUL();
+    d.PictureCompression = Labels.JPEG2000BroadcastContributionSingleTileProfileLevel5;
+    d.ColorPrimaries = Labels.ColorPrimaries_ITU709.asUL();
+    d.VideoLineMap = new Int32Array();
+    d.VideoLineMap.add(0);
+    d.VideoLineMap.add(0);
+    d.ComponentMaxRef = 65535L;
+    d.ComponentMinRef = 0L;
+    d.ScanningDirection = ScanningDirectionType.ScanningDirection_LeftToRightTopToBottom;
+    d.PixelLayout = new RGBALayout();
+    d.PixelLayout.add(new RGBAComponent(RGBAComponentKind.CompRed, (short) 16));
+    d.PixelLayout.add(new RGBAComponent(RGBAComponentKind.CompGreen, (short) 16));
+    d.PixelLayout.add(new RGBAComponent(RGBAComponentKind.CompBlue, (short) 16));
+    d.PixelLayout.add(new RGBAComponent(RGBAComponentKind.CompNull, (short) 0));
+    d.PixelLayout.add(new RGBAComponent(RGBAComponentKind.CompNull, (short) 0));
+    d.PixelLayout.add(new RGBAComponent(RGBAComponentKind.CompNull, (short) 0));
+    d.PixelLayout.add(new RGBAComponent(RGBAComponentKind.CompNull, (short) 0));
+    d.PixelLayout.add(new RGBAComponent(RGBAComponentKind.CompNull, (short) 0));
+    d.SubDescriptors = new SubDescriptorStrongReferenceVector();
+    d.ContainerFormat = Labels.MXFGCP1FrameWrappedPictureElement;
+
+    JPEG2000SubDescriptor sd = new JPEG2000SubDescriptor();
+    sd.InstanceID = UUID.fromRandom();
+    sd.Rsiz = 1798;
+    sd.Xsiz = 640L;
+    sd.Ysiz = 360L;
+    sd.XOsiz = 0L;
+    sd.YOsiz = 0L;
+    sd.XTsiz = 640L;
+    sd.YTsiz = 360L;
+    sd.XTOsiz = 0L;
+    sd.YTOsiz = 0L;
+    sd.Csiz = 3;
+    sd.PictureComponentSizing = new J2KComponentSizingArray();
+    sd.PictureComponentSizing.add(new J2KComponentSizing((short) 15, (short) 1, (short) 1));
+    sd.PictureComponentSizing.add(new J2KComponentSizing((short) 15, (short) 1, (short) 1));
+    sd.PictureComponentSizing.add(new J2KComponentSizing((short) 15, (short) 1, (short) 1));
+    sd.CodingStyleDefault = HexFormat.of().parseHex("01040001010503030001778888888888");
+    sd.QuantizationDefault = HexFormat.of().parseHex("20909898a09898a09898a0989898909098");
+    sd.J2CLayout = d.PixelLayout;
+
+    d.SubDescriptors.add(sd);
+
+    /* create header metadata */
+
+    OP1aHelper.TrackInfo ti = new OP1aHelper.TrackInfo(
+        trackID,
+        EssenceKeys.FrameWrappedJPEG2000PictureElement.asUL(),
+        d,
+        Labels.PictureEssenceTrack);
+
+    OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
+        Collections.singletonList(ti),
+        null,
+        editRate);
+
+    OP1aHelper header = new OP1aHelper(eci);
+
+    UL j2kElementKey = header.getElementKey(trackID);
+
+    /* start writing file */
+
+    OutputStream os = new FileOutputStream("target/test-output/test-vbeframe.j2k.mxf");
+
+    StreamingWriter sw = new StreamingWriter(os, header.getPreface());
+
+    var cw = sw.addVBEFrameWrappedGC(1, 2);
+    sw.start();
+    for (int i = 0; i < frameCount; i++) {
+      if (i % 4 == 0) {
+        sw.startPartition(cw);
+      }
+      cw.nextContentPackage();
+      cw.nextElement(j2kElementKey, j2cFrame.length);
+      cw.write(j2cFrame);
+    }
+    sw.finish();
+
+  }
+
+  @Test
   void testVBE() throws Exception {
 
     final int frameCount = 24;
