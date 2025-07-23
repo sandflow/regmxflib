@@ -102,8 +102,12 @@ public class StreamingWriter2 {
 
     abstract byte[] drainIndexSegments() throws IOException;
 
-    long getECOffset() {
+    long getPosition() {
       return this.ecOffset;
+    }
+
+    void setPosition(long p) {
+      this.ecOffset = p;
     }
 
     abstract long getDuration();
@@ -315,7 +319,7 @@ public class StreamingWriter2 {
     }
 
     public void nextContentPackage() {
-      cpPositions.add(this.getECOffset());
+      cpPositions.add(this.getPosition());
       duration++;
     }
 
@@ -327,12 +331,12 @@ public class StreamingWriter2 {
       }
 
       MXFOutputStream mos = new MXFOutputStream(StreamingWriter2.this.fos);
-
       mos.writeUL(elementKey);
       mos.writeBERLength(elementSize);
-      this.setBytesToWrite(elementSize);
-
+      this.setPosition(this.getPosition() + mos.getWrittenCount());
       mos.close();
+
+      this.setBytesToWrite(elementSize);
     }
 
     @Override
@@ -350,11 +354,11 @@ public class StreamingWriter2 {
       its.InstanceID = UUID.fromRandom();
       its.IndexEditRate = StreamingWriter2.this.getECEditRate(this.getBodySID());
       its.IndexStartPosition = cpFirstEditUnit;
-      its.IndexDuration = this.getDuration();
+      its.IndexDuration = (long) this.cpPositions.size();
       its.IndexStreamID = this.getIndexSID();
       its.EssenceStreamID = this.getBodySID();
       its.EditUnitByteCount = 0L;
-      its.VBEByteCount = this.getECOffset() - this.cpPositions.get(this.cpPositions.size() - 1);
+      its.VBEByteCount = this.getPosition() - this.cpPositions.get(this.cpPositions.size() - 1);
 
       its.IndexEntryArray = new IndexEntryArray();
       for (var position : this.cpPositions) {
@@ -531,7 +535,7 @@ public class StreamingWriter2 {
     this.closeCurrentPartition();
 
     /* start a new partition */
-    startPartition(cw.getBodySID(), 0, 0, 0, cw.getECOffset(), PartitionPack.Kind.BODY,
+    startPartition(cw.getBodySID(), 0, 0, 0, cw.getPosition(), PartitionPack.Kind.BODY,
         PartitionPack.Status.CLOSED_COMPLETE);
 
     this.currentContainer = cw;
@@ -825,7 +829,7 @@ public class StreamingWriter2 {
         this.currentContainer.getIndexSID(),
         0L,
         (long) itsBytes.length,
-        this.currentContainer.getECOffset(),
+        this.currentContainer.getPosition(),
         PartitionPack.Kind.BODY,
         PartitionPack.Status.CLOSED_COMPLETE);
     fos.write(itsBytes);
