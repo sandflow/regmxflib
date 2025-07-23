@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.numbers.fraction.Fraction;
 
 import com.sandflow.smpte.klv.LocalTagRegister;
@@ -48,6 +49,8 @@ import com.sandflow.smpte.klv.LocalTagResolver;
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
+import com.sandflow.smpte.mxf.PartitionPack.Kind;
+import com.sandflow.smpte.mxf.PartitionPack.Status;
 import com.sandflow.smpte.mxf.RandomIndexPack.PartitionOffset;
 import com.sandflow.smpte.mxf.helpers.IndexSegmentHelper;
 import com.sandflow.smpte.mxf.types.EssenceData;
@@ -111,6 +114,10 @@ public class StreamingWriter {
     }
 
     abstract long getDuration();
+
+    abstract PartitionPack.Kind getPartitionKind();
+
+    abstract PartitionPack.Status getPartitionStatus();
 
     @Override
     public void write(int b) throws IOException {
@@ -210,6 +217,53 @@ public class StreamingWriter {
       return IndexSegmentHelper.toBytes(its);
     }
 
+    @Override
+    PartitionPack.Kind getPartitionKind() {
+      return PartitionPack.Kind.BODY;
+    }
+
+    @Override
+    PartitionPack.Status getPartitionStatus() {
+      return PartitionPack.Status.CLOSED_COMPLETE;
+    }
+
+  }
+
+  class GSWriter extends ContainerWriter {
+
+    public GSWriter(long bodySID) {
+      super(bodySID, 0);
+    }
+
+    public void nextElement(UL elementKey, long elementLength) throws IOException {
+      if (!this.isActive()) {
+        throw new RuntimeException();
+      }
+      StreamingWriter.this.fos.writeUL(elementKey);
+      StreamingWriter.this.fos.writeBERLength(elementLength);
+      this.setBytesToWrite(elementLength);
+    }
+
+    @Override
+    long getDuration() {
+      throw new NotImplementedException();
+    }
+
+    @Override
+    byte[] drainIndexSegments() throws IOException {
+      return null;
+    }
+
+    @Override
+    PartitionPack.Kind getPartitionKind() {
+      return PartitionPack.Kind.BODY;
+    }
+
+    @Override
+    PartitionPack.Status getPartitionStatus() {
+      return PartitionPack.Status.STREAM;
+    }
+
   }
 
   public class GCClipVBEWriter extends ContainerWriter {
@@ -291,6 +345,16 @@ public class StreamingWriter {
       }
 
       return IndexSegmentHelper.toBytes(its);
+    }
+
+    @Override
+    PartitionPack.Kind getPartitionKind() {
+      return PartitionPack.Kind.BODY;
+    }
+
+    @Override
+    PartitionPack.Status getPartitionStatus() {
+      return PartitionPack.Status.CLOSED_COMPLETE;
     }
 
   }
@@ -376,6 +440,16 @@ public class StreamingWriter {
       this.cpPositions.clear();
 
       return IndexSegmentHelper.toBytes(its);
+    }
+
+    @Override
+    PartitionPack.Kind getPartitionKind() {
+      return PartitionPack.Kind.BODY;
+    }
+
+    @Override
+    PartitionPack.Status getPartitionStatus() {
+      return PartitionPack.Status.CLOSED_COMPLETE;
     }
 
   }
@@ -535,8 +609,8 @@ public class StreamingWriter {
     this.closeCurrentPartition();
 
     /* start a new partition */
-    startPartition(cw.getBodySID(), 0, 0, 0, cw.getPosition(), PartitionPack.Kind.BODY,
-        PartitionPack.Status.CLOSED_COMPLETE);
+    startPartition(cw.getBodySID(), 0, 0, 0, cw.getPosition(), cw.getPartitionKind(),
+        cw.getPartitionStatus());
 
     this.currentContainer = cw;
   }
@@ -560,8 +634,6 @@ public class StreamingWriter {
   /**
    * creates a clip-wrapped essence container with constant size units
    * 
-   * @param unitCount Number of units in the essence container
-   * @param unitSize  Size in bytes of each element
    */
   public GCClipCBEWriter addCBEClipWrappedGC(long bodySID, long indexSID)
       throws IOException, KLVException {
@@ -590,8 +662,6 @@ public class StreamingWriter {
   /**
    * creates a clip-wrapped essence container with variable size access units
    * 
-   * @param unitCount Number of units in the essence container
-   * @param unitSize  Size in bytes of each element
    */
   public GCClipVBEWriter addVBEClipWrappedGC(long bodySID, long indexSID)
       throws IOException, KLVException {
@@ -620,8 +690,6 @@ public class StreamingWriter {
   /**
    * creates a framed-wrapped essence container with variable size access units
    * 
-   * @param unitCount Number of units in the essence container
-   * @param unitSize  Size in bytes of each element
    */
   public GCFrameVBEWriter addVBEFrameWrappedGC(long bodySID, long indexSID)
       throws IOException, KLVException {
@@ -641,6 +709,27 @@ public class StreamingWriter {
     this.sids.add(indexSID);
 
     GCFrameVBEWriter w = new GCFrameVBEWriter(bodySID, indexSID);
+
+    this.ecs.put(bodySID, w);
+
+    return w;
+  }
+
+  /**
+   * creates a generic stream container
+   * 
+   */
+  public GSWriter addGenericStream(long bodySID)
+      throws IOException, KLVException {
+    /* TODO: check for valid SIDs */
+
+    if (this.sids.contains(bodySID)) {
+      throw new RuntimeException();
+    }
+
+    this.sids.add(bodySID);
+
+    GSWriter w = new GSWriter(bodySID);
 
     this.ecs.put(bodySID, w);
 

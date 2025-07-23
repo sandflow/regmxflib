@@ -33,6 +33,7 @@ package com.sandflow.smpte.mxf.helpers;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.numbers.fraction.Fraction;
@@ -62,7 +63,7 @@ public class OP1aHelper {
 
   public record TrackInfo(byte trackId, UL essenceKey,
       FileDescriptor descriptor,
-      AUID dataDefinition) {
+      AUID dataDefinition, String trackName) {
   }
 
   public record EssenceContainerInfo(
@@ -105,8 +106,13 @@ public class OP1aHelper {
       }
 
       FileDescriptor d = ecInfo.tracks().get(i).descriptor();
-      d.EssenceLength = 0L;
-      d.LinkedTrackID = ecInfo.tracks().size() > 1 ? (long) trackId : null;
+      /**
+       * EXCEPTION: some MXF files do not have one essence descriptor per track
+       */
+      if (d != null) {
+        d.EssenceLength = 0L;
+        d.LinkedTrackID = ecInfo.tracks().size() > 1 ? (long) trackId : null;
+      }
 
       UL elementKey = MXFFiles.makeEssenceElementKey(ecInfo.tracks().get(i).essenceKey(), trackCount, (byte) trackId);
 
@@ -114,16 +120,18 @@ public class OP1aHelper {
 
       sp.PackageTracks.add(PackageHelper.makeTimelineTrack(ecInfo.editRate(), -1L, UMID.NULL_UMID,
           (long) MXFFiles.getTrackNumber(elementKey), null, (long) trackId,
-          ecInfo.tracks().get(i).dataDefinition()));
+          ecInfo.tracks().get(i).dataDefinition(), ecInfo.tracks().get(i).trackName));
 
       mp.PackageTracks
           .add(PackageHelper.makeTimelineTrack(ecInfo.editRate(), null, sp.PackageID, null, (long) trackId,
               (long) trackId,
-              ecInfo.tracks().get(i).dataDefinition()));
+              ecInfo.tracks().get(i).dataDefinition(), ecInfo.tracks().get(i).trackName));
     }
 
-    if (trackCount == 1) {
-      sp.EssenceDescription = ecInfo.tracks().get(0).descriptor();
+    List<FileDescriptor> fds = ecInfo.tracks().stream().map(e -> e.descriptor()).filter(e -> e != null).toList();
+
+    if (fds.size() == 1) {
+      sp.EssenceDescription = fds.get(0);
     } else {
       MultipleDescriptor md = new MultipleDescriptor();
       md.InstanceID = UUID.fromRandom();
@@ -131,7 +139,7 @@ public class OP1aHelper {
       md.SampleRate = ecInfo.editRate();
       md.ContainerFormat = Labels.MXFGCGenericEssenceMultipleMappings;
       md.FileDescriptors = new FileDescriptorStrongReferenceVector();
-      md.FileDescriptors.addAll(ecInfo.tracks().stream().map(e -> e.descriptor()).toList());
+      md.FileDescriptors.addAll(fds);
       sp.EssenceDescription = md;
     }
 
@@ -155,9 +163,14 @@ public class OP1aHelper {
     /* EssenceContainers */
     var ecs = new AUIDSet();
     for (TrackInfo info : ecInfo.tracks()) {
-      AUID ecLabel = info.descriptor().ContainerFormat;
-      if (!ecs.contains(ecLabel)) {
-        ecs.add(ecLabel);
+      /**
+       * EXCEPTION: some descriptor can be null
+       */
+      if (info.descriptor() != null) {
+        AUID ecLabel = info.descriptor().ContainerFormat;
+        if (ecLabel != null && !ecs.contains(ecLabel)) {
+          ecs.add(ecLabel);
+        }
       }
     }
 

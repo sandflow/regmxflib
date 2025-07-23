@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PackingList xmlns="http://www.smpte-ra.org/schemas/2067-2/2016/PKL">
+  <Id>urn:uuid:46eafe52-a3fb-4bb2-a6f8-13840f84db2a</Id>
+  <AnnotationText>regMXFtestmaterial</AnnotationText>
+  <IssueDate>2025-07-15T15:23:50</IssueDate>
+  <Issuer>Blackmagic Design</Issuer>
+  <Creator>Blackmagic Design DaVinci Resolve Studio 20.0.1.0006</Creator>
+  <AssetList>
+    <Asset>
+      <Id>urn:uuid:f031aa43-88c8-4de9-856f-904a33a78505</Id>
+      <AnnotationText>VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.mxf</AnnotationText>
+      <Hash>YI0hQdiRkJcuV+IQkHrEHmdYi8k=</Hash>
+      <Size>12818559</Size>
+      <Type>application/mxf</Type>
+      <OriginalFileName>VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.mxf</OriginalFileName>
+      <HashAlgorithm Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+    </Asset>
+    <Asset>
+      <Id>urn:uuid:dd3fabc6-4794-4bae-95ee-6bc2405716a6</Id>
+      <AnnotationText>IAB_dd3fabc6-4794-4bae-95ee-6bc2405716a6.mxf</AnnotationText>
+      <Hash>GBxLyIj01NGyfC3PtA1zz4jUQiE=</Hash>
+      <Size>1629507</Size>
+      <Type>application/mxf</Type>
+      <OriginalFileName>IAB_dd3fabc6-4794-4bae-95ee-6bc2405716a6.mxf</OriginalFileName>
+      <HashAlgorithm Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+    </Asset>
+    <Asset>
+      <Id>urn:uuid:807d0b4c-69ec-44b0-be74-dfbf1a8c99d3</Id>
+      <AnnotationText>AUDIO_807d0b4c-69ec-44b0-be74-dfbf1a8c99d3.mxf</AnnotationText>
+      <Hash>JhMUwqA0b4PXlf2Mf9vYgCugujg=</Hash>
+      <Size>1131688</Size>
+      <Type>application/mxf</Type>
+      <OriginalFileName>AUDIO_807d0b4c-69ec-44b0-be74-dfbf1a8c99d3.mxf</OriginalFileName>
+      <HashAlgorithm Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+    </Asset>
+    <Asset>
+      <Id>urn:uuid:dae1aac5-a019-4b82-b2cb-3d9306005c71</Id>
+      <AnnotationText>regMXFtestmaterial</AnnotationText>
+      <Hash>QBi9Y1n2W4lzk4S2tXWwVlUynpw=</Hash>
+      <Size>19331</Size>
+      <Type>text/xml</Type>
+      <OriginalFileName>CPL_dae1aac5-a019-4b82-b2cb-3d9306005c71.xml</OriginalFileName>
+      <HashAlgorithm Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+    </Asset>
+  </AssetList>
+</PackingList>

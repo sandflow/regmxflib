@@ -55,7 +55,7 @@ public class PackageHelper {
   }
 
   public static TimelineTrack makeTimelineTrack(Fraction editRate, Long duration,
-      UMID sourcePackageID, Long essenceTrackNum, Long sourceTrackID, Long trackID, AUID dataDefinition) {
+      UMID sourcePackageID, Long essenceTrackNum, Long sourceTrackID, Long trackID, AUID dataDefinition, String trackName) {
     var sc = new SourceClip();
     sc.InstanceID = UUID.fromRandom();
     sc.ComponentLength = duration;
@@ -79,6 +79,7 @@ public class PackageHelper {
     track.EssenceTrackNumber = essenceTrackNum != null ? essenceTrackNum : 0L;
     track.Origin = 0L;
     track.TrackSegment = seq;
+    track.TrackName = trackName;
 
     return track;
   }

@@ -32,6 +32,8 @@ package com.sandflow.smpte.tools;
 
 import java.io.EOFException;
 import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.logging.Logger;
@@ -64,7 +66,12 @@ public class RegMXFDump {
     long totalLength;
   }
 
+
   public static void main(String[] args) throws Exception {
+    dump(new FileInputStream(args[0]), System.out);
+  }
+
+  public static void dump(InputStream is, OutputStream os) throws Exception {
     EventHandler evthandler = new EventHandler() {
 
       @Override
@@ -88,14 +95,11 @@ public class RegMXFDump {
       }
     };
 
-    OutputStreamWriter osw = new OutputStreamWriter(System.out);
-    osw.write("[\n");
-
-    FileInputStream f = new FileInputStream(args[0]);
-
-    MXFInputStream mis = new MXFInputStream(f);
+    OutputStreamWriter osw = new OutputStreamWriter(os);
+    MXFInputStream mis = new MXFInputStream(is);
 
     try {
+      osw.write("[\n");
       while (true) {
         AUID elementKey = mis.readAUID();
         long elementLength = mis.readBERLength();
@@ -185,35 +189,27 @@ public class RegMXFDump {
         }
 
         /* read indexes */
-        if (pp.getIndexByteCount() > 0) {
-          Triplet t;
-          for (; (t = mis.readTriplet()) != null; mis.resetCount()) {
-            /* skip fill items, if any */
-            if (!FillItem.getKey().equalsIgnoreVersion(t.getKey())) {
-              break;
-            }
+        mis.resetCount();
+        while (mis.getReadCount() < pp.getIndexByteCount()) {
+          Triplet t = mis.readTriplet();
+
+          if (FillItem.getKey().equalsIgnoreVersion(t.getKey())) {
+            continue;
           }
 
-          while (true) {
-            IndexTableSegment its = IndexTableSegment.fromSet(
-                Set.fromLocalSet(t, StaticLocalTags.register()),
-                new MXFInputContext() {
-                  @Override
-                  public Set getSet(UUID uuid) {
-                    throw new UnsupportedOperationException("Unimplemented method 'getSet'");
-                  }
-                });
+          IndexTableSegment its = IndexTableSegment.fromSet(
+              Set.fromLocalSet(t, StaticLocalTags.register()),
+              new MXFInputContext() {
+                @Override
+                public Set getSet(UUID uuid) {
+                  throw new UnsupportedOperationException("Unimplemented method 'getSet'");
+                }
+              });
 
-            if (its != null) {
-              JSONSerializer.serialize(its, osw);
-              osw.write(",\n");
-              osw.flush();
-            }
-
-            if (mis.getReadCount() >= pp.getIndexByteCount())
-              break;
-
-            t = mis.readTriplet();
+          if (its != null) {
+            JSONSerializer.serialize(its, osw);
+            osw.write(",\n");
+            osw.flush();
           }
 
         }
