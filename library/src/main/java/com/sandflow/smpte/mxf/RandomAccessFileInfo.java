@@ -31,16 +31,20 @@
 package com.sandflow.smpte.mxf;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.commons.numbers.fraction.Fraction;
+
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.PartitionPack.Status;
+import com.sandflow.smpte.mxf.helpers.IndexSegmentHelper;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.mxf.types.Preface;
 import com.sandflow.smpte.util.RandomAccessInputSource;
@@ -48,6 +52,84 @@ import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.EventHandler;
 
 public class RandomAccessFileInfo implements HeaderInfo {
+
+  interface ECIndex {
+    long getECPosition(long editUnitIndex);
+
+    long length();
+  }
+
+  class VBEIndex implements ECIndex {
+    private ArrayList<Long> positions = new ArrayList<>();
+
+    protected void addECPosition(long ecPosition) {
+      this.positions.add(ecPosition);
+    }
+
+    @Override
+    public long getECPosition(long editUnit) {
+      if (editUnit >= this.positions.size()) {
+        throw new IllegalArgumentException();
+      }
+      return (long) this.positions.get((int) editUnit);
+    }
+
+    @Override
+    public long length() {
+      return this.positions.size();
+    }
+  }
+
+  class CBEClipIndex implements ECIndex {
+    private long cbeSize;
+    private long length;
+
+    CBEClipIndex(long cbeSize, long length) {
+      if (length <= 0) {
+        throw new IllegalArgumentException();
+      }
+
+      if (length <= 0) {
+        throw new IllegalArgumentException();
+      }
+      this.cbeSize = cbeSize;
+      this.length = length;
+    }
+
+    @Override
+    public long getECPosition(long editUnit) {
+      if (editUnit >= this.length) {
+        throw new IllegalArgumentException();
+      }
+      return this.cbeSize * editUnit;
+    }
+
+    @Override
+    public long length() {
+      return this.length;
+    }
+
+    public long getLength() {
+      return length;
+    }
+
+    public long getCbeSize() {
+      return cbeSize;
+    }
+
+    public byte[] toBytes(long ecSID, long indexSID, Fraction editRate) throws IOException {
+      var its = new IndexTableSegment();
+      its.InstanceID = UUID.fromRandom();
+      its.IndexEditRate = editRate;
+      its.IndexStartPosition = 0L;
+      its.IndexDuration = this.length;
+      its.IndexStreamID = indexSID;
+      its.EssenceStreamID = ecSID;
+      its.EditUnitByteCount = this.cbeSize;
+
+      return IndexSegmentHelper.toBytes(its);
+    }
+  }
 
   /**
    * Maps Essence Container offset to file offsets
@@ -306,6 +388,5 @@ public class RandomAccessFileInfo implements HeaderInfo {
     /* check for no index */
     return this.euToECPosition.length();
   }
-
 
 }

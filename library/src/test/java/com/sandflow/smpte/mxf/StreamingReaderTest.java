@@ -66,7 +66,7 @@ class StreamingReaderTest {
     assertNotNull(is);
 
     StreamingFileInfo info = new StreamingFileInfo(is, null);
-    ECTracks tracks = new ECTracks(info.getPreface());
+    GCEssenceTracks tracks = new GCEssenceTracks(info.getPreface());
     assertEquals(1, tracks.getTrackCount());
     RGBADescriptor d = (RGBADescriptor) tracks.getTrackInfo(0).descriptor();
     assertEquals(640L, d.StoredWidth);
@@ -85,7 +85,7 @@ class StreamingReaderTest {
     InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/audio.mxf");
 
     StreamingFileInfo info = new StreamingFileInfo(is, null);
-    ECTracks tracks = new ECTracks(info.getPreface());
+    GCEssenceTracks tracks = new GCEssenceTracks(info.getPreface());
     assertEquals(1, tracks.getTrackCount());
 
     StreamingReader sr = new StreamingReader(is, null);

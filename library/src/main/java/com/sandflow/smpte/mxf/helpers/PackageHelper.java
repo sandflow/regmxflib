@@ -54,13 +54,6 @@ public class PackageHelper {
     p.PackageTracks = new TrackStrongReferenceVector();
   }
 
-  public static void initSingleTrackPackage(Package p, Fraction editRate, Long duration,
-      UMID sourcePackageID, Long essenceTrackNum, Long sourceTrackID, AUID dataDefinition) {
-    PackageHelper.initPackage(p, null);
-    p.PackageTracks
-        .add(makeTimelineTrack(editRate, duration, sourcePackageID, essenceTrackNum, sourceTrackID, 1L, dataDefinition));
-  }
-
   public static TimelineTrack makeTimelineTrack(Fraction editRate, Long duration,
       UMID sourcePackageID, Long essenceTrackNum, Long sourceTrackID, Long trackID, AUID dataDefinition) {
     var sc = new SourceClip();

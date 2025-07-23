@@ -32,9 +32,7 @@ package com.sandflow.smpte.mxf.helpers;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.numbers.fraction.Fraction;
