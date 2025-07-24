@@ -129,10 +129,10 @@ public class MXFFiles {
     return -1;
   }
 
-  public static UL makeEssenceElementKey(UL essenceKey, byte elementCount, byte elementIndex) {
+  public static UL makeEssenceElementKey(UL essenceKey, byte elementCountInItem, byte elementIDInItem) {
     byte[] key = essenceKey.getValue().clone();
-    key[15] = elementIndex;
-    key[13] = elementCount;
+    key[15] = elementIDInItem;
+    key[13] = elementCountInItem;
     return new UL(key);
   }
 

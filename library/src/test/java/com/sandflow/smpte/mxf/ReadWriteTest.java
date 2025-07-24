@@ -116,6 +116,12 @@ public class ReadWriteTest {
         GenericStreamDataElementKey.MultiKLVWrapping.NO,
         GenericStreamDataElementKey.EssenceSync.OTHER);
 
+    /**
+     * EXCEPTION: Dolby requires the following label even though it is invalid
+     * (since there is more than one track) and it is not specified in RDD 56.
+     */
+    outHeader.getPreface().OperationalPattern = Labels.MXFOP1aSingleItemSinglePackageUniTrackStreamInternal;
+
     /* create output file */
 
     OutputStream os = new FileOutputStream("target/test-output/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.new.mxf");
@@ -130,7 +136,6 @@ public class ReadWriteTest {
     outWriter.start();
     outWriter.startPartition(gc);
     while (true) {
-      gc.nextContentPackage();
 
       if (!inReader.nextElement())
         break;
@@ -140,6 +145,8 @@ public class ReadWriteTest {
       if (elementKey.equalsWithMask(EssenceKeys.PHDRImageMetadataItem, 0b1111_1111_1111_1010)) {
         gc.nextElement(phdrMetadataElementKey, inReader.getElementLength());
       } else if (elementKey.equalsWithMask(EssenceKeys.FrameWrappedJPEG2000PictureElement, 0b1111_1111_1111_1010)) {
+        /* we index J2K elements */
+        gc.nextContentPackage();
         gc.nextElement(phdrImageElementKey, inReader.getElementLength());
       } else if (phdrGSElementKey.equalsIgnoreVersion(elementKey)) {
         phdrMetadataPayload = inReader.readNBytes((int) inReader.getElementLength());
@@ -162,4 +169,5 @@ public class ReadWriteTest {
 
     inReader.close();
   }
+
 }

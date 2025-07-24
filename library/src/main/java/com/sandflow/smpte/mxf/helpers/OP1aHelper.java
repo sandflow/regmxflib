@@ -99,6 +99,10 @@ public class OP1aHelper {
     var mp = new MaterialPackage();
     PackageHelper.initPackage(mp, "Material Package");
 
+    /* Create essence tracks */
+
+    Map<UL, Byte> itemCountByKey = new HashMap<>();
+
     for (byte i = 0; i < trackCount; i++) {
       byte trackId = ecInfo.tracks().get(i).trackId();
       if (trackId < 1 || trackIDToElementKeys.containsKey(trackId)) {
@@ -114,7 +118,10 @@ public class OP1aHelper {
         d.LinkedTrackID = ecInfo.tracks().size() > 1 ? (long) trackId : null;
       }
 
-      UL elementKey = MXFFiles.makeEssenceElementKey(ecInfo.tracks().get(i).essenceKey(), trackCount, (byte) trackId);
+      byte itemCount = (byte) (itemCountByKey.getOrDefault(ecInfo.tracks().get(i).essenceKey(), (byte) 0) + 1);
+      itemCountByKey.put(ecInfo.tracks().get(i).essenceKey(), itemCount);
+
+      UL elementKey = MXFFiles.makeEssenceElementKey(ecInfo.tracks().get(i).essenceKey(), itemCount, (byte) trackId);
 
       this.trackIDToElementKeys.put(trackId, elementKey);
 
