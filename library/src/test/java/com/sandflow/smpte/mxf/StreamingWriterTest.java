@@ -271,7 +271,7 @@ class StreamingWriterTest {
     sw.startPartition(gc);
     gc.nextClip(header.getElementKey(trackID), iaFrame.length * frameCount);
     for (int i = 0; i < frameCount; i++) {
-      gc.nextAccessUnit(iaFrame.length);
+      gc.nextAccessUnit();
       gc.write(iaFrame);
     }
 

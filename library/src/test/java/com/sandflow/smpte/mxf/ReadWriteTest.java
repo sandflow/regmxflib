@@ -34,10 +34,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
@@ -45,9 +48,11 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import com.sandflow.smpte.mxf.helpers.OP1aHelper;
+import com.sandflow.smpte.mxf.types.IABEssenceDescriptor;
 import com.sandflow.smpte.mxf.types.PHDRMetadataTrackSubDescriptor;
 import com.sandflow.smpte.mxf.types.PictureDescriptor;
 import com.sandflow.smpte.mxf.types.SoundDescriptor;
+import com.sandflow.smpte.util.FileRandomAccessInputSource;
 import com.sandflow.smpte.util.UL;
 
 public class ReadWriteTest {
@@ -254,5 +259,118 @@ public class ReadWriteTest {
     out.finish();
 
   }
+
+    @Test
+  void testIAB_dd3fabc6_4794_4bae_95ee_6bc2405716a6() throws Exception {
+
+    /* load the source file */
+    InputStream is = ClassLoader.getSystemResourceAsStream("imps/imp_1/IAB_dd3fabc6-4794-4bae-95ee-6bc2405716a6.mxf");
+    var sourceInfo = new StreamingFileInfo(is, null);
+    StreamingReader in = new StreamingReader(is, null);
+
+    /* get the audio descriptor */
+
+    GCEssenceTracks inTracks = new GCEssenceTracks(sourceInfo.getPreface());
+
+    assertEquals(1, inTracks.getTrackCount());
+    assertInstanceOf(IABEssenceDescriptor.class, inTracks.getTrackInfo(0).descriptor());
+    IABEssenceDescriptor d = (IABEssenceDescriptor) inTracks.getTrackInfo(0).descriptor();
+
+    /* create header metadata */
+
+    final long BODY_SID = 1;
+    final long INDEX_SID = BODY_SID + 1;
+
+    final byte IAB_TRACKID = 1;
+
+    OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
+        Collections.singletonList(
+            new OP1aHelper.TrackInfo(
+                IAB_TRACKID,
+                EssenceKeys.IMF_IABEssenceClipWrappedElement.asUL(),
+                d,
+                Labels.SoundEssenceTrack,
+                "IA Bitstream")),
+        java.util.Set.of(Labels.IMF_IABTrackFileLevel0),
+        d.SampleRate);
+
+    OP1aHelper outHeader = new OP1aHelper(eci);
+
+    UL elementKey = outHeader.getElementKey(IAB_TRACKID);
+
+    /* create output file */
+
+    OutputStream os = new FileOutputStream("target/test-output/IAB_dd3fabc6-4794-4bae-95ee-6bc2405716a6.new.mxf");
+
+    StreamingWriter out = new StreamingWriter(os, outHeader.getPreface());
+
+    /* start reading the clip from the source file */
+
+    assertTrue(in.nextElement());
+
+    /* confirm the element contains IAB essence */
+
+    assertTrue(
+        EssenceKeys.IMF_IABEssenceClipWrappedElement.asUL().equalsWithMask(in.getElementKey(), 0b1111_1110_1111_1010));
+
+    /* create a single clip wrapped generic container */
+
+    var gc = out.addVBEClipWrappedGC(BODY_SID, INDEX_SID);
+    out.start();
+    out.startPartition(gc);
+    gc.nextClip(elementKey, in.getElementLength());
+
+    /* copy the access units */
+
+    long bytesRemaining = in.getElementLength();
+    while (bytesRemaining > 0) {
+      gc.nextAccessUnit();
+
+      DataInputStream dis = new DataInputStream(in);
+      DataOutputStream dos = new DataOutputStream(gc);
+
+      /* PreambleTag */
+      byte preambleTag = dis.readByte();
+      assertEquals(0x01, preambleTag);
+      dos.writeByte(preambleTag);
+      bytesRemaining--;
+
+      /* PreambleLength */
+      long preambleLength = Integer.toUnsignedLong(dis.readInt());
+      dos.writeInt((int) preambleLength);
+      bytesRemaining = bytesRemaining - 4;
+
+       /* PreambleValue */
+      byte[] buffer = dis.readNBytes((int) preambleLength);
+      dos.write(buffer);
+      bytesRemaining = bytesRemaining - preambleLength;
+
+      /* IAFrameTag */
+      byte frameTag = dis.readByte();
+      assertEquals(0x02, frameTag);
+      dos.writeByte(frameTag);
+      bytesRemaining--;
+
+      /* IAFrameLength */
+      long frameLength = Integer.toUnsignedLong(dis.readInt());
+      dos.writeInt((int) frameLength);
+      bytesRemaining = bytesRemaining - 4;
+
+       /* IAFrame */
+      buffer = dis.readNBytes((int) frameLength);
+      dos.write(buffer);
+      bytesRemaining = bytesRemaining - frameLength;
+
+      dos.flush();
+    }
+
+    /* clean-up */
+
+    out.finish();
+
+    in.close();
+
+  }
+
 
 }

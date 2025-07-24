@@ -85,7 +85,7 @@ public class ClipReader extends InputStream {
     return this.remainingElementBytes;
   }
 
-  public long getSize() {
+  public long getEUCount() {
     return this.info.getEUCount();
   }
 

@@ -96,7 +96,7 @@ class RandomAccessReaderTest {
     byte[] buffer = new byte[iaFrameMagic.length];
 
     ClipReader fr = new ClipReader(fi, rais);
-    for (int i = 0; i < fr.getSize(); i++) {
+    for (int i = 0; i < fr.getEUCount(); i++) {
       fr.seek(i);
       fr.read(buffer);
       assertArrayEquals(buffer, iaFrameMagic);

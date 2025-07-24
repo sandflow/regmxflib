@@ -276,10 +276,12 @@ public class StreamingWriter {
 
     private State state = State.READY;
 
+    private long clipSize;
+
     /**
-     * size in bytes of the VBE units within the current partition
+     * offset in bytes of the VBE units within the essence container
      */
-    private List<Long> auSizes = new ArrayList<>();
+    private List<Long> auOffsets = new ArrayList<>();
 
     GCClipVBEWriter(long bodySID, long indexSID) {
       super(bodySID, indexSID);
@@ -303,13 +305,13 @@ public class StreamingWriter {
       this.state = State.WRITTEN;
     }
 
-    public void nextAccessUnit(int accessUnitSize) {
-      auSizes.add((long) accessUnitSize);
+    public void nextAccessUnit() {
+      auOffsets.add(this.getPosition());
     }
 
     @Override
     long getDuration() {
-      return this.auSizes.size();
+      return this.auOffsets.size();
     }
 
     @Override
@@ -327,21 +329,18 @@ public class StreamingWriter {
       its.IndexStreamID = this.getIndexSID();
       its.EssenceStreamID = this.getBodySID();
       its.EditUnitByteCount = 0L;
-      its.VBEByteCount = this.auSizes.get(this.auSizes.size() - 1);
+      its.VBEByteCount = clipSize - this.auOffsets.get(this.auOffsets.size() - 1);
 
-      long streamOffset = 0;
       its.IndexEntryArray = new IndexEntryArray();
-      for (var auSize : this.auSizes) {
+      for (var auOffset : this.auOffsets) {
         var e = new IndexEntry();
         e.TemporalOffset = 0;
         e.Flags = (byte) 0x80;
-        e.StreamOffset = streamOffset;
+        e.StreamOffset = auOffset;
         e.KeyFrameOffset = 0;
         e.TemporalOffset = 0;
 
         its.IndexEntryArray.add(e);
-
-        streamOffset += auSize;
       }
 
       return IndexSegmentHelper.toBytes(its);
