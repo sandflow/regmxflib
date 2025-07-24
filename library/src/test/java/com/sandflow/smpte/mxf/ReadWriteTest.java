@@ -30,11 +30,16 @@
 
 package com.sandflow.smpte.mxf;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -42,6 +47,7 @@ import org.junit.jupiter.api.Test;
 import com.sandflow.smpte.mxf.helpers.OP1aHelper;
 import com.sandflow.smpte.mxf.types.PHDRMetadataTrackSubDescriptor;
 import com.sandflow.smpte.mxf.types.PictureDescriptor;
+import com.sandflow.smpte.mxf.types.SoundDescriptor;
 import com.sandflow.smpte.util.UL;
 
 public class ReadWriteTest {
@@ -142,9 +148,9 @@ public class ReadWriteTest {
 
       UL elementKey = inReader.getElementKey().asUL();
 
-      if (elementKey.equalsWithMask(EssenceKeys.PHDRImageMetadataItem, 0b1111_1111_1111_1010)) {
+      if (elementKey.equalsWithMask(EssenceKeys.PHDRImageMetadataItem, 0b1111_1110_1111_1010)) {
         gc.nextElement(phdrMetadataElementKey, inReader.getElementLength());
-      } else if (elementKey.equalsWithMask(EssenceKeys.FrameWrappedJPEG2000PictureElement, 0b1111_1111_1111_1010)) {
+      } else if (elementKey.equalsWithMask(EssenceKeys.FrameWrappedJPEG2000PictureElement, 0b1111_1110_1111_1010)) {
         /* we index J2K elements */
         gc.nextContentPackage();
         gc.nextElement(phdrImageElementKey, inReader.getElementLength());
@@ -168,6 +174,85 @@ public class ReadWriteTest {
     outWriter.finish();
 
     inReader.close();
+  }
+
+  @Test
+  void testAUDIO_807d0b4c_69ec_44b0_be74_dfbf1a8c99d3() throws Exception {
+
+    /* load the source file */
+    InputStream is = ClassLoader.getSystemResourceAsStream("imps/imp_1/AUDIO_807d0b4c-69ec-44b0-be74-dfbf1a8c99d3.mxf");
+
+    var sourceInfo = new StreamingFileInfo(is, null);
+
+    StreamingReader in = new StreamingReader(is, null);
+
+    /* get the audio descriptor */
+
+    GCEssenceTracks inTracks = new GCEssenceTracks(sourceInfo.getPreface());
+
+    assertEquals(1, inTracks.getTrackCount());
+    assertInstanceOf(SoundDescriptor.class, inTracks.getTrackInfo(0).descriptor());
+    SoundDescriptor d = (SoundDescriptor) inTracks.getTrackInfo(0).descriptor();
+
+    long bytesPerSample = (d.QuantizationBits / 8) * d.ChannelCount;
+
+    /* create header metadata */
+
+    final long BODY_SID = 1;
+    final long INDEX_SID = BODY_SID + 1;
+
+    final byte SOUND_TRACKID = 1;
+
+    OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
+        Collections.singletonList(
+            new OP1aHelper.TrackInfo(
+                SOUND_TRACKID,
+                EssenceKeys.WaveClipWrappedSoundElement.asUL(),
+                d,
+                Labels.SoundEssenceTrack,
+                "AUDIO_807d0b4c-69ec-44b0-be74-dfbf1a8c99d3")),
+        null,
+        d.SampleRate);
+
+    OP1aHelper outHeader = new OP1aHelper(eci);
+
+    UL elementKey = outHeader.getElementKey(SOUND_TRACKID);
+
+    /* create output file */
+
+    OutputStream os = new FileOutputStream("target/test-output/AUDIO_807d0b4c-69ec-44b0-be74-dfbf1a8c99d3.new.mxf");
+
+    StreamingWriter out = new StreamingWriter(os, outHeader.getPreface());
+
+    /* create a single clip wrapped generic container */
+
+    var gc = out.addCBEClipWrappedGC(BODY_SID, INDEX_SID);
+
+    /* start reading the clip from the source file */
+
+    assertTrue(in.nextElement());
+
+    /* make sure it is audio as expected */
+
+    assertTrue(
+        EssenceKeys.WaveClipWrappedSoundElement.asUL().equalsWithMask(in.getElementKey(), 0b1111_1110_1111_1010));
+
+    assertEquals(0, in.getElementLength() % bytesPerSample);
+
+    /* read the clip payload */
+
+    byte[] clipPayload = in.readNBytes((int) in.getElementLength());
+
+    in.close();
+
+    /* write the ouput file */
+
+    out.start();
+    out.startPartition(gc);
+    gc.nextClip(elementKey, bytesPerSample, clipPayload.length / bytesPerSample);
+    gc.write(clipPayload);
+    out.finish();
+
   }
 
 }

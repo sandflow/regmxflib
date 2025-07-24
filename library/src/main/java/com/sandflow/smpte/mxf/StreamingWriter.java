@@ -918,7 +918,7 @@ public class StreamingWriter {
         this.currentContainer.getIndexSID(),
         0L,
         (long) itsBytes.length,
-        this.currentContainer.getPosition(),
+        0,
         PartitionPack.Kind.BODY,
         PartitionPack.Status.CLOSED_COMPLETE);
     fos.write(itsBytes);
