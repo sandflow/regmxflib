@@ -32,6 +32,9 @@ package com.sandflow.smpte.mxf;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.DataInputStream;
@@ -46,14 +49,27 @@ import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.openjdk.nashorn.internal.runtime.Source;
 
 import com.sandflow.smpte.mxf.helpers.OP1aHelper;
+import com.sandflow.smpte.mxf.types.AUIDSet;
+import com.sandflow.smpte.mxf.types.ComponentStrongReferenceVector;
+import com.sandflow.smpte.mxf.types.DescriptiveMarker;
+import com.sandflow.smpte.mxf.types.GenericStreamTextBasedSet;
 import com.sandflow.smpte.mxf.types.IABEssenceDescriptor;
 import com.sandflow.smpte.mxf.types.PHDRMetadataTrackSubDescriptor;
 import com.sandflow.smpte.mxf.types.PictureDescriptor;
+import com.sandflow.smpte.mxf.types.Sequence;
 import com.sandflow.smpte.mxf.types.SoundDescriptor;
+import com.sandflow.smpte.mxf.types.SourcePackage;
+import com.sandflow.smpte.mxf.types.StaticTrack;
+import com.sandflow.smpte.mxf.types.TextBasedFramework;
+import com.sandflow.smpte.mxf.types.TextBasedObject;
+import com.sandflow.smpte.mxf.types.Track;
+import com.sandflow.smpte.mxf.types.Package;
 import com.sandflow.smpte.util.FileRandomAccessInputSource;
 import com.sandflow.smpte.util.UL;
+import com.sandflow.smpte.util.UUID;
 
 public class ReadWriteTest {
 
@@ -260,8 +276,23 @@ public class ReadWriteTest {
 
   }
 
-    @Test
+  private static List<Track> findRP2057Tracks(Package p) {
+    return p.PackageTracks.stream()
+        .filter(t -> Labels.DescriptiveMetadataTrack.asUL().equalsIgnoreVersion(t.TrackSegment.ComponentDataDefinition))
+        .toList();
+  }
+
+  @Test
   void testIAB_dd3fabc6_4794_4bae_95ee_6bc2405716a6() throws Exception {
+
+    final long BODY_SID = 1;
+    final long INDEX_SID = BODY_SID + 1;
+    final long DD_SID = INDEX_SID + 1;
+    final long ADM_SID = DD_SID + 1;
+
+    final byte IAB_TRACKID = 1;
+    final byte DD_TRACKID = IAB_TRACKID + 1;
+    final byte ADM_TRACKID = DD_TRACKID + 1;
 
     /* load the source file */
     InputStream is = ClassLoader.getSystemResourceAsStream("imps/imp_1/IAB_dd3fabc6-4794-4bae-95ee-6bc2405716a6.mxf");
@@ -278,11 +309,6 @@ public class ReadWriteTest {
 
     /* create header metadata */
 
-    final long BODY_SID = 1;
-    final long INDEX_SID = BODY_SID + 1;
-
-    final byte IAB_TRACKID = 1;
-
     OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
         Collections.singletonList(
             new OP1aHelper.TrackInfo(
@@ -297,6 +323,88 @@ public class ReadWriteTest {
     OP1aHelper outHeader = new OP1aHelper(eci);
 
     UL elementKey = outHeader.getElementKey(IAB_TRACKID);
+
+    /* find RP 2057 DMSs and copy them to the new file */
+
+    SourcePackage topPackage = (SourcePackage) outHeader.getPreface().ContentStorageObject.Packages.stream()
+        .filter(e -> e instanceof SourcePackage).findFirst().orElse(null);
+
+    long sourceDDGSSID = 0;
+    long sourceADMGSSID = 0;
+
+    for (Package p : sourceInfo.getPreface().ContentStorageObject.Packages) {
+      if (!(p instanceof SourcePackage))
+        continue;
+
+      for (Track t : ((SourcePackage) p).PackageTracks) {
+        if (!Labels.DescriptiveMetadataTrack.asUL().equalsIgnoreVersion(t.TrackSegment.ComponentDataDefinition))
+          continue;
+
+        Sequence sq = (Sequence) t.TrackSegment;
+
+        if (!(sq.ComponentObjects.get(0) instanceof DescriptiveMarker))
+          continue;
+
+        DescriptiveMarker dm = (DescriptiveMarker) sq.ComponentObjects.get(0);
+
+        if (!(dm.DescriptiveFrameworkObject instanceof TextBasedFramework))
+          continue;
+
+        GenericStreamTextBasedSet gstb = (GenericStreamTextBasedSet) ((TextBasedFramework) dm.DescriptiveFrameworkObject).TextBasedObject;
+
+        GenericStreamTextBasedSet dmT = new GenericStreamTextBasedSet();
+        dmT.InstanceID = UUID.fromRandom();
+        dmT.RFC5646TextLanguageCode = gstb.RFC5646TextLanguageCode;
+        dmT.TextBasedMetadataPayloadSchemeID = gstb.TextBasedMetadataPayloadSchemeID;
+        dmT.TextDataDescription = gstb.TextDataDescription;
+        dmT.TextMIMEMediaType = gstb.TextMIMEMediaType;
+        if (dmT.TextDataDescription.equals("urn:ebu:metadata-schema:ebuCore_2016")) {
+          dmT.GenericStreamID = (long) ADM_SID;
+          assertEquals(0, sourceADMGSSID);
+          sourceADMGSSID = gstb.GenericStreamID;
+        } else if (dmT.TextDataDescription.equals("http://www.dolby.com/schemas/2018/DbmdWrapper")) {
+          dmT.GenericStreamID = (long) DD_SID;
+          assertEquals(0, sourceDDGSSID);
+          sourceDDGSSID = gstb.GenericStreamID;
+        } else {
+          throw new RuntimeException();
+        }
+
+        TextBasedFramework dmTBF = new TextBasedFramework();
+        dmTBF.InstanceID = UUID.fromRandom();
+        dmTBF.TextBasedObject = dmT;
+
+        DescriptiveMarker dmMarker = new DescriptiveMarker();
+        dmMarker.InstanceID = UUID.fromRandom();
+        dmMarker.DescriptiveFrameworkObject = dmTBF;
+        dmMarker.EventComment = "SMPTE RP 2057 Generic Stream Text-Based Set";
+
+        Sequence dmSequence = new Sequence();
+        dmSequence.InstanceID = UUID.fromRandom();
+        dmSequence.ComponentDataDefinition = Labels.DescriptiveMetadataTrack;
+        dmSequence.ComponentObjects = new ComponentStrongReferenceVector();
+        dmSequence.ComponentObjects.add(dmMarker);
+
+        StaticTrack dmTrack = new StaticTrack();
+        dmTrack.InstanceID = UUID.fromRandom();
+        if (gstb.TextDataDescription.equals("urn:ebu:metadata-schema:ebuCore_2016")) {
+          dmTrack.TrackID = (long) ADM_TRACKID;
+          dmTrack.TrackName = "Audio Definition Model Metadata Track";
+        } else if (gstb.TextDataDescription.equals("http://www.dolby.com/schemas/2018/DbmdWrapper")) {
+          dmTrack.TrackID = (long) DD_TRACKID;
+          dmTrack.TrackName = "Dolby Audio Metadata Chunk Track";
+        }
+        dmTrack.TrackSegment = dmSequence;
+
+        topPackage.PackageTracks.add(dmTrack);
+      }
+    }
+
+    assertNotEquals(0, sourceADMGSSID);
+    assertNotEquals(0, sourceDDGSSID);
+
+    outHeader.getPreface().DescriptiveSchemes = new AUIDSet();
+    outHeader.getPreface().DescriptiveSchemes.add(Labels.MXFTextBasedFramework);
 
     /* create output file */
 
@@ -316,6 +424,14 @@ public class ReadWriteTest {
     /* create a single clip wrapped generic container */
 
     var gc = out.addVBEClipWrappedGC(BODY_SID, INDEX_SID);
+
+    /* create the two generic stream containers */
+
+    var ddGS = out.addGenericStream(DD_SID);
+    var admGS = out.addGenericStream(ADM_SID);
+
+    /* start writing */
+
     out.start();
     out.startPartition(gc);
     gc.nextClip(elementKey, in.getElementLength());
@@ -340,7 +456,7 @@ public class ReadWriteTest {
       dos.writeInt((int) preambleLength);
       bytesRemaining = bytesRemaining - 4;
 
-       /* PreambleValue */
+      /* PreambleValue */
       byte[] buffer = dis.readNBytes((int) preambleLength);
       dos.write(buffer);
       bytesRemaining = bytesRemaining - preambleLength;
@@ -356,12 +472,31 @@ public class ReadWriteTest {
       dos.writeInt((int) frameLength);
       bytesRemaining = bytesRemaining - 4;
 
-       /* IAFrame */
+      /* IAFrame */
       buffer = dis.readNBytes((int) frameLength);
       dos.write(buffer);
       bytesRemaining = bytesRemaining - frameLength;
 
       dos.flush();
+    }
+
+    UL gsElementKey = UL.fromURN("urn:smpte:ul:060e2b34.0101010c.0d010509.01000000");
+
+    while (in.nextElement()) {
+      assertTrue(gsElementKey.equals(in.getElementKey()));
+
+      if (in.getSID() == sourceDDGSSID) {
+        out.startPartition(ddGS);
+        ddGS.nextElement(in.getElementKey().asUL(), in.getElementLength());
+        ddGS.write(in.readNBytes((int) in.getElementLength()));
+      } else if (in.getSID() == sourceADMGSSID) {
+        out.startPartition(admGS);
+        admGS.nextElement(in.getElementKey().asUL(), in.getElementLength());
+        admGS.write(in.readNBytes((int) in.getElementLength()));
+      } else {
+        throw new RuntimeException();
+      }
+
     }
 
     /* clean-up */
@@ -371,6 +506,5 @@ public class ReadWriteTest {
     in.close();
 
   }
-
 
 }
