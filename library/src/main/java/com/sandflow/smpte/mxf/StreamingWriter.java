@@ -58,9 +58,12 @@ import com.sandflow.smpte.mxf.types.FileDescriptor;
 import com.sandflow.smpte.mxf.types.IndexEntry;
 import com.sandflow.smpte.mxf.types.IndexEntryArray;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
+import com.sandflow.smpte.mxf.types.MaterialPackage;
 import com.sandflow.smpte.mxf.types.MultipleDescriptor;
 import com.sandflow.smpte.mxf.types.Package;
 import com.sandflow.smpte.mxf.types.Preface;
+import com.sandflow.smpte.mxf.types.Sequence;
+import com.sandflow.smpte.mxf.types.SourceClip;
 import com.sandflow.smpte.mxf.types.SourcePackage;
 import com.sandflow.smpte.mxf.types.TimelineTrack;
 import com.sandflow.smpte.mxf.types.Track;
@@ -77,6 +80,8 @@ public class StreamingWriter {
     private final long indexSID;
     private long bytesToWrite;
     private long ecOffset = 0;
+
+    /* TODO: warn if the body and index SIDs are not in the preface */
 
     ContainerWriter(long bodySID, long indexSID) {
       this.bodySID = bodySID;
@@ -328,7 +333,6 @@ public class StreamingWriter {
       its.IndexDuration = this.getDuration();
       its.IndexStreamID = this.getIndexSID();
       its.EssenceStreamID = this.getBodySID();
-      its.EditUnitByteCount = 0L;
       its.VBEByteCount = clipSize - this.auOffsets.get(this.auOffsets.size() - 1);
 
       its.IndexEntryArray = new IndexEntryArray();
@@ -420,7 +424,6 @@ public class StreamingWriter {
       its.IndexDuration = (long) this.cpPositions.size();
       its.IndexStreamID = this.getIndexSID();
       its.EssenceStreamID = this.getBodySID();
-      its.EditUnitByteCount = 0L;
       its.VBEByteCount = this.getPosition() - this.cpPositions.get(this.cpPositions.size() - 1);
 
       its.IndexEntryArray = new IndexEntryArray();
@@ -535,6 +538,12 @@ public class StreamingWriter {
         .map(e -> getPackageByID(e.LinkedPackageID))
         .findFirst()
         .orElse(null);
+  }
+
+  private List<MaterialPackage> getMaterialPackages() {
+    return this.preface.ContentStorageObject.Packages.stream()
+        .filter(p -> p instanceof MaterialPackage).map(e -> (MaterialPackage) e)
+        .toList();
   }
 
   private java.util.Set<UL> getECLabels() {
@@ -764,6 +773,44 @@ public class StreamingWriter {
 
       for (var t : sp.PackageTracks) {
         t.TrackSegment.ComponentLength = cw.getDuration();
+
+        if (!(t.TrackSegment instanceof Sequence))
+          continue;
+
+        Sequence sq = (Sequence) t.TrackSegment;
+
+        for (var co : sq.ComponentObjects) {
+          co.ComponentLength = cw.getDuration();
+        }
+      }
+
+      /* look for material package tracks that reference the source package */
+
+      for (var mp : getMaterialPackages()) {
+        for (var t : mp.PackageTracks) {
+          if (!(t instanceof TimelineTrack))
+            continue;
+
+          TimelineTrack tt = (TimelineTrack) t;
+
+          if (!(tt.TrackSegment instanceof Sequence))
+            continue;
+
+          tt.TrackSegment.ComponentLength = cw.getDuration();
+
+          Sequence sq = (Sequence) tt.TrackSegment;
+
+          for (var co : sq.ComponentObjects) {
+            if (!(co instanceof SourceClip))
+              continue;
+
+            SourceClip sc = (SourceClip) co;
+
+            if (sc.SourcePackageID.equals(sp.PackageID)) {
+              sc.ComponentLength = cw.getDuration();
+            }
+          }
+        }
       }
     }
 

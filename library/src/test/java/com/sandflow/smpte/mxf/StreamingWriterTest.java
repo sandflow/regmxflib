@@ -35,6 +35,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.IDN;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HexFormat;
@@ -141,7 +142,9 @@ class StreamingWriterTest {
     OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
         Collections.singletonList(ti),
         null,
-        editRate);
+        editRate,
+        1,
+        127);
 
     OP1aHelper header = new OP1aHelper(eci);
 
@@ -209,6 +212,8 @@ class StreamingWriterTest {
     final Fraction sampleRate = Fraction.of(48000);
     final Fraction editRate = Fraction.of(24000, 1001);
     final byte trackID = 1;
+    final long BODY_SID = 1;
+    final long INDEX_SID = 127;
 
     /* read IA frame */
 
@@ -250,7 +255,9 @@ class StreamingWriterTest {
     OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
         Collections.singletonList(ti),
         java.util.Set.of(Labels.IMF_IABTrackFileLevel0),
-        editRate);
+        editRate,
+        BODY_SID,
+        INDEX_SID);
 
     OP1aHelper header = new OP1aHelper(eci);
 
@@ -260,7 +267,7 @@ class StreamingWriterTest {
 
     /* configure the clip-wrapped generic container */
 
-    var gc = sw.addVBEClipWrappedGC(1L, 2L);
+    var gc = sw.addVBEClipWrappedGC(BODY_SID, INDEX_SID);
 
     /* start writing file */
 
@@ -421,6 +428,8 @@ class StreamingWriterTest {
     final Fraction sampleRate = Fraction.of(24);
     final Fraction editRate = Fraction.of(24);
     final byte trackID = 1;
+    final long BODY_SID = 1;
+    final long INDEX_SID = 127;
 
     /* read J2C frame */
 
@@ -493,7 +502,9 @@ class StreamingWriterTest {
     OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
         Collections.singletonList(ti),
         null,
-        editRate);
+        editRate,
+        BODY_SID,
+        INDEX_SID);
 
     OP1aHelper header = new OP1aHelper(eci);
 
@@ -505,7 +516,7 @@ class StreamingWriterTest {
 
     StreamingWriter sw = new StreamingWriter(os, header.getPreface());
 
-    var cw = sw.addVBEFrameWrappedGC(1, 2);
+    var cw = sw.addVBEFrameWrappedGC(BODY_SID, INDEX_SID);
     sw.start();
     for (int i = 0; i < frameCount; i++) {
       if (i % 4 == 0) {
@@ -526,6 +537,8 @@ class StreamingWriterTest {
     final Fraction sampleRate = Fraction.of(24);
     final Fraction editRate = Fraction.of(24);
     final byte trackID = 1;
+    final long BODY_SID = 1;
+    final long INDEX_SID = 127;
 
     /* read J2C frame */
 
@@ -598,7 +611,9 @@ class StreamingWriterTest {
     OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
         Collections.singletonList(ti),
         null,
-        editRate);
+        editRate,
+        BODY_SID,
+        INDEX_SID);
 
     OP1aHelper header = new OP1aHelper(eci);
 
@@ -610,10 +625,10 @@ class StreamingWriterTest {
 
     StreamingWriter sw = new StreamingWriter(os, header.getPreface());
 
-    var cw = sw.addVBEFrameWrappedGC(1, 2);
+    var cw = sw.addVBEFrameWrappedGC(BODY_SID, INDEX_SID);
     sw.start();
     for (int i = 0; i < frameCount; i++) {
-      if (i % 4 == 0) {
+      if (i % 50 == 0) {
         sw.startPartition(cw);
       }
       cw.nextContentPackage();

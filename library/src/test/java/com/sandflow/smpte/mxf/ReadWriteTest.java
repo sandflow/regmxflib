@@ -130,7 +130,9 @@ public class ReadWriteTest {
     OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
         List.of(phdrMetadataTrackInfo, phdrImageTrackInfo),
         null,
-        d.SampleRate);
+        d.SampleRate,
+        IMG_BODY_SID,
+        IMG_INDEX_SID);
 
     OP1aHelper outHeader = new OP1aHelper(eci);
 
@@ -233,7 +235,9 @@ public class ReadWriteTest {
                 Labels.SoundEssenceTrack,
                 "AUDIO_807d0b4c-69ec-44b0-be74-dfbf1a8c99d3")),
         null,
-        d.SampleRate);
+        d.SampleRate,
+        BODY_SID,
+        INDEX_SID);
 
     OP1aHelper outHeader = new OP1aHelper(eci);
 
@@ -318,7 +322,9 @@ public class ReadWriteTest {
                 Labels.SoundEssenceTrack,
                 "IA Bitstream")),
         java.util.Set.of(Labels.IMF_IABTrackFileLevel0),
-        d.SampleRate);
+        d.SampleRate,
+        BODY_SID,
+        INDEX_SID);
 
     OP1aHelper outHeader = new OP1aHelper(eci);
 

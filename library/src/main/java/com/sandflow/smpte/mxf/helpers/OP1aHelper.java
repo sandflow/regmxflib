@@ -69,14 +69,13 @@ public class OP1aHelper {
   public record EssenceContainerInfo(
       java.util.List<TrackInfo> tracks,
       java.util.Set<AUID> conformsToSpecifications,
-      Fraction editRate) {
+      Fraction editRate,
+      long bodySID,
+      long indexSID) {
   }
 
   private final EssenceContainerInfo ecInfo;
   private final Preface preface;
-
-  private final long bodySID = 1;
-  private final long indexSID = 127;
 
   final Map<Byte, UL> trackIDToElementKeys = new HashMap<>();
 
@@ -87,6 +86,9 @@ public class OP1aHelper {
     this.ecInfo = ecInfo;
 
     if (ecInfo.tracks().size() > 127 || ecInfo.tracks().size() == 0)
+      throw new RuntimeException();
+
+    if (ecInfo.bodySID() == 0 || ecInfo.indexSID() == 0)
       throw new RuntimeException();
 
     final byte trackCount = (byte) ecInfo.tracks().size();
@@ -114,7 +116,7 @@ public class OP1aHelper {
        * EXCEPTION: some MXF files do not have one essence descriptor per track
        */
       if (d != null) {
-        d.EssenceLength = 0L;
+        d.EssenceLength = null;
         d.LinkedTrackID = ecInfo.tracks().size() > 1 ? (long) trackId : null;
       }
 
@@ -130,7 +132,7 @@ public class OP1aHelper {
           ecInfo.tracks().get(i).dataDefinition(), ecInfo.tracks().get(i).trackName));
 
       mp.PackageTracks
-          .add(PackageHelper.makeTimelineTrack(ecInfo.editRate(), null, sp.PackageID, null, (long) trackId,
+          .add(PackageHelper.makeTimelineTrack(ecInfo.editRate(), -1L, sp.PackageID, null, (long) trackId,
               (long) trackId,
               ecInfo.tracks().get(i).dataDefinition(), ecInfo.tracks().get(i).trackName));
     }
@@ -142,7 +144,7 @@ public class OP1aHelper {
     } else {
       MultipleDescriptor md = new MultipleDescriptor();
       md.InstanceID = UUID.fromRandom();
-      md.EssenceLength = 0L;
+      md.EssenceLength = null;
       md.SampleRate = ecInfo.editRate();
       md.ContainerFormat = Labels.MXFGCGenericEssenceMultipleMappings;
       md.FileDescriptors = new FileDescriptorStrongReferenceVector();
@@ -154,8 +156,8 @@ public class OP1aHelper {
     /* EssenceDataObject */
     var edo = new EssenceData();
     edo.InstanceID = UUID.fromRandom();
-    edo.EssenceStreamID = this.bodySID;
-    edo.IndexStreamID = this.indexSID;
+    edo.EssenceStreamID = this.ecInfo.bodySID();
+    edo.IndexStreamID = this.ecInfo.indexSID();
     edo.LinkedPackageID = sp.PackageID;
 
     /* Content Storage Object */
