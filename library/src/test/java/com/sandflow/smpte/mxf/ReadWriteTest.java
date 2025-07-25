@@ -33,8 +33,6 @@ package com.sandflow.smpte.mxf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.DataInputStream;
@@ -43,13 +41,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.openjdk.nashorn.internal.runtime.Source;
 
 import com.sandflow.smpte.mxf.helpers.OP1aHelper;
 import com.sandflow.smpte.mxf.types.AUIDSet;
@@ -58,16 +54,14 @@ import com.sandflow.smpte.mxf.types.DescriptiveMarker;
 import com.sandflow.smpte.mxf.types.GenericStreamTextBasedSet;
 import com.sandflow.smpte.mxf.types.IABEssenceDescriptor;
 import com.sandflow.smpte.mxf.types.PHDRMetadataTrackSubDescriptor;
+import com.sandflow.smpte.mxf.types.Package;
 import com.sandflow.smpte.mxf.types.PictureDescriptor;
 import com.sandflow.smpte.mxf.types.Sequence;
 import com.sandflow.smpte.mxf.types.SoundDescriptor;
 import com.sandflow.smpte.mxf.types.SourcePackage;
 import com.sandflow.smpte.mxf.types.StaticTrack;
 import com.sandflow.smpte.mxf.types.TextBasedFramework;
-import com.sandflow.smpte.mxf.types.TextBasedObject;
 import com.sandflow.smpte.mxf.types.Track;
-import com.sandflow.smpte.mxf.types.Package;
-import com.sandflow.smpte.util.FileRandomAccessInputSource;
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UUID;
 
@@ -132,7 +126,8 @@ public class ReadWriteTest {
         null,
         d.SampleRate,
         IMG_BODY_SID,
-        IMG_INDEX_SID);
+        IMG_INDEX_SID,
+        null);
 
     OP1aHelper outHeader = new OP1aHelper(eci);
 
@@ -226,6 +221,9 @@ public class ReadWriteTest {
 
     final byte SOUND_TRACKID = 1;
 
+    /* EXCEPTION: Resolve requires the essence container duration to be set for multichannel track files */
+    long ecDuration = d.EssenceLength;
+
     OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
         Collections.singletonList(
             new OP1aHelper.TrackInfo(
@@ -237,7 +235,8 @@ public class ReadWriteTest {
         null,
         d.SampleRate,
         BODY_SID,
-        INDEX_SID);
+        INDEX_SID,
+        ecDuration);
 
     OP1aHelper outHeader = new OP1aHelper(eci);
 
@@ -280,12 +279,6 @@ public class ReadWriteTest {
 
   }
 
-  private static List<Track> findRP2057Tracks(Package p) {
-    return p.PackageTracks.stream()
-        .filter(t -> Labels.DescriptiveMetadataTrack.asUL().equalsIgnoreVersion(t.TrackSegment.ComponentDataDefinition))
-        .toList();
-  }
-
   @Test
   void testIAB_dd3fabc6_4794_4bae_95ee_6bc2405716a6() throws Exception {
 
@@ -313,6 +306,10 @@ public class ReadWriteTest {
 
     /* create header metadata */
 
+    /*
+     * EXCEPTION: Resolve requires the essence descriptor to specify the duration of the essence container
+     */
+    long ecDuration = d.EssenceLength;
     OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
         Collections.singletonList(
             new OP1aHelper.TrackInfo(
@@ -324,7 +321,8 @@ public class ReadWriteTest {
         java.util.Set.of(Labels.IMF_IABTrackFileLevel0),
         d.SampleRate,
         BODY_SID,
-        INDEX_SID);
+        INDEX_SID,
+        ecDuration);
 
     OP1aHelper outHeader = new OP1aHelper(eci);
 

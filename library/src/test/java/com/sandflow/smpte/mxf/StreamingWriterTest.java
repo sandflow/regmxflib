@@ -139,12 +139,18 @@ class StreamingWriterTest {
         Labels.SoundEssenceTrack,
         null);
 
+    /*
+     * EXCEPTION: Resolve requires the essence container duration to be set for
+     * multichannel track files
+     */
+
     OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
         Collections.singletonList(ti),
         null,
         editRate,
         1,
-        127);
+        127,
+        (long) sampleCount);
 
     OP1aHelper header = new OP1aHelper(eci);
 
@@ -257,7 +263,8 @@ class StreamingWriterTest {
         java.util.Set.of(Labels.IMF_IABTrackFileLevel0),
         editRate,
         BODY_SID,
-        INDEX_SID);
+        INDEX_SID,
+        (long) frameCount);
 
     OP1aHelper header = new OP1aHelper(eci);
 
@@ -504,7 +511,8 @@ class StreamingWriterTest {
         null,
         editRate,
         BODY_SID,
-        INDEX_SID);
+        INDEX_SID,
+        null);
 
     OP1aHelper header = new OP1aHelper(eci);
 
@@ -613,7 +621,8 @@ class StreamingWriterTest {
         null,
         editRate,
         BODY_SID,
-        INDEX_SID);
+        INDEX_SID,
+        null);
 
     OP1aHelper header = new OP1aHelper(eci);
 

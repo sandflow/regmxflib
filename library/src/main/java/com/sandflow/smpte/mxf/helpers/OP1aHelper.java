@@ -71,7 +71,8 @@ public class OP1aHelper {
       java.util.Set<AUID> conformsToSpecifications,
       Fraction editRate,
       long bodySID,
-      long indexSID) {
+      long indexSID,
+      Long duration) {
   }
 
   private final EssenceContainerInfo ecInfo;
@@ -116,8 +117,8 @@ public class OP1aHelper {
        * EXCEPTION: some MXF files do not have one essence descriptor per track
        */
       if (d != null) {
-        d.EssenceLength = null;
-        d.LinkedTrackID = ecInfo.tracks().size() > 1 ? (long) trackId : null;
+        d.EssenceLength = this.ecInfo.duration();
+        d.LinkedTrackID = (long) trackId /* ecInfo.tracks().size() > 1 true ? (long) trackId : null */;
       }
 
       byte itemCount = (byte) (itemCountByKey.getOrDefault(ecInfo.tracks().get(i).essenceKey(), (byte) 0) + 1);
@@ -127,12 +128,14 @@ public class OP1aHelper {
 
       this.trackIDToElementKeys.put(trackId, elementKey);
 
-      sp.PackageTracks.add(PackageHelper.makeTimelineTrack(ecInfo.editRate(), -1L, UMID.NULL_UMID,
+      sp.PackageTracks.add(PackageHelper.makeTimelineTrack(ecInfo.editRate(),
+          this.ecInfo.duration() == null ? -1L : this.ecInfo.duration(), UMID.NULL_UMID,
           (long) MXFFiles.getTrackNumber(elementKey), null, (long) trackId,
           ecInfo.tracks().get(i).dataDefinition(), ecInfo.tracks().get(i).trackName));
 
       mp.PackageTracks
-          .add(PackageHelper.makeTimelineTrack(ecInfo.editRate(), -1L, sp.PackageID, null, (long) trackId,
+          .add(PackageHelper.makeTimelineTrack(ecInfo.editRate(),
+              this.ecInfo.duration() == null ? -1L : this.ecInfo.duration(), sp.PackageID, null, (long) trackId,
               (long) trackId,
               ecInfo.tracks().get(i).dataDefinition(), ecInfo.tracks().get(i).trackName));
     }

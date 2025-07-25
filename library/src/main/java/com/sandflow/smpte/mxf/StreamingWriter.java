@@ -104,6 +104,10 @@ public class StreamingWriter {
       return bytesToWrite;
     }
 
+    /*
+     * TODO: this is super ugly as it interferes with the ability of the GC to write
+     * stuff to itself
+     */
     void setBytesToWrite(long bytesToWrite) {
       this.bytesToWrite = bytesToWrite;
     }
@@ -303,8 +307,23 @@ public class StreamingWriter {
         throw new RuntimeException();
       }
 
-      StreamingWriter.this.fos.writeUL(elementKey);
-      StreamingWriter.this.fos.writeBERLength(clipSize);
+      if (StreamingWriter.this.preface.EssenceContainers != null
+          && StreamingWriter.this.preface.EssenceContainers.contains(Labels.IMF_IABEssenceClipWrappedContainer)) {
+        /**
+         * EXCPTION: ASDCPLib incorrectly includes the Clip KL in the essence container
+         * offset for IAB files
+         */
+        this.setBytesToWrite(50);
+        MXFOutputStream mos = new MXFOutputStream(this);
+        mos.writeUL(elementKey);
+        mos.writeBERLength(clipSize);
+        mos.flush();
+        mos.close();
+      } else {
+        StreamingWriter.this.fos.writeUL(elementKey);
+        StreamingWriter.this.fos.writeBERLength(clipSize);
+      }
+
       this.setBytesToWrite(clipSize);
 
       this.state = State.WRITTEN;
