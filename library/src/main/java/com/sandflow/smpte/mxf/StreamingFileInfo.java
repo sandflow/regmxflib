@@ -43,7 +43,7 @@ import com.sandflow.smpte.mxf.types.Preface;
 import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.EventHandler;
 
-public class StreamingFileInfo implements HeaderInfo {
+public class StreamingFileInfo {
 
   private static Preface readHeaderMetadataFrom(InputStream is, long headerByteCount, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
@@ -171,7 +171,6 @@ public class StreamingFileInfo implements HeaderInfo {
     }
   }
 
-  @Override
   public Preface getPreface() {
     return this.preface;
   }

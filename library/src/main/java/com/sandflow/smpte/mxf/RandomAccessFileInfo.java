@@ -51,7 +51,7 @@ import com.sandflow.smpte.util.RandomAccessInputSource;
 import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.EventHandler;
 
-public class RandomAccessFileInfo implements HeaderInfo {
+public class RandomAccessFileInfo {
 
   interface ECIndex {
     long getECPosition(long editUnitIndex);
@@ -155,7 +155,7 @@ public class RandomAccessFileInfo implements HeaderInfo {
     }
   }
 
-  private final HeaderInfo basicInfo;
+  private final StreamingFileInfo basicInfo;
   private Long ecSID = null;
   private Long ecIndexSID = null;
   private ECIndex euToECPosition;
@@ -360,7 +360,6 @@ public class RandomAccessFileInfo implements HeaderInfo {
 
   }
 
-  @Override
   public Preface getPreface() {
     return this.basicInfo.getPreface();
   }
