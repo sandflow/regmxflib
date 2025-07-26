@@ -40,8 +40,11 @@ public class UInt8Adapter {
     return (short) is.readUnsignedByte();
   }
 
-  public static void toStream(Short value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+  public static void toStream(short value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
     os.writeUnsignedByte(value);
   }
 
+  public static short copyOf(short value) {
+    return value;
+  }
 }

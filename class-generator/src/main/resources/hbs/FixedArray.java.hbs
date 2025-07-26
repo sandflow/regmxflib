@@ -63,4 +63,12 @@ public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
       {{itemAdapterName}}.toStream(v.get(i), os, ctx);
     }
   }
+
+  public static {{adapterName}} copyOf({{adapterName}} src) {
+    var dst = new {{adapterName}}();
+    for (var item : src) {
+      dst.add({{itemAdapterName}}.copyOf(item));
+    }
+    return dst;
+  }
  }

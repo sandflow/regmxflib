@@ -60,6 +60,32 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
   public {{typeName}} {{symbol}};
 {{/unless}}{{/each}}
 
+  {{#if isAbstract}}protected {{/if}}{{#unless isAbstract}}public {{/unless}}{{className}}({{className}} other) {
+    {{#if parentClassName}}super(other);{{/if}}
+{{#each members}}{{#unless isInherited}}
+    this.{{symbol}} = {{adapterName}}.copyOf(other.{{symbol}});
+{{/unless}}{{/each}}
+  }
+
+  {{#if isAbstract}}protected {{/if}}{{#unless isAbstract}}public {{/unless}}{{className}}() {
+    {{#if parentClassName}}super();{{/if}}
+  }
+
+{{#unless isAbstract}}
+  public {{className}} copyOf() {
+    return new {{className}}(this);
+  } 
+{{/unless}}
+
+{{#if isAbstract}}
+  public abstract {{className}} copyOf();
+{{/if}}
+
+
+  public static {{className}} copyOf({{className}} obj) {
+    return obj.copyOf();
+  }
+
   void readFromSet(Set s, MXFInputContext ctx) throws IOException {
 {{#if parentClassName}}
     super.readFromSet(s, ctx);

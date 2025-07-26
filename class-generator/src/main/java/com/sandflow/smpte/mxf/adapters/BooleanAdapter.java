@@ -44,4 +44,8 @@ public class BooleanAdapter {
     os.writeByte((byte) (value ? 1 : 0));
   }
 
+  public static boolean copyOf(boolean s) {
+    return s;
+  }
+
 }

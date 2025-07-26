@@ -43,4 +43,8 @@ public class UInt32Adapter {
   public static void toStream(long value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
     os.writeUnsignedInt(value);
   }
+
+  public static long copyOf(long value) {
+    return value;
+  }
 }

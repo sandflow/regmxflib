@@ -61,4 +61,8 @@ public class PrimaryPackageAdapter {
     os.writeUUID(instanceID);
   }
 
+  public static UMID copyOf(UMID value) {
+    return value;
+  }
+
 }

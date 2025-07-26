@@ -49,8 +49,6 @@ import com.sandflow.smpte.klv.LocalTagResolver;
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
-import com.sandflow.smpte.mxf.PartitionPack.Kind;
-import com.sandflow.smpte.mxf.PartitionPack.Status;
 import com.sandflow.smpte.mxf.RandomIndexPack.PartitionOffset;
 import com.sandflow.smpte.mxf.helpers.IndexSegmentHelper;
 import com.sandflow.smpte.mxf.types.EssenceData;

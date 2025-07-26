@@ -52,4 +52,7 @@ public class LocalDateAdapter {
     os.writeUnsignedByte((byte) t.getDayOfMonth());
   }
 
+  public static LocalDateTime copyOf(LocalDateTime value) {
+    return value;
+  }
 }

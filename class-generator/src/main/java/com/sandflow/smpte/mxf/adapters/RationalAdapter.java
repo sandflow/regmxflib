@@ -50,4 +50,8 @@ public class RationalAdapter {
     os.writeInt(value.getNumerator());
     os.writeInt(value.getDenominator());
   }
+
+  public static Fraction copyOf(Fraction value) {
+    return value;
+  }
 }

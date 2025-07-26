@@ -44,4 +44,8 @@ public class Int8Adapter {
     os.write(value);
   }
 
+  public static byte copyOf(byte value) {
+    return value;
+  }
+
 }

@@ -44,4 +44,8 @@ public class Int64Adapter {
     os.writeLong(value);
   }
 
+  public static long copyOf(long value) {
+    return value;
+  }
+
 }

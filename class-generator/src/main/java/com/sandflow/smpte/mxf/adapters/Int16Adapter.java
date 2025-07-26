@@ -44,4 +44,8 @@ public class Int16Adapter {
     os.writeShort(value);
   }
 
+  public static short copyOf(short value) {
+    return value;
+  }
+
 }

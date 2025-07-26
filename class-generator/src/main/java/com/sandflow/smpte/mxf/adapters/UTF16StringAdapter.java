@@ -52,5 +52,8 @@ public class UTF16StringAdapter {
     osw.write(s);
     osw.flush();
   }
-
+  
+  public static String copyOf(String s) {
+    return s;
+  }
 }

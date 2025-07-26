@@ -63,4 +63,11 @@ public class {{name}} {
     {{memberAdapterName}}.toStream(value.{{memberName}}, os, ctx);{{/each}}
   }
 
+  public static {{name}} copyOf({{name}} src) {
+    var dst = new {{name}}();
+{{#each members}}
+    dst.{{memberName}} = {{memberAdapterName}}.copyOf(src.{{memberName}});{{/each}}    
+    return dst;
+  }
+
 }

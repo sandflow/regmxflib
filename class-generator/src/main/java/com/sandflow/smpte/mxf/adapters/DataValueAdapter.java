@@ -43,11 +43,15 @@ public class DataValueAdapter {
     while ((r = is.read(buffer)) != -1) {
       value.write(buffer, 0, r);
     }
-    return value.toByteArray();    
+    return value.toByteArray();
   }
 
   public static void toStream(byte[] value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
     os.write(value);
+  }
+
+  public static byte[] copyOf(byte[] value) {
+    return value.clone();
   }
 
 }

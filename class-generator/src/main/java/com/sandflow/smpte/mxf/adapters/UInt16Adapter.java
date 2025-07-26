@@ -43,4 +43,8 @@ public class UInt16Adapter {
   public static void toStream(int value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
     os.writeUnsignedShort(value);
   }
+
+  public static int copyOf(int value) {
+    return value;
+  }
 }

@@ -50,4 +50,9 @@ public class ExtendibleEnumerationAdapter {
   public static void toStream(UL value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
     os.writeUL(value);
   }
+
+  public static UL copyOf(UL value) {
+    return value;
+  }
+
 }

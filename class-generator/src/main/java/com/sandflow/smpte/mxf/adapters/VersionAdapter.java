@@ -49,4 +49,7 @@ public class VersionAdapter {
     os.writeUnsignedByte((byte) value.getMinor());
   }
 
+  public static Version copyOf(Version value) {
+    return new Version(value);
+  }
 }

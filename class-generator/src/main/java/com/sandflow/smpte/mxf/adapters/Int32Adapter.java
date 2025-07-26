@@ -44,4 +44,8 @@ public class Int32Adapter {
     os.writeInt(value);
   }
 
+  public static int copyOf(int value) {
+    return value;
+  }
+
 }
