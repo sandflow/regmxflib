@@ -38,11 +38,11 @@ import com.sandflow.smpte.mxf.MXFOutputStream;
 
 public class UTF8StringAdapter {
   public static String fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
-    return CharacterAdapterUtilities.readerToString(new InputStreamReader(is, StandardCharsets.UTF_8), false);
+    return CharacterAdapterUtilities.readerToString(new InputStreamReader(is.stream(), StandardCharsets.UTF_8), false);
   }
 
   public static void toStream(String s, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
-    var osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
+    var osw = new OutputStreamWriter(os.stream(), StandardCharsets.UTF_8);
     osw.write(s);
     osw.flush();
   }

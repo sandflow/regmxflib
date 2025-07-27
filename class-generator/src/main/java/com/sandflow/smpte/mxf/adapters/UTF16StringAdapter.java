@@ -41,13 +41,13 @@ public class UTF16StringAdapter {
 
   public static String fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return CharacterAdapterUtilities.readerToString(
-        new InputStreamReader(is,
+        new InputStreamReader(is.stream(),
             is.getByteOrder() == ByteOrder.BIG_ENDIAN ? StandardCharsets.UTF_16BE : StandardCharsets.UTF_16LE),
         true);
   }
 
   public static void toStream(String s, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
-    var osw = new OutputStreamWriter(os,
+    var osw = new OutputStreamWriter(os.stream(),
         os.getByteOrder() == ByteOrder.BIG_ENDIAN ? StandardCharsets.UTF_16BE : StandardCharsets.UTF_16LE);
     osw.write(s);
     osw.flush();

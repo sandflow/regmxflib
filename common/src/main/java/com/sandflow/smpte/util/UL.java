@@ -119,9 +119,6 @@ public class UL implements Cloneable {
         return getValueOctet(REGISTRY_DESIGNATOR_BYTE);
     }
 
-    private UL() {
-        this.value = new byte[16];
-    }
 
     /**
      * Creates a version-normalized UL

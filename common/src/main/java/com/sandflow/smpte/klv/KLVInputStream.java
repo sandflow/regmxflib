@@ -33,13 +33,15 @@ import java.io.InputStream;
 
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.util.AUID;
-import com.sandflow.smpte.util.CountingInputStream;
 import com.sandflow.smpte.util.UL;
 
 /**
  * KLVInputStream allows KLV data structures to be read from an InputStream
  */
-public class KLVInputStream extends CountingInputStream {
+public class KLVInputStream {
+
+  private final InputStream is;
+  private long read = 0;
 
   /**
    * Possible byte ordering of a KLV packet
@@ -67,8 +69,26 @@ public class KLVInputStream extends CountingInputStream {
    * @param byteorder Byte ordering of the file
    */
   public KLVInputStream(InputStream is, ByteOrder byteorder) {
-    super(is);
+    this.is = is;
     this.byteorder = byteorder;
+  }
+
+  public InputStream stream() {
+    return this.is;
+  }
+
+  public int read() throws IOException {
+    int r = this.is.read();
+    this.read++;
+    return r;
+  }
+
+  public void resetCount() {
+    this.read = 0;
+  }
+
+  public long getReadCount() {
+    return this.read;
   }
 
   /**
@@ -177,6 +197,17 @@ public class KLVInputStream extends CountingInputStream {
     readFully(value);
 
     return new MemoryTriplet(auid, value);
+  }
+
+  public int read(byte[] b, int off, int len) throws IOException {
+    int r = this.is.read(b, off, len);
+    if (r != -1)
+      this.read += r;
+    return r;
+  }
+
+  public int read(byte[] b) throws IOException {
+    return this.read(b, 0, b.length);
   }
 
   public final void readFully(byte[] b) throws IOException {
@@ -294,9 +325,10 @@ public class KLVInputStream extends CountingInputStream {
     return n - r;
   }
 
-  @Override
-  public void close() throws IOException {
-    /* do nothing since this is pure filtering stream */
+  public long skip(long n) throws IOException {
+    long r = this.is.skip(n);
+    this.read += r;
+    return r;
   }
 
 }

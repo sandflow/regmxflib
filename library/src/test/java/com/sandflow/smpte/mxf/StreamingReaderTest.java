@@ -78,6 +78,8 @@ class StreamingReaderTest {
     }
 
     assertIterableEquals(actualSizes, measuredSizes);
+
+    sr.close();
   }
 
   @Test

@@ -95,7 +95,6 @@ public class Set implements Group {
       }
       mbos.write(t.getValue());
     }
-    mbos.close();
 
     /* write the local set */
     byte[] lsKey = g.getKey().getValue().clone();
@@ -105,7 +104,7 @@ public class Set implements Group {
 
     mos.writeUL(new UL(lsKey));
     mos.writeBERLength(bos.size());
-    bos.writeTo(mos);
+    bos.writeTo(mos.stream());
   }
 
   /**

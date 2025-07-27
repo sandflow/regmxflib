@@ -25,8 +25,6 @@
  */
 package com.sandflow.smpte.register;
 
-import com.sandflow.smpte.register.exceptions.DuplicateEntryException;
-import com.sandflow.smpte.util.UL;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -34,7 +32,10 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.List;
+
+import com.sandflow.smpte.register.exceptions.DuplicateEntryException;
+import com.sandflow.smpte.util.UL;
+
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;

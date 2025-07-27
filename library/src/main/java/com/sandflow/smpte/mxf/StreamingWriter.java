@@ -316,7 +316,6 @@ public class StreamingWriter {
         mos.writeUL(elementKey);
         mos.writeBERLength(clipSize);
         mos.flush();
-        mos.close();
       } else {
         StreamingWriter.this.fos.writeUL(elementKey);
         StreamingWriter.this.fos.writeBERLength(clipSize);
@@ -418,7 +417,6 @@ public class StreamingWriter {
       mos.writeUL(elementKey);
       mos.writeBERLength(elementSize);
       this.setPosition(this.getPosition() + mos.getWrittenCount());
-      mos.close();
 
       this.setBytesToWrite(elementSize);
     }
@@ -839,7 +837,7 @@ public class StreamingWriter {
     fos.write(headerbytes);
 
     /* write the RIP */
-    this.rip.toStream(fos);
+    this.rip.toStream(fos.stream());
 
     fos.flush();
 
@@ -928,7 +926,7 @@ public class StreamingWriter {
     }
 
     /* required 8 KB fill item per ST 2067-5 */
-    FillItem.toStream(mos, (short) 8192);
+    FillItem.toStream(mos.stream(), (short) 8192);
 
     mos.flush();
 

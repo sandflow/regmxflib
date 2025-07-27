@@ -147,7 +147,7 @@ public class StreamingFileInfo {
           new MXFEvent(MXFEvent.EventCodes.MISSING_PARTITION_PACK, "No Partition Pack found"));
     }
 
-    this.preface = readHeaderMetadataFrom(mis, pp.getHeaderByteCount(), evthandler);
+    this.preface = readHeaderMetadataFrom(is, pp.getHeaderByteCount(), evthandler);
 
     if (this.preface == null) {
       throw new RuntimeException();

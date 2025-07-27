@@ -32,7 +32,6 @@ import java.io.OutputStream;
 import com.sandflow.smpte.klv.KLVInputStream.ByteOrder;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.util.AUID;
-import com.sandflow.smpte.util.CountingOutputStream;
 import com.sandflow.smpte.util.UL;
 
 /**
@@ -40,9 +39,11 @@ import com.sandflow.smpte.util.UL;
  * 
  * TODO: documentation
  */
-public class KLVOutputStream extends CountingOutputStream {
+public class KLVOutputStream {
 
   private ByteOrder byteorder;
+  private OutputStream os;
+  private long written = 0;
 
   /**
    * Assumes big endian byte ordering.
@@ -61,15 +62,19 @@ public class KLVOutputStream extends CountingOutputStream {
    */
   public KLVOutputStream(OutputStream os, ByteOrder byteorder) {
 
-    super(os);
+    this.os = os;
     this.byteorder = byteorder;
+  }
+
+  public long getWrittenCount() {
+    return this.written;
   }
 
   /**
    * @return The underlying output stream
    */
   public OutputStream stream() {
-    return this.out;
+    return this.os;
   }
 
   /**
@@ -215,6 +220,24 @@ public class KLVOutputStream extends CountingOutputStream {
     this.writeInt((int) (v & 0xFFFFFFFF));
   }
 
+  public void write(int b) throws IOException {
+    this.os.write(b);
+    this.written++;
+  }
+
+  public void write(byte[] b, int off, int len) throws IOException {
+    this.os.write(b, off, len);
+    this.written += len;
+  }
+
+  public void write(byte[] b) throws IOException {
+    this.write(b, 0, b.length);
+  }
+
+  public void flush() throws IOException {
+    this.os.flush();
+  }
+
   public void writeInt(int v) throws IOException {
     if (byteorder == ByteOrder.BIG_ENDIAN) {
       write(((v >> 24) & 0xFF));
@@ -264,11 +287,6 @@ public class KLVOutputStream extends CountingOutputStream {
       this.write(v & 0xFF);
       this.write((v >> 8) & 0xFF);
     }
-  }
-
-  @Override
-  public void close() throws IOException {
-    /* do nothing since this is pure filtering stream */
   }
 
 }

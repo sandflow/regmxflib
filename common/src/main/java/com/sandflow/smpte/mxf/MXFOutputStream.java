@@ -34,7 +34,6 @@ import java.util.function.Function;
 
 import com.sandflow.smpte.klv.KLVInputStream.ByteOrder;
 import com.sandflow.smpte.klv.KLVOutputStream;
-import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.util.IDAU;
 import com.sandflow.smpte.util.UMID;
@@ -62,6 +61,16 @@ public class MXFOutputStream extends KLVOutputStream {
    */
   public MXFOutputStream(OutputStream os, ByteOrder byteorder) {
     super(os, byteorder);
+  }
+
+  /**
+   * Uses an existing MXFOutputStream
+   *
+   * @param mos MXFOutputStream from which the byte ordering and underlying
+   * OutputStream will be used
+   */
+  public MXFOutputStream(MXFOutputStream mos) {
+    super(mos.stream(), mos.getByteOrder());
   }
 
   /**

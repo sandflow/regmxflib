@@ -90,7 +90,7 @@ public class StreamingReader extends InputStream {
       this.mis.skipFully(this.remainingElementBytes);
     }
 
-    this.elementInfo = MXFFiles.nextElement(this.mis);
+    this.elementInfo = MXFFiles.nextElement(this.mis.stream());
     if (this.elementInfo == null) {
       this.state = State.DONE;
       return false;

@@ -99,7 +99,6 @@ public class PrimerPack {
       os.writeUnsignedShort((int) entry.localTag().longValue());
       os.writeAUID(entry.auid());
     }
-    os.close();
     return new MemoryTriplet(new AUID(KEY), bos.toByteArray());
   }
 

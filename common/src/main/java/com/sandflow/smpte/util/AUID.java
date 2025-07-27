@@ -59,8 +59,6 @@ public class AUID {
 
   private byte[] value;
 
-  private AUID() {
-  }
 
   /**
    * Instantiates a AUID from a 16-byte buffer
