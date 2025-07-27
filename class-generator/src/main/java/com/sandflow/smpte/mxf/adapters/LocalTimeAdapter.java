@@ -31,14 +31,14 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 
 public class LocalTimeAdapter {
   public static final Integer ITEM_LENGTH = 4;
 
-  public static LocalTime fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+  public static LocalTime fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
 
     /*
      * INFO: ST 2001-1 and ST 377-1 diverge on the meaning of 'fraction'.
@@ -52,7 +52,7 @@ public class LocalTimeAdapter {
     return LocalTime.of(hour, minute, second, 4 * fraction * 1000);
   }
 
-  public static void toStream(LocalDateTime t, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+  public static void toStream(LocalDateTime t, MXFDataOutput os, MXFOutputContext ctx) throws IOException {
     os.writeUnsignedByte((byte) t.getHour());
     os.writeUnsignedByte((byte) t.getMinute());
     os.writeUnsignedByte((byte) t.getSecond());

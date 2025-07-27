@@ -29,18 +29,18 @@ package com.sandflow.smpte.mxf.adapters;
 import java.io.IOException;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 
 public class BooleanAdapter {
   public static final Integer ITEM_LENGTH = 1;
 
-  public static Boolean fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+  public static Boolean fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
     return is.readByte() != 0;
   }
 
-  public static void toStream(Boolean value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+  public static void toStream(Boolean value, MXFDataOutput os, MXFOutputContext ctx) throws IOException {
     os.writeByte((byte) (value ? 1 : 0));
   }
 

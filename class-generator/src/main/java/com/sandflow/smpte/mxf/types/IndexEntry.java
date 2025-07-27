@@ -35,9 +35,9 @@ import java.io.IOException;
 import org.apache.commons.numbers.fraction.Fraction;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 import com.sandflow.smpte.mxf.adapters.RationalAdapter;
 
 public class IndexEntry {
@@ -53,7 +53,7 @@ public class IndexEntry {
     return 11 + 4 * nsl + 8 * npe;
   }
 
-  public static IndexEntry fromStream(MXFInputStream is, MXFInputContext ctx, short nsl, short npe) throws IOException {
+  public static IndexEntry fromStream(MXFDataInput is, MXFInputContext ctx, short nsl, short npe) throws IOException {
     var r = new IndexEntry();
 
     r.TemporalOffset = is.readByte();
@@ -86,7 +86,7 @@ public class IndexEntry {
     StreamOffset = streamOffset;
   }
 
-  public static void toStream(IndexEntry value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+  public static void toStream(IndexEntry value, MXFDataOutput os, MXFOutputContext ctx) throws IOException {
 
     os.writeByte(value.TemporalOffset);
     os.writeByte(value.KeyFrameOffset);

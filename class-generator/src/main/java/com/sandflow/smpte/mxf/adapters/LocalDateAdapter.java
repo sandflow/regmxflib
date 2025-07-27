@@ -31,14 +31,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 
 public class LocalDateAdapter {
   public static final Integer ITEM_LENGTH = 4;
 
-  public static LocalDate fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+  public static LocalDate fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
     int year = is.readUnsignedShort();
     int month = is.readUnsignedByte();
     int day = is.readUnsignedByte();
@@ -46,7 +46,7 @@ public class LocalDateAdapter {
     return LocalDate.of(year, month, day);
   }
 
-  public static void toStream(LocalDateTime t, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+  public static void toStream(LocalDateTime t, MXFDataOutput os, MXFOutputContext ctx) throws IOException {
     os.writeUnsignedShort(t.getYear());
     os.writeUnsignedByte((byte) t.getMonth().getValue());
     os.writeUnsignedByte((byte) t.getDayOfMonth());

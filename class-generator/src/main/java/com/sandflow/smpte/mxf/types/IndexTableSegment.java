@@ -39,9 +39,9 @@ import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.mxf.ClassFactory;
 import com.sandflow.smpte.mxf.SetItemAdapter;
 import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 
@@ -179,83 +179,83 @@ public class IndexTableSegment {
 
     if ((t = s.getItem(SliceCount_AUID)) != null) {
       this.SliceCount = com.sandflow.smpte.mxf.adapters.UInt8Adapter
-          .fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
+          .fromStream(new MXFDataInput(t.getValueAsStream()), ctx);
     }
 
     if ((t = s.getItem(DeltaEntryArray_AUID)) != null) {
       this.DeltaEntryArray = com.sandflow.smpte.mxf.types.DeltaEntryArray
-          .fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
+          .fromStream(new MXFDataInput(t.getValueAsStream()), ctx);
     }
 
     if ((t = s.getItem(VBEByteCount_AUID)) != null) {
       this.VBEByteCount = com.sandflow.smpte.mxf.adapters.UInt64Adapter
-          .fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
+          .fromStream(new MXFDataInput(t.getValueAsStream()), ctx);
     }
 
     if ((t = s.getItem(ForwardIndexDirection_AUID)) != null) {
       this.ForwardIndexDirection = com.sandflow.smpte.mxf.adapters.BooleanAdapter
-          .fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
+          .fromStream(new MXFDataInput(t.getValueAsStream()), ctx);
     }
 
     if ((t = s.getItem(IndexEditRate_AUID)) != null) {
       this.IndexEditRate = com.sandflow.smpte.mxf.adapters.RationalAdapter
-          .fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
+          .fromStream(new MXFDataInput(t.getValueAsStream()), ctx);
     }
 
     if ((t = s.getItem(IndexStreamID_AUID)) != null) {
       this.IndexStreamID = com.sandflow.smpte.mxf.adapters.UInt32Adapter
-          .fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
+          .fromStream(new MXFDataInput(t.getValueAsStream()), ctx);
     }
 
     if ((t = s.getItem(IndexDuration_AUID)) != null) {
       this.IndexDuration = com.sandflow.smpte.mxf.adapters.Int64Adapter
-          .fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
+          .fromStream(new MXFDataInput(t.getValueAsStream()), ctx);
     }
 
     if ((t = s.getItem(PositionTableCount_AUID)) != null) {
       this.PositionTableCount = com.sandflow.smpte.mxf.adapters.UInt8Adapter
-          .fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
+          .fromStream(new MXFDataInput(t.getValueAsStream()), ctx);
     }
 
     if ((t = s.getItem(InstanceID_AUID)) != null) {
-      this.InstanceID = com.sandflow.smpte.mxf.adapters.UUIDAdapter.fromStream(new MXFInputStream(t.getValueAsStream()),
+      this.InstanceID = com.sandflow.smpte.mxf.adapters.UUIDAdapter.fromStream(new MXFDataInput(t.getValueAsStream()),
           ctx);
     }
 
     if ((t = s.getItem(IndexStartPosition_AUID)) != null) {
       this.IndexStartPosition = com.sandflow.smpte.mxf.adapters.Int64Adapter
-          .fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
+          .fromStream(new MXFDataInput(t.getValueAsStream()), ctx);
     }
 
     if ((t = s.getItem(SingleEssenceLocation_AUID)) != null) {
       this.SingleEssenceLocation = com.sandflow.smpte.mxf.adapters.BooleanAdapter
-          .fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
+          .fromStream(new MXFDataInput(t.getValueAsStream()), ctx);
     }
 
     if ((t = s.getItem(SingleIndexLocation_AUID)) != null) {
       this.SingleIndexLocation = com.sandflow.smpte.mxf.adapters.BooleanAdapter
-          .fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
+          .fromStream(new MXFDataInput(t.getValueAsStream()), ctx);
     }
 
     if ((t = s.getItem(ExtStartOffset_AUID)) != null) {
       this.ExtStartOffset = com.sandflow.smpte.mxf.adapters.UInt64Adapter
-          .fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
+          .fromStream(new MXFDataInput(t.getValueAsStream()), ctx);
     }
 
     if ((t = s.getItem(IndexEntryArray_AUID)) != null) {
       this.IndexEntryArray = com.sandflow.smpte.mxf.types.IndexEntryArray
-          .fromStream(new MXFInputStream(t.getValueAsStream()), ctx, this.SliceCount == null ? 0 : this.SliceCount,
+          .fromStream(new MXFDataInput(t.getValueAsStream()), ctx, this.SliceCount == null ? 0 : this.SliceCount,
               this.PositionTableCount == null ? 0 : this.PositionTableCount);
     }
 
     if ((t = s.getItem(EditUnitByteCount_AUID)) != null) {
       this.EditUnitByteCount = com.sandflow.smpte.mxf.adapters.UInt32Adapter
-          .fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
+          .fromStream(new MXFDataInput(t.getValueAsStream()), ctx);
     }
 
     if ((t = s.getItem(EssenceStreamID_AUID)) != null) {
       this.EssenceStreamID = com.sandflow.smpte.mxf.adapters.UInt32Adapter
-          .fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
+          .fromStream(new MXFDataInput(t.getValueAsStream()), ctx);
     }
 
   }
@@ -278,7 +278,7 @@ public class IndexTableSegment {
     return null;
   }
 
-  public static IndexTableSegment fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+  public static IndexTableSegment fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
     try {
       var uuid = is.readUUID();
       var s = ctx.getSet(uuid);
@@ -324,7 +324,7 @@ public class IndexTableSegment {
         com.sandflow.smpte.mxf.adapters.UInt64Adapter::toStream, s, ctx);
     if (this.IndexEntryArray != null) {
       ByteArrayOutputStream ibos = new ByteArrayOutputStream();
-      MXFOutputStream imos = new MXFOutputStream(ibos);
+      MXFDataOutput imos = new MXFDataOutput(ibos);
       com.sandflow.smpte.mxf.types.IndexEntryArray.toStream(
           this.IndexEntryArray,
           imos,
@@ -346,7 +346,7 @@ public class IndexTableSegment {
     ctx.putSet(s);
   }
 
-  public static void toStream(IndexTableSegment value, MXFOutputStream mos, MXFOutputContext ctx) throws IOException {
+  public static void toStream(IndexTableSegment value, MXFDataOutput mos, MXFOutputContext ctx) throws IOException {
     mos.writeUUID(value.InstanceID);
     value.toSet(ctx);
   }

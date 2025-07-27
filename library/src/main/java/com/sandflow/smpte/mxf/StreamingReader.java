@@ -50,7 +50,7 @@ public class StreamingReader extends InputStream {
     DONE
   }
 
-  private MXFInputStream mis;
+  private MXFDataInput mis;
   protected State state;
   private ElementInfo elementInfo;
   private long remainingElementBytes = 0;
@@ -68,7 +68,7 @@ public class StreamingReader extends InputStream {
       throw new NullPointerException("InputStream cannot be null");
     }
 
-    this.mis = new MXFInputStream(is);
+    this.mis = new MXFDataInput(is);
 
     this.state = State.READY;
   }

@@ -36,9 +36,9 @@ import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 
 /**
- * KLVInputStream allows KLV data structures to be read from an InputStream
+ * KLVDataInput allows KLV data structures to be read from an InputStream
  */
-public class KLVInputStream {
+public class KLVDataInput {
 
   private final InputStream is;
   private long read = 0;
@@ -58,7 +58,7 @@ public class KLVInputStream {
    * 
    * @param is InputStream to read from
    */
-  public KLVInputStream(InputStream is) {
+  public KLVDataInput(InputStream is) {
     this(is, ByteOrder.BIG_ENDIAN);
   }
 
@@ -68,7 +68,7 @@ public class KLVInputStream {
    * @param is        InputStream to read from
    * @param byteorder Byte ordering of the file
    */
-  public KLVInputStream(InputStream is, ByteOrder byteorder) {
+  public KLVDataInput(InputStream is, ByteOrder byteorder) {
     this.is = is;
     this.byteorder = byteorder;
   }

@@ -31,22 +31,22 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 
-import com.sandflow.smpte.klv.KLVInputStream.ByteOrder;
+import com.sandflow.smpte.klv.KLVDataInput.ByteOrder;
 import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 
 public class UTF16CharacterAdapter {
 
-  public static String fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+  public static String fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
     return CharacterAdapterUtilities.readerToString(
         new InputStreamReader(is.stream(),
             is.getByteOrder() == ByteOrder.BIG_ENDIAN ? StandardCharsets.UTF_16BE : StandardCharsets.UTF_16LE),
         false);
   }
 
-  public static void toStream(String s, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+  public static void toStream(String s, MXFDataOutput os, MXFOutputContext ctx) throws IOException {
     var osw = new OutputStreamWriter(os.stream(),
         os.getByteOrder() == ByteOrder.BIG_ENDIAN ? StandardCharsets.UTF_16BE : StandardCharsets.UTF_16LE);
     osw.write(s);

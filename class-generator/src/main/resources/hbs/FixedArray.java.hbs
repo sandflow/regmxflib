@@ -33,9 +33,9 @@ package com.sandflow.smpte.mxf.types;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 
 public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
@@ -44,7 +44,7 @@ public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
     super();
   }
 
-   public static {{adapterName}} fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
+   public static {{adapterName}} fromStream(MXFDataInput is, MXFInputContext ctx)  throws IOException {
     var items = new {{adapterName}}();
 
     for (int i = 0; i < {{itemCount}}; i++) {
@@ -57,7 +57,7 @@ public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
     return items;
    }
 
-  public static void toStream({{adapterName}} v, MXFOutputStream os, MXFOutputContext ctx)  throws IOException {
+  public static void toStream({{adapterName}} v, MXFDataOutput os, MXFOutputContext ctx)  throws IOException {
     for (int i = 0; i < {{itemCount}}; i++) {
       {{itemAdapterName}}.toStream(v.get(i), os, ctx);
     }

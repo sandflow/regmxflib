@@ -33,7 +33,7 @@ import java.util.HashMap;
 
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.klv.exceptions.TripletLengthException;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 
@@ -70,7 +70,7 @@ public class Set implements Group {
 
   }
 
-  public static void toStreamAsLocalSet(Group g, LocalTagResolver tags, MXFOutputStream mos)
+  public static void toStreamAsLocalSet(Group g, LocalTagResolver tags, MXFDataOutput mos)
       throws EOFException, IOException {
     if (g == null || !g.getKey().isGroup()) {
       throw new IllegalArgumentException("Not a group");
@@ -80,7 +80,7 @@ public class Set implements Group {
 
     /* write the value of the local set */
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    MXFOutputStream mbos = new MXFOutputStream(bos);
+    MXFDataOutput mbos = new MXFDataOutput(bos);
 
     for (Triplet t : g.getItems()) {
       Long localTag = tags.getLocalTag(t.getKey());
@@ -129,7 +129,7 @@ public class Set implements Group {
 
       UL lskey = localset.getKey().asUL();
 
-      KLVInputStream kis = new KLVInputStream(localset.getValueAsStream());
+      KLVDataInput kis = new KLVDataInput(localset.getValueAsStream());
 
       Set set = new Set(lskey);
 

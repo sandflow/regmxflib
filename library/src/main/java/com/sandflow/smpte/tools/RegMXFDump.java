@@ -45,7 +45,7 @@ import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.mxf.FillItem;
 import com.sandflow.smpte.mxf.HeaderMetadataSet;
 import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.PartitionPack;
 import com.sandflow.smpte.mxf.PrimerPack;
 import com.sandflow.smpte.mxf.RandomIndexPack;
@@ -96,7 +96,7 @@ public class RegMXFDump {
     };
 
     OutputStreamWriter osw = new OutputStreamWriter(os);
-    MXFInputStream mis = new MXFInputStream(is);
+    MXFDataInput mis = new MXFDataInput(is);
 
     try {
       osw.write("[\n");

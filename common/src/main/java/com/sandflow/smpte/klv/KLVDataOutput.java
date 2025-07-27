@@ -29,17 +29,17 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import com.sandflow.smpte.klv.KLVInputStream.ByteOrder;
+import com.sandflow.smpte.klv.KLVDataInput.ByteOrder;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 
 /**
- * KLVOutputStream allows KLV data structures to be write to an OutputStream
+ * KLVDataOutput allows KLV data structures to be write to an OutputStream
  * 
  * TODO: documentation
  */
-public class KLVOutputStream {
+public class KLVDataOutput {
 
   private ByteOrder byteorder;
   private OutputStream os;
@@ -50,7 +50,7 @@ public class KLVOutputStream {
    * 
    * @param os OutputStream to write to
    */
-  public KLVOutputStream(OutputStream os) {
+  public KLVDataOutput(OutputStream os) {
     this(os, ByteOrder.BIG_ENDIAN);
   }
 
@@ -60,7 +60,7 @@ public class KLVOutputStream {
    * @param os        OutputStream to write to
    * @param byteorder Byte ordering of the file
    */
-  public KLVOutputStream(OutputStream os, ByteOrder byteorder) {
+  public KLVDataOutput(OutputStream os, ByteOrder byteorder) {
 
     this.os = os;
     this.byteorder = byteorder;

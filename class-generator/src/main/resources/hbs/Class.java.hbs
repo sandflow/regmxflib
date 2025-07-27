@@ -38,9 +38,9 @@ import com.sandflow.smpte.mxf.SetItemAdapter;{{/if}}
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.mxf.ClassFactory;
 import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 import com.sandflow.smpte.klv.Set;
 
 /**
@@ -97,7 +97,7 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
     Triplet t;{{/if}}
 {{#each ownMembers}}
     if ((t = s.getItem({{symbol}}_AUID)) != null) {
-      this.{{symbol}} = {{adapterName}}.fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
+      this.{{symbol}} = {{adapterName}}.fromStream(new MXFDataInput(t.getValueAsStream()), ctx);
     }
 {{/each}}
 
@@ -122,7 +122,7 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
     return null;
   }
 
-  public static {{className}} fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+  public static {{className}} fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
     try {
       var uuid = is.readUUID();
       var s = ctx.getSet(uuid);
@@ -151,7 +151,7 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
     ctx.putSet(s);
   }
 
-  public static void toStream({{className}} value, MXFOutputStream mos, MXFOutputContext ctx) throws IOException {
+  public static void toStream({{className}} value, MXFDataOutput mos, MXFOutputContext ctx) throws IOException {
     mos.writeUUID(value.InstanceID);
     value.toSet(ctx);
   }

@@ -32,12 +32,12 @@ import java.io.ByteArrayOutputStream;
 
 import org.junit.jupiter.api.Test;
 
-class KLVOutputStreamTest {
+class KLVDataOutputTest {
 
   @Test
   void testWriteBER4Length() throws Exception {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    KLVOutputStream kos = new KLVOutputStream(bos);
+    KLVDataOutput kos = new KLVDataOutput(bos);
     kos.writeBER4Length(0xf345);
     assertArrayEquals(bos.toByteArray(), new byte[] { (byte) 0x83, 0x00, (byte) 0xf3, 0x45 });
   }
@@ -45,14 +45,14 @@ class KLVOutputStreamTest {
   @Test
   void testWriteBER4LengthOutOfRange() throws Exception {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    KLVOutputStream kos = new KLVOutputStream(bos);
+    KLVDataOutput kos = new KLVDataOutput(bos);
     assertThrowsExactly(IllegalArgumentException.class, () -> kos.writeBER4Length(0x01122345));
   }
 
   @Test
   void testWriteLong() throws Exception {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    KLVOutputStream kos = new KLVOutputStream(bos);
+    KLVDataOutput kos = new KLVDataOutput(bos);
     kos.writeLong(0xFFFFFFFFFFFFFFFFL);
     assertArrayEquals(bos.toByteArray(), new byte[] { (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
         (byte) 0xFF, (byte) 0xFF, (byte) 0xFF });
@@ -61,7 +61,7 @@ class KLVOutputStreamTest {
   @Test
   void testWriteUnsignedByte() throws Exception {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    KLVOutputStream kos = new KLVOutputStream(bos);
+    KLVDataOutput kos = new KLVDataOutput(bos);
     kos.writeUnsignedByte((short) 255);
     assertArrayEquals(bos.toByteArray(), new byte[] { (byte) 0xFF });
   }

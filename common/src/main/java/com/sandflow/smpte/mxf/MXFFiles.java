@@ -60,7 +60,7 @@ public class MXFFiles {
    */
   public static long seekFooterPartition(SeekableByteChannel mxffile) throws IOException, KLVException {
     long headeroffset = seekHeaderPartition(mxffile);
-    MXFInputStream kis = new MXFInputStream(Channels.newInputStream(mxffile));
+    MXFDataInput kis = new MXFDataInput(Channels.newInputStream(mxffile));
     Triplet t = kis.readTriplet();
     if (t == null) {
       return -1;
@@ -90,7 +90,7 @@ public class MXFFiles {
 
     /* read RIP */
 
-    kis = new MXFInputStream(Channels.newInputStream(mxffile));
+    kis = new MXFDataInput(Channels.newInputStream(mxffile));
 
     t = kis.readTriplet();
 
@@ -147,7 +147,7 @@ public class MXFFiles {
   }
 
   public static ElementInfo nextElement(InputStream is) throws IOException, KLVException {
-    MXFInputStream mis = new MXFInputStream(is);
+    MXFDataInput mis = new MXFDataInput(is);
 
     long sid = 0;
     AUID elementKey = mis.readAUID();

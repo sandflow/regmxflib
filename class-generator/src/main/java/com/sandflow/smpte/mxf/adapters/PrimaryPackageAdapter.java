@@ -30,9 +30,9 @@ import java.io.IOException;
 
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UMID;
 import com.sandflow.smpte.util.UUID;
@@ -42,18 +42,18 @@ public class PrimaryPackageAdapter {
 
   private static final AUID PACKAGEID_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01010101.01011510.00000000");
 
-  public static UMID fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+  public static UMID fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
     UUID uuid = is.readUUID();
     var s = ctx.getSet(uuid);
     if (s == null) {
       throw new RuntimeException();
     }
     Triplet t = s.getItem(PACKAGEID_AUID);
-    MXFInputStream mis = new MXFInputStream(t.getValueAsStream());
+    MXFDataInput mis = new MXFDataInput(t.getValueAsStream());
     return mis.readUMID();
   }
 
-  public static void toStream(UMID packageID, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+  public static void toStream(UMID packageID, MXFDataOutput os, MXFOutputContext ctx) throws IOException {
     UUID instanceID = ctx.getPackageInstanceID(packageID);
     if (instanceID == null) {
       throw new RuntimeException();
