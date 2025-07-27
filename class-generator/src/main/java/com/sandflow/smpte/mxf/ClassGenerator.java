@@ -218,7 +218,9 @@ public class ClassGenerator {
         data.put("parentClassName", parentClass.getSymbol());
       }
 
-      var members = new LinkedList<HashMap<String, String>>();
+      var ownMembers = new LinkedList<HashMap<String, String>>();
+      var inheritedMembers = new LinkedList<HashMap<String, String>>();
+      var allMembers = new LinkedList<HashMap<String, String>>();
 
       ClassDefinition c = def;
       while (true) {
@@ -248,7 +250,7 @@ public class ClassGenerator {
               member.put("isOptional", "true");
             }
 
-            /* TODO: this is pretty ugly */
+            /* is this an owned or inherited */
             if (c == def) {
               TypeMaker t = getTypeInformation(typeDef);
               member.put("typeName", t.getTypeName());
@@ -257,11 +259,12 @@ public class ClassGenerator {
               } else {
                 member.put("adapterName", t.getAdapterName());
               }
+              ownMembers.addFirst(member);
             } else {
-              member.put("isInherited", "true");
+               inheritedMembers.addFirst(member);
             }
 
-            members.addFirst(member);
+            allMembers.addFirst(member);
 
           } catch (Exception e) {
             System.out.println("Skipping %s because of %s".formatted(propertyDef.getSymbol(), e.getMessage()));
@@ -279,7 +282,9 @@ public class ClassGenerator {
         }
         c = (ClassDefinition) resolver.getDefinition(c.getParentClass());
       }
-      data.put("members", members);
+      data.put("ownMembers", ownMembers);
+      data.put("inheritedMembers", inheritedMembers);
+      data.put("allMembers", allMembers);
 
       generateSource(classTemplate, TYPE_PACKAGE_NAME, def.getSymbol(), data);
 

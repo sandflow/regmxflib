@@ -32,7 +32,7 @@ package com.sandflow.smpte.mxf.types;
 
 import java.io.IOException;
 
-{{#if members}}import com.sandflow.smpte.klv.Triplet;
+{{#if ownMembers}}import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.mxf.SetItemAdapter;{{/if}}
 import com.sandflow.smpte.util.UL;
@@ -45,26 +45,26 @@ import com.sandflow.smpte.klv.Set;
 
 /**
   * {{#if isAbstract}}<<abstract>> {{/if}}{{className}}
-  *{{#each members}}
+  *{{#each allMembers}}
   *   - {{symbol}} : {{typeDefinition}}{{#if isOptional}} [0..1]{{/if}}{{/each}}
   */
 public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassName}} extends {{parentClassName}}{{/if}} {
   private static final UL KEY = UL.fromURN("{{identification}}");
   public static final int ITEM_LENGTH = 16;
-{{#each members}}{{#unless isInherited}}
-  private static final AUID {{symbol}}_AUID = AUID.fromURN("{{identification}}");{{/unless}}{{/each}}
-{{#each members}}{{#unless isInherited}}
+{{#each ownMembers}}
+  private static final AUID {{symbol}}_AUID = AUID.fromURN("{{identification}}");{{/each}}
+{{#each ownMembers}}
   /**
     * {{{description}}}
     */
   public {{typeName}} {{symbol}};
-{{/unless}}{{/each}}
+{{/each}}
 
   {{#if isAbstract}}protected {{/if}}{{#unless isAbstract}}public {{/unless}}{{className}}({{className}} other) {
     {{#if parentClassName}}super(other);{{/if}}
-{{#each members}}{{#unless isInherited}}
+{{#each ownMembers}}
     this.{{symbol}} = {{adapterName}}.copyOf(other.{{symbol}});
-{{/unless}}{{/each}}
+{{/each}}
   }
 
   {{#if isAbstract}}protected {{/if}}{{#unless isAbstract}}public {{/unless}}{{className}}() {
@@ -90,14 +90,14 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
 {{#if parentClassName}}
     super.readFromSet(s, ctx);
 {{/if}}
-{{#if members}}
-    Triplet t;
-{{#each members}}{{#unless isInherited}}
+{{#if ownMembers}}
+    Triplet t;{{/if}}
+{{#each ownMembers}}
     if ((t = s.getItem({{symbol}}_AUID)) != null) {
       this.{{symbol}} = {{adapterName}}.fromStream(new MXFInputStream(t.getValueAsStream()), ctx);
     }
-{{/unless}}{{/each}}
-{{/if}}
+{{/each}}
+
   }
   public static {{className}} fromSet(Set s, MXFInputContext ctx) {
     Class<?> clazz = ClassFactory.getClass(s.getKey());
@@ -138,8 +138,8 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
   void addItemsToSet(Set s, MXFOutputContext ctx) throws IOException {
 {{#if parentClassName}}
     super.addItemsToSet(s, ctx);{{/if}}
-{{#each members}}{{#unless isInherited}}
-    SetItemAdapter.toSetItem(this.{{symbol}}, {{symbol}}_AUID, {{adapterName}}::toStream, s, ctx);{{/unless}}{{/each}}
+{{#each ownMembers}}
+    SetItemAdapter.toSetItem(this.{{symbol}}, {{symbol}}_AUID, {{adapterName}}::toStream, s, ctx);{{/each}}
   }
 
   public void toSet(MXFOutputContext ctx) throws IOException {

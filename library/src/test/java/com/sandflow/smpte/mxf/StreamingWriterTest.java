@@ -35,7 +35,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.IDN;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HexFormat;
