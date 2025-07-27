@@ -83,6 +83,9 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
 
 
   public static {{className}} copyOf({{className}} obj) {
+    if (obj == null) {
+      return null;
+    }
     return obj.copyOf();
   }
 

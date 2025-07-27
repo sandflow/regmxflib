@@ -64,6 +64,9 @@ public class {{name}} {
   }
 
   public static {{name}} copyOf({{name}} src) {
+    if (src == null) {
+      return null;
+    }
     var dst = new {{name}}();
 {{#each members}}
     dst.{{memberName}} = {{memberAdapterName}}.copyOf(src.{{memberName}});{{/each}}    

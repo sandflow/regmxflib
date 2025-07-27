@@ -72,6 +72,9 @@ public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
   }
 
   public static {{adapterName}} copyOf({{adapterName}} src) {
+    if (src == null) {
+      return null;
+    }
     var dst = new {{adapterName}}();
     for (var item : src) {
       dst.add({{itemAdapterName}}.copyOf(item));

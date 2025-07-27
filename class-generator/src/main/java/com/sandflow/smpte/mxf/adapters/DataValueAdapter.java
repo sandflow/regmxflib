@@ -51,6 +51,9 @@ public class DataValueAdapter {
   }
 
   public static byte[] copyOf(byte[] value) {
+    if (value == null) {
+      return null;
+    }
     return value.clone();
   }
 

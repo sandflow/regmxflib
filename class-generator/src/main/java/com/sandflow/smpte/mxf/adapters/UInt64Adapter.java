@@ -36,15 +36,15 @@ import com.sandflow.smpte.mxf.MXFOutputStream;
 public class UInt64Adapter {
   public static final Integer ITEM_LENGTH = 8;
 
-  public static long fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+  public static Long fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return is.readLong();
   }
 
-    public static void toStream(long value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+    public static void toStream(Long value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
     os.writeLong(value);
   }
 
-  public static long copyOf(long value) {
+  public static Long copyOf(Long value) {
     return value;
   }
 
