@@ -36,7 +36,7 @@ import com.sandflow.smpte.mxf.MXFOutputStream;
 public class UInt8Adapter {
   public static final Integer ITEM_LENGTH = 1;
 
-  public static short fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+  public static Short fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return (short) is.readUnsignedByte();
   }
 
@@ -44,4 +44,7 @@ public class UInt8Adapter {
     os.writeUnsignedByte(value);
   }
 
+  public static Short copyOf(Short value) {
+    return value;
+  }
 }

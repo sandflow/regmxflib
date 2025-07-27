@@ -31,7 +31,6 @@
 package com.sandflow.smpte.mxf.types;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.ArrayList;
 
 import com.sandflow.smpte.mxf.MXFInputStream;
@@ -62,5 +61,16 @@ public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
     for (int i = 0; i < {{itemCount}}; i++) {
       {{itemAdapterName}}.toStream(v.get(i), os, ctx);
     }
+  }
+
+  public static {{adapterName}} copyOf({{adapterName}} src) {
+    if (src == null) {
+      return null;
+    }
+    var dst = new {{adapterName}}();
+    for (var item : src) {
+      dst.add({{itemAdapterName}}.copyOf(item));
+    }
+    return dst;
   }
  }

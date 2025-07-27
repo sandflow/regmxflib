@@ -48,4 +48,8 @@ public class ASCIIStringAdapter {
     osw.flush();
   }
 
+  public static String copyOf(String s) {
+    return s;
+  }
+
 }

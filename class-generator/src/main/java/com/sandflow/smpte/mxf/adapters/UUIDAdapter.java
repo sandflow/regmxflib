@@ -45,4 +45,7 @@ public class UUIDAdapter {
     os.writeUUID(value);
   }
 
+  public static UUID copyOf(UUID s) {
+    return s;
+  }
 }

@@ -47,4 +47,7 @@ public class UTF8StringAdapter {
     osw.flush();
   }
 
+  public static String copyOf(String s) {
+    return s;
+  }
 }

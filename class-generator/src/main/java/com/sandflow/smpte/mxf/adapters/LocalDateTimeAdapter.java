@@ -59,4 +59,7 @@ public class LocalDateTimeAdapter {
     os.writeUnsignedByte((byte) (t.getNano() / 4000));
   }
 
+  public static LocalDateTime copyOf(LocalDateTime value) {
+    return value;
+  }
 }

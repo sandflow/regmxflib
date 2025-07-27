@@ -36,11 +36,15 @@ import com.sandflow.smpte.mxf.MXFOutputStream;
 public class UInt16Adapter {
   public static final Integer ITEM_LENGTH = 2;
 
-  public static int fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+  public static Integer fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return is.readUnsignedShort();
   }
 
-  public static void toStream(int value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+  public static void toStream(Integer value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
     os.writeUnsignedShort(value);
+  }
+
+  public static int copyOf(Integer value) {
+    return value;
   }
 }

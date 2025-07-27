@@ -39,6 +39,11 @@ public class Version {
     this.minor = minor;
   }
 
+  public Version(Version other) {
+    this.major = other.major;
+    this.minor = other.minor;
+  }
+
   public int getMajor() {
     return major;
   }

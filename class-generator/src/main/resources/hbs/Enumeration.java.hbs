@@ -70,4 +70,9 @@ public enum {{symbol}} {
   public static void toStream({{symbol}} value, MXFOutputStream os, MXFOutputContext ctx)  throws IOException {
       {{valuesAdapterName}}.toStream(value.value, os, ctx);
   }
+
+  public static {{symbol}} copyOf({{symbol}} obj) {
+    return obj;
+  }
+
 }

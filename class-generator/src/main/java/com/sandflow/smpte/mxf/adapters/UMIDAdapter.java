@@ -45,4 +45,7 @@ public class UMIDAdapter {
     os.writeUMID(value);
   }
 
+  public static UMID copyOf(UMID value) {
+    return value;
+  }
 }

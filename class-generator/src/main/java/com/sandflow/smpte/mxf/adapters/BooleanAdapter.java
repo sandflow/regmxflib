@@ -36,12 +36,16 @@ import com.sandflow.smpte.mxf.MXFOutputStream;
 public class BooleanAdapter {
   public static final Integer ITEM_LENGTH = 1;
 
-  public static boolean fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+  public static Boolean fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
     return is.readByte() != 0;
   }
 
-  public static void toStream(boolean value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+  public static void toStream(Boolean value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
     os.writeByte((byte) (value ? 1 : 0));
+  }
+
+  public static Boolean copyOf(Boolean s) {
+    return s;
   }
 
 }

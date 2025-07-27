@@ -45,4 +45,8 @@ public class AUIDAdapter {
     os.writeAUID(value);
   }
 
+  public static AUID copyOf(AUID value) {
+    return value;
+  }
+
 }
