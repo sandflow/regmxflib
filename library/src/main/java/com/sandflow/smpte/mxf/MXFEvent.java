@@ -32,7 +32,6 @@ package com.sandflow.smpte.mxf;
 
 import com.sandflow.util.events.BasicEvent;
 import com.sandflow.util.events.Event;
-import com.sandflow.util.events.EventHandler;
 
 /**
  * All events raised by this class are instance of this class
@@ -67,7 +66,25 @@ public class MXFEvent extends BasicEvent {
     /**
      * Inconsistent header metadata length
      */
-    INCONSISTENT_HEADER_LENGTH(Event.Severity.FATAL);
+    INCONSISTENT_HEADER_LENGTH(Event.Severity.FATAL),
+    /**
+     * Inconsistent header metadata length
+     */
+    RIP_NOTFOUND(Event.Severity.FATAL),
+    /**
+     * Inconsistent generic stream partition
+     */
+    BAD_GS_PARTITION(Event.Severity.WARN),
+    /**
+     * More than one essence container is present
+     */
+    TOO_MANY_ECS(Event.Severity.FATAL),
+    /**
+     * Invalid index segment
+     */
+    BAD_INDEX_SEGMENT(Event.Severity.FATAL);
+
+
 
     public final Event.Severity severity;
 
@@ -79,21 +96,6 @@ public class MXFEvent extends BasicEvent {
 
   public MXFEvent(MXFEvent.EventCodes kind, String message) {
     super(kind.severity, kind, message);
-  }
-
-  static void handle(EventHandler handler, com.sandflow.util.events.Event evt) throws MXFException {
-    if (handler != null) {
-      if (!handler.handle(evt) ||
-          evt.getSeverity() == MXFEvent.Severity.FATAL) {
-        /* die on FATAL events or if requested by the handler */
-        throw new MXFException(evt.getMessage());
-
-      }
-    } else if (evt.getSeverity() == MXFEvent.Severity.ERROR ||
-        evt.getSeverity() == MXFEvent.Severity.FATAL) {
-      /* if no event handler was provided, die on FATAL and ERROR events */
-      throw new MXFException(evt.getMessage());
-    }
   }
 
 }

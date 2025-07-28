@@ -75,7 +75,8 @@ public class GCEssenceTracks {
       }
 
       if (fp == null) {
-        throw new RuntimeException("No file packages found");
+        throw new IllegalArgumentException(String.format("Cannot find Package ID %s corresponding to Container SID %s",
+            ed.LinkedPackageID, ed.EssenceStreamID));
       }
 
       /* do we have a multi-descriptor */

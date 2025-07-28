@@ -42,7 +42,7 @@ public class StaticLocalTags {
     try {
       Class.forName("com.sandflow.smpte.mxf.StaticLocalTagsInitializer");
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new InternalError("Cannot initialize local tag register", e);
     }
   }
 

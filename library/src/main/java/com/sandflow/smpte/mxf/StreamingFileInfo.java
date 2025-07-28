@@ -61,7 +61,7 @@ public class StreamingFileInfo {
     }
 
     if (localreg == null) {
-      MXFEvent.handle(evthandler, new MXFEvent(
+      MXFException.handle(evthandler, new MXFEvent(
           MXFEvent.EventCodes.MISSING_PRIMER_PACK,
           "No Primer Pack found"));
     }
@@ -91,12 +91,12 @@ public class StreamingFileInfo {
           }
 
         } else {
-          MXFEvent.handle(evthandler, new MXFEvent(
+          MXFException.handle(evthandler, new MXFEvent(
               MXFEvent.EventCodes.GROUP_READ_FAILED,
               String.format("Failed to read Group: %s", t.getKey().toString())));
         }
       } catch (KLVException ke) {
-        MXFEvent.handle(evthandler, new MXFEvent(
+        MXFException.handle(evthandler, new MXFEvent(
             MXFEvent.EventCodes.GROUP_READ_FAILED,
             String.format("Failed to read Group %s with error %s", t.getKey().toString(), ke.getMessage())));
       }
@@ -106,7 +106,7 @@ public class StreamingFileInfo {
      * check that the header metadata length is consistent
      */
     if (mis.getReadCount() != headerByteCount) {
-      MXFEvent.handle(evthandler, new MXFEvent(
+      MXFException.handle(evthandler, new MXFEvent(
           MXFEvent.EventCodes.INCONSISTENT_HEADER_LENGTH,
           String.format("Actual Header Metadata length (%s) does not match the Partition Pack information (%s)",
               mis.getReadCount(), headerByteCount)));
@@ -143,7 +143,7 @@ public class StreamingFileInfo {
     }
 
     if (pp == null) {
-      MXFEvent.handle(evthandler,
+      MXFException.handle(evthandler,
           new MXFEvent(MXFEvent.EventCodes.MISSING_PARTITION_PACK, "No Partition Pack found"));
     }
 

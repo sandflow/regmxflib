@@ -115,7 +115,7 @@ public class GenericStreamDataElementKey {
       case WRAPPED:
         break;
       default:
-        throw new RuntimeException();
+        throw new IllegalArgumentException("Invalid KLV Type");
     }
 
     switch (bo) {
@@ -129,7 +129,7 @@ public class GenericStreamDataElementKey {
         dataOctet |= 0b1100;
         break;
       default:
-        throw new RuntimeException();
+        throw new IllegalArgumentException("Invalid Byte Order");
     }
 
     octets[DATA_KEY_DATA_OCTET] = dataOctet;
@@ -143,7 +143,7 @@ public class GenericStreamDataElementKey {
         wrappingOctet |= 0b10;
         break;
       default:
-        throw new RuntimeException();
+        throw new IllegalArgumentException("Invalid Access Unit Wrapping");
     }
 
     switch (multi) {
@@ -153,7 +153,7 @@ public class GenericStreamDataElementKey {
         wrappingOctet |= 0b100;
         break;
       default:
-        throw new RuntimeException();
+        throw new IllegalArgumentException("Invalid Multi-KLV Feature");
     }
 
     switch (es) {
@@ -163,7 +163,7 @@ public class GenericStreamDataElementKey {
       case OTHER:
         break;
       default:
-        throw new RuntimeException();
+        throw new IllegalArgumentException("Invalid Essence Synchronization");
     }
 
     octets[DATA_KEY_WRAPPING_OCTET] = wrappingOctet;

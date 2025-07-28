@@ -25,6 +25,8 @@
  */
 package com.sandflow.util.events;
 
+import com.sandflow.util.events.Event.Severity;
+
 /**
  * A generic interface for handling events generated, for instance, by parsing
  * operations.

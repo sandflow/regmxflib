@@ -43,12 +43,14 @@ import org.apache.commons.numbers.fraction.Fraction;
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
+import com.sandflow.smpte.mxf.MXFEvent.EventCodes;
 import com.sandflow.smpte.mxf.PartitionPack.Status;
 import com.sandflow.smpte.mxf.helpers.IndexSegmentHelper;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.mxf.types.Preface;
 import com.sandflow.smpte.util.RandomAccessInputSource;
 import com.sandflow.smpte.util.UUID;
+import com.sandflow.util.events.Event;
 import com.sandflow.util.events.EventHandler;
 
 public class RandomAccessFileInfo {
@@ -142,13 +144,10 @@ public class RandomAccessFileInfo {
     }
 
     long getFilePosition(long ecPosition) {
-      if (this.ecToFileOffsets.size() == 0) {
-        throw new RuntimeException();
-      }
       var entry = this.ecToFileOffsets.floorEntry(ecPosition);
 
       if (entry == null) {
-        throw new RuntimeException();
+        throw new IllegalStateException("No file position corresponds to the essence container position");
       }
 
       return ecPosition - entry.getKey() + entry.getValue();
@@ -172,16 +171,16 @@ public class RandomAccessFileInfo {
     long ripSize = mis.readUnsignedInt();
     raip.position(raip.size() - ripSize);
 
+    RandomIndexPack rip = null;
     Triplet t = mis.readTriplet();
-    if (t == null) {
-      /* no Triplet where the RIP should start */
-      throw new RuntimeException();
+    if (t != null) {
+      rip = RandomIndexPack.fromTriplet(t);
     }
-
-    RandomIndexPack rip = RandomIndexPack.fromTriplet(t);
     if (rip == null) {
       /* no RIP where it should be */
-      throw new RuntimeException();
+      MXFException.handle(evthandler, new MXFEvent(
+          MXFEvent.EventCodes.RIP_NOTFOUND,
+          "No RIP found"));
     }
 
     /*
@@ -197,23 +196,25 @@ public class RandomAccessFileInfo {
 
       /* seek to and read partition */
       raip.position(rip.getOffsets().get(i).getOffset());
+      PartitionPack pp = null;
       t = mis.readTriplet();
-      if (t == null) {
-        /* no triplet where it should be */
-        throw new RuntimeException();
+      if (t != null) {
+        pp = PartitionPack.fromTriplet(t);
       }
-
-      PartitionPack pp = PartitionPack.fromTriplet(t);
       if (pp == null) {
         /* no partition pack where expected */
-        throw new RuntimeException();
+        MXFException.handle(evthandler, new MXFEvent(
+            MXFEvent.EventCodes.MISSING_PARTITION_PACK,
+            String.format("No partition found at RIP entry %d", i)));
       }
 
       /* process generic stream partition */
       if (pp.getStatus() == Status.STREAM) {
         if (pp.getBodySID() == 0) {
-          throw new RuntimeException();
-          /* TODO: warning and continue */
+          MXFException.handle(evthandler, new MXFEvent(
+              MXFEvent.EventCodes.BAD_GS_PARTITION,
+              String.format("Generic stream partition at RIP entry %d has a zero body SID", i)));
+          continue;
         }
 
         FilePositionMapper gs = this.gsToFilePositions.get(pp.getBodySID());
@@ -282,7 +283,9 @@ public class RandomAccessFileInfo {
         if (this.ecIndexSID == null) {
           this.ecIndexSID = pp.getIndexSID();
         } else if (this.ecIndexSID != pp.getIndexSID()) {
-          throw new RuntimeException();
+          MXFException.handle(evthandler, new MXFEvent(
+              MXFEvent.EventCodes.TOO_MANY_ECS,
+              "Index tables for more than one essence container are present"));
         }
 
         /* Reset MXF Input stream */
@@ -300,7 +303,9 @@ public class RandomAccessFileInfo {
               });
 
           if (its == null) {
-            throw new RuntimeException();
+            MXFException.handle(evthandler, new MXFEvent(
+                MXFEvent.EventCodes.BAD_INDEX_SEGMENT,
+                "Index table segment not found in partition at file offset: " + pp.getThisPartition()));
           }
 
           if (its.EditUnitByteCount != null && its.EditUnitByteCount > 0) {
@@ -311,13 +316,15 @@ public class RandomAccessFileInfo {
              * a CBE index table, we ignore its
              */
             if (this.euToECPosition != null) {
-              throw new RuntimeException("Only one VBE permitted.");
+              MXFException.handle(evthandler, new MXFEvent(
+                  MXFEvent.EventCodes.BAD_INDEX_SEGMENT,
+                  "A constant-byte-per-element essence container cannot contain more than one index table segment"));
             }
 
             this.euToECPosition = new CBEClipIndex(its.EditUnitByteCount, its.IndexDuration);
           } else {
             /* we have a VBE index table */
-            VBEIndex vbeIndex;
+            VBEIndex vbeIndex = null;
 
             if (this.euToECPosition == null) {
               vbeIndex = new VBEIndex();
@@ -325,8 +332,9 @@ public class RandomAccessFileInfo {
             } else if (this.euToECPosition instanceof VBEIndex) {
               vbeIndex = (VBEIndex) this.euToECPosition;
             } else {
-              /* report error */
-              continue;
+              MXFException.handle(evthandler, new MXFEvent(
+                  MXFEvent.EventCodes.BAD_INDEX_SEGMENT,
+                  "A constant-byte-per-element index table segment was already found for the essence container"));
             }
 
             for (var e : its.IndexEntryArray) {

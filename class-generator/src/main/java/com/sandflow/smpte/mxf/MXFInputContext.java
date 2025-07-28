@@ -32,7 +32,9 @@ package com.sandflow.smpte.mxf;
 
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.util.UUID;
+import com.sandflow.util.events.Event;
 
 public interface MXFInputContext {
   Set getSet(UUID uuid);
+  void handleEvent(Event evt);
 }

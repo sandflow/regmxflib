@@ -137,7 +137,7 @@ public class ClassGenerator {
       localTagsTemplate = handlebars.compile("hbs/StaticLocalTagsInitializer.java");
       essenceKeysTemplate = handlebars.compile("hbs/EssenceKeys.java");
     } catch (Exception e) {
-      throw new RuntimeException("Failed to load template", e);
+      throw new InternalError("Failed to load class generator templates", e);
     }
   }
 
@@ -229,7 +229,7 @@ public class ClassGenerator {
 
           PropertyDefinition propertyDef = (PropertyDefinition) resolver.getDefinition(propertyAUID);
           if (propertyDef == null) {
-            throw new RuntimeException("Failed to find property definition for " + propertyAUID);
+            throw new InternalError("Failed to find property definition for " + propertyAUID);
           }
 
           /* ignore definitions */
@@ -261,7 +261,7 @@ public class ClassGenerator {
               }
               ownMembers.addFirst(member);
             } else {
-               inheritedMembers.addFirst(member);
+              inheritedMembers.addFirst(member);
             }
 
             allMembers.addFirst(member);
@@ -500,7 +500,7 @@ public class ClassGenerator {
         for (var member : def.getMembers()) {
           Definition memberTypeDef = findBaseDefinition(resolver.getDefinition(member.getType()));
           if (memberTypeDef == null) {
-            throw new RuntimeException(
+            throw new InternalError(
                 String.format("Bad type %s at member %s.", member.getType().toString(), member.getName()));
           }
           TypeMaker tm = getTypeInformation(memberTypeDef);
@@ -759,7 +759,7 @@ public class ClassGenerator {
       os.write(template.apply(data));
       os.close();
     } catch (Exception e) {
-      throw new RuntimeException("Failed to write class file", e);
+      throw new InternalError("Failed to write class " + symbol, e);
     }
   }
 
