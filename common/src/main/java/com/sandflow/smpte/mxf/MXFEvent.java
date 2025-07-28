@@ -36,7 +36,7 @@ import com.sandflow.util.events.Event;
 /**
  * All events raised by this class are instance of this class
  */
-public class RegMXFEvent extends BasicEvent {
+public class MXFEvent extends BasicEvent {
 
   /**
    * Defines all events raised by this class
@@ -110,7 +110,7 @@ public class RegMXFEvent extends BasicEvent {
 
   }
 
-  public RegMXFEvent(RegMXFEvent.EventCodes kind, String message) {
+  public MXFEvent(MXFEvent.EventCodes kind, String message) {
     super(kind.severity, kind, message);
   }
 

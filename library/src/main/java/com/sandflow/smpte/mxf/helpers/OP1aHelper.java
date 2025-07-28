@@ -155,7 +155,6 @@ public class OP1aHelper {
       sp.EssenceDescription = md;
     }
 
-    /* TODO: return better error when InstanceID is null */
     /* EssenceDataObject */
     var edo = new EssenceData();
     edo.InstanceID = UUID.fromRandom();

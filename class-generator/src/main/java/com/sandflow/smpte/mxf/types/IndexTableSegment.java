@@ -42,9 +42,11 @@ import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.MXFDataOutput;
+import com.sandflow.smpte.mxf.MXFEvent;
 import com.sandflow.smpte.mxf.MXFException;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
+import com.sandflow.smpte.util.UUID;
 
 /**
  * IndexTableSegment
@@ -261,38 +263,41 @@ public class IndexTableSegment {
 
   }
 
-  public static IndexTableSegment fromSet(Set s, MXFInputContext ctx) {
+  public static IndexTableSegment fromSet(Set s, MXFInputContext ctx) throws MXFException, IOException {
+    if (s == null) {
+      throw new IllegalArgumentException("Cannot read from an empty Set");
+    }
     Class<?> clazz = ClassFactory.getClass(s.getKey());
     if (clazz == null) {
+      ctx.handleEvent(new MXFEvent(
+        MXFEvent.EventCodes.CLASS_NOT_FOUND,
+        "Class not found: "+ s.getKey().toString()));
       return null;
     }
+
+    IndexTableSegment obj;
     try {
-      IndexTableSegment obj;
       obj = (IndexTableSegment) clazz.getConstructor().newInstance();
-      obj.readFromSet(s, ctx);
-      return obj;
     } catch (Exception e) {
-      /* TODO: log error */
-      System.err.println(e.getMessage());
+      throw new RuntimeException(e);
     }
 
-    return null;
+    obj.readFromSet(s, ctx);
+    return obj;
   }
 
-  public static IndexTableSegment fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
-    try {
-      var uuid = is.readUUID();
-      var s = ctx.getSet(uuid);
-      if (s == null)
-        return null;
+  public static IndexTableSegment fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException, MXFException {
+    UUID uuid = is.readUUID();
 
-      return IndexTableSegment.fromSet(s, ctx);
-    } catch (Exception e) {
-      /* TODO: log error */
-      System.err.println(e.getMessage());
+    var s = ctx.getSet(uuid);
+    if (s == null) {
+      ctx.handleEvent(new MXFEvent(
+              MXFEvent.EventCodes.MISSING_HEADER_SET,
+              "Cannot find header metadata set " + uuid));
+      return null;
     }
 
-    return null;
+    return IndexTableSegment.fromSet(s, ctx);
   }
 
   void addItemsToSet(Set s, MXFOutputContext ctx) throws IOException, MXFException {

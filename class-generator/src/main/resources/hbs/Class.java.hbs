@@ -43,7 +43,7 @@ import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.MXFDataOutput;
 import com.sandflow.smpte.mxf.MXFException;
-import com.sandflow.smpte.mxf.RegMXFEvent;
+import com.sandflow.smpte.mxf.MXFEvent;
 import com.sandflow.smpte.klv.Set;
 
 
@@ -105,8 +105,8 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
         this.{{symbol}} = {{adapterName}}.fromStream(new MXFDataInput(t.getValueAsStream()), ctx);
       }
     } catch (IOException e) {
-      ctx.handleEvent(new RegMXFEvent(
-        RegMXFEvent.EventCodes.ITEM_READ_FAILED,
+      ctx.handleEvent(new MXFEvent(
+        MXFEvent.EventCodes.ITEM_READ_FAILED,
         "Reading item {{symbol}} from Set "+ s.getKey().toString() + " failed"));
     }
 {{/each}}
@@ -118,8 +118,8 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
     }
     Class<?> clazz = ClassFactory.getClass(s.getKey());
     if (clazz == null) {
-      ctx.handleEvent(new RegMXFEvent(
-        RegMXFEvent.EventCodes.CLASS_NOT_FOUND,
+      ctx.handleEvent(new MXFEvent(
+        MXFEvent.EventCodes.CLASS_NOT_FOUND,
         "Class not found: "+ s.getKey().toString()));
       return null;
     }
@@ -140,8 +140,8 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
 
     var s = ctx.getSet(uuid);
     if (s == null) {
-      ctx.handleEvent(new RegMXFEvent(
-              RegMXFEvent.EventCodes.MISSING_HEADER_SET,
+      ctx.handleEvent(new MXFEvent(
+              MXFEvent.EventCodes.MISSING_HEADER_SET,
               "Cannot find header metadata set " + uuid));
       return null;
     }

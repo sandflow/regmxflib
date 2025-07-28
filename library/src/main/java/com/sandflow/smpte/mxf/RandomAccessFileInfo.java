@@ -169,8 +169,8 @@ public class RandomAccessFileInfo {
     }
     if (rip == null) {
       /* no RIP where it should be */
-      MXFException.handle(evthandler, new RegMXFEvent(
-          RegMXFEvent.EventCodes.RIP_NOTFOUND,
+      MXFException.handle(evthandler, new MXFEvent(
+          MXFEvent.EventCodes.RIP_NOTFOUND,
           "No RIP found"));
     }
 
@@ -194,16 +194,16 @@ public class RandomAccessFileInfo {
       }
       if (pp == null) {
         /* no partition pack where expected */
-        MXFException.handle(evthandler, new RegMXFEvent(
-            RegMXFEvent.EventCodes.MISSING_PARTITION_PACK,
+        MXFException.handle(evthandler, new MXFEvent(
+            MXFEvent.EventCodes.MISSING_PARTITION_PACK,
             String.format("No partition found at RIP entry %d", i)));
       }
 
       /* process generic stream partition */
       if (pp.getStatus() == Status.STREAM) {
         if (pp.getBodySID() == 0) {
-          MXFException.handle(evthandler, new RegMXFEvent(
-              RegMXFEvent.EventCodes.BAD_GS_PARTITION,
+          MXFException.handle(evthandler, new MXFEvent(
+              MXFEvent.EventCodes.BAD_GS_PARTITION,
               String.format("Generic stream partition at RIP entry %d has a zero body SID", i)));
           continue;
         }
@@ -274,8 +274,8 @@ public class RandomAccessFileInfo {
         if (this.ecIndexSID == null) {
           this.ecIndexSID = pp.getIndexSID();
         } else if (this.ecIndexSID != pp.getIndexSID()) {
-          MXFException.handle(evthandler, new RegMXFEvent(
-              RegMXFEvent.EventCodes.TOO_MANY_ECS,
+          MXFException.handle(evthandler, new MXFEvent(
+              MXFEvent.EventCodes.TOO_MANY_ECS,
               "Index tables for more than one essence container are present"));
         }
 
@@ -299,9 +299,16 @@ public class RandomAccessFileInfo {
               });
 
           if (its == null) {
-            MXFException.handle(evthandler, new RegMXFEvent(
-                RegMXFEvent.EventCodes.BAD_INDEX_SEGMENT,
+            MXFException.handle(evthandler, new MXFEvent(
+                MXFEvent.EventCodes.BAD_INDEX_SEGMENT,
                 "Index table segment not found in partition at file offset: " + pp.getThisPartition()));
+          }
+
+          if (its.EssenceStreamID != this.ecSID || its.IndexStreamID != this.ecIndexSID) {
+            MXFException.handle(evthandler, new MXFEvent(
+                MXFEvent.EventCodes.INCONSISTENT_HEADER,
+                String.format("Index table segment at partition %d is for BodySID=%d and IndexSID=%d, but we are tracking BodySID=%d and IndexSID=%d",
+                pp.getThisPartition(), its.EssenceStreamID, its.IndexStreamID, this.ecSID, this.ecIndexSID)));
           }
 
           if (its.EditUnitByteCount != null && its.EditUnitByteCount > 0) {
@@ -312,8 +319,8 @@ public class RandomAccessFileInfo {
              * a CBE index table, we ignore its
              */
             if (this.euToECPosition != null) {
-              MXFException.handle(evthandler, new RegMXFEvent(
-                  RegMXFEvent.EventCodes.BAD_INDEX_SEGMENT,
+              MXFException.handle(evthandler, new MXFEvent(
+                  MXFEvent.EventCodes.BAD_INDEX_SEGMENT,
                   "A constant-byte-per-element essence container cannot contain more than one index table segment"));
             }
 
@@ -328,8 +335,8 @@ public class RandomAccessFileInfo {
             } else if (this.euToECPosition instanceof VBEIndex) {
               vbeIndex = (VBEIndex) this.euToECPosition;
             } else {
-              MXFException.handle(evthandler, new RegMXFEvent(
-                  RegMXFEvent.EventCodes.BAD_INDEX_SEGMENT,
+              MXFException.handle(evthandler, new MXFEvent(
+                  MXFEvent.EventCodes.BAD_INDEX_SEGMENT,
                   "A constant-byte-per-element index table segment was already found for the essence container"));
             }
 

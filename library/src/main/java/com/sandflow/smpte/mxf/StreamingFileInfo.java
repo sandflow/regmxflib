@@ -62,8 +62,8 @@ public class StreamingFileInfo {
     }
 
     if (localreg == null) {
-      MXFException.handle(evthandler, new RegMXFEvent(
-          RegMXFEvent.EventCodes.MISSING_PRIMER_PACK,
+      MXFException.handle(evthandler, new MXFEvent(
+          MXFEvent.EventCodes.MISSING_PRIMER_PACK,
           "No Primer Pack found"));
     }
 
@@ -92,13 +92,13 @@ public class StreamingFileInfo {
           }
 
         } else {
-          MXFException.handle(evthandler, new RegMXFEvent(
-              RegMXFEvent.EventCodes.GROUP_READ_FAILED,
+          MXFException.handle(evthandler, new MXFEvent(
+              MXFEvent.EventCodes.GROUP_READ_FAILED,
               String.format("Failed to read Group: %s", t.getKey().toString())));
         }
       } catch (KLVException ke) {
-        MXFException.handle(evthandler, new RegMXFEvent(
-            RegMXFEvent.EventCodes.GROUP_READ_FAILED,
+        MXFException.handle(evthandler, new MXFEvent(
+            MXFEvent.EventCodes.GROUP_READ_FAILED,
             String.format("Failed to read Group %s with error %s", t.getKey().toString(), ke.getMessage())));
       }
     }
@@ -107,8 +107,8 @@ public class StreamingFileInfo {
      * check that the header metadata length is consistent
      */
     if (mis.getReadCount() != headerByteCount) {
-      MXFException.handle(evthandler, new RegMXFEvent(
-          RegMXFEvent.EventCodes.INCONSISTENT_HEADER_LENGTH,
+      MXFException.handle(evthandler, new MXFEvent(
+          MXFEvent.EventCodes.INCONSISTENT_HEADER_LENGTH,
           String.format("Actual Header Metadata length (%s) does not match the Partition Pack information (%s)",
               mis.getReadCount(), headerByteCount)));
     }
@@ -150,7 +150,7 @@ public class StreamingFileInfo {
 
     if (pp == null) {
       MXFException.handle(evthandler,
-          new RegMXFEvent(RegMXFEvent.EventCodes.MISSING_PARTITION_PACK, "No Partition Pack found"));
+          new MXFEvent(MXFEvent.EventCodes.MISSING_PARTITION_PACK, "No Partition Pack found"));
     }
 
     this.preface = readHeaderMetadataFrom(is, pp.getHeaderByteCount(), evthandler);

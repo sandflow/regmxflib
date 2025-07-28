@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -178,7 +179,15 @@ public class StreamingWriter {
     }
 
     public void nextClip(UL elementKey, long accessUnitSize, long accessUnitCount) throws IOException {
-      /* TODO check parameter validity */
+      Objects.requireNonNull(elementKey, "Element Key cannot be null");
+
+      if (accessUnitCount < 0) {
+        throw new IllegalArgumentException("Access Unit Count cannot be negative");
+      }
+
+      if (accessUnitSize <= 0) {
+        throw new IllegalArgumentException("Access Unit Size must be greater than 0");
+      }
 
       if (!this.isActive()) {
         throw new RuntimeException();
@@ -295,7 +304,11 @@ public class StreamingWriter {
     }
 
     public void nextClip(UL elementKey, long clipSize) throws IOException {
-      /* TODO check parameter validity */
+      Objects.requireNonNull(elementKey, "Element Key cannot be null");
+
+      if (clipSize < 0) {
+        throw new IllegalArgumentException("Clip size cannot be negative");
+      }
 
       if (!this.isActive()) {
         throw new RuntimeException();
@@ -407,7 +420,11 @@ public class StreamingWriter {
     }
 
     public void nextElement(UL elementKey, long elementSize) throws IOException {
-      /* TODO check parameter validity */
+      Objects.requireNonNull(elementKey, "Element Key cannot be null");
+
+      if (elementSize < 0) {
+        throw new IllegalArgumentException("Element size cannot be negative");
+      }
 
       if (!this.isActive()) {
         throw new RuntimeException();
@@ -489,11 +506,13 @@ public class StreamingWriter {
   private ContainerWriter currentContainer;
   private final Preface preface;
   private final EventHandler evthandler;
+  private java.util.Set<UL> ecLabels;
 
   /**
    * current partition
    */
   private PartitionPack curPartition;
+
 
   public StreamingWriter(OutputStream os, Preface preface, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
@@ -618,7 +637,7 @@ public class StreamingWriter {
       throw new RuntimeException();
     }
 
-    /* TODO: fill in ecLabels */
+    this.ecLabels = getECLabels();
 
     /* serialize the header metadata */
     byte[] hmb = serializePreface(this.preface);
@@ -677,15 +696,15 @@ public class StreamingWriter {
         .filter(e -> e.EssenceStreamID == bodySID).toList();
 
     if (gcs.size() != 1) {
-      MXFException.handle(evthandler, new RegMXFEvent(
-          RegMXFEvent.EventCodes.INCONSISTENT_HEADER,
+      MXFException.handle(evthandler, new MXFEvent(
+          MXFEvent.EventCodes.INCONSISTENT_HEADER,
           String.format("Header metadata does not specify exactly one generic container with BodySID = %d",
               bodySID)));
     }
 
     if (gcs.get(0).IndexStreamID != indexSID) {
-      MXFException.handle(evthandler, new RegMXFEvent(
-          RegMXFEvent.EventCodes.INCONSISTENT_HEADER,
+      MXFException.handle(evthandler, new MXFEvent(
+          MXFEvent.EventCodes.INCONSISTENT_HEADER,
           String.format("Trying to add a generic container with BodySID=%d and IndexSID=%d but the header metadata specifies an IndexSID=%d",
               bodySID, indexSID, gcs.get(0).IndexStreamID)));
     }
@@ -946,8 +965,6 @@ public class StreamingWriter {
    * Partition utilities
    */
 
-  /* TODO: warn if clip wrapping and partition duration is not null */
-
   private void startPartition(long bodySID, long indexSID, long headerSize, long indexSize, long bodyOffset,
       PartitionPack.Kind kind,
       PartitionPack.Status status) throws IOException, KLVException {
@@ -958,7 +975,7 @@ public class StreamingWriter {
     pp.setIndexByteCount(indexSize);
     pp.setHeaderByteCount(headerSize);
     pp.setOperationalPattern(this.getOP());
-    pp.setEssenceContainers(this.getECLabels());
+    pp.setEssenceContainers(this.ecLabels);
     pp.setThisPartition(this.fos.getWrittenCount());
     if (kind == PartitionPack.Kind.FOOTER) {
       pp.setFooterPartition(pp.getThisPartition());
