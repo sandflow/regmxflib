@@ -42,7 +42,7 @@ public class ClassFactory {
     try {
       Class.forName("com.sandflow.smpte.mxf.ClassFactoryInitializer");
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new InternalError("Could not initialize the MXF class factory", e);
     }
 
     ClassFactory.putClass(IndexTableSegment.getKey(), IndexTableSegment.class);

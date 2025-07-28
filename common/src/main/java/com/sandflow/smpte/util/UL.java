@@ -100,7 +100,6 @@ public class UL implements Cloneable {
      * @return true if the UL is a Key for a KLV Group (see SMPTE ST 336)
      */
     public boolean isGroup() {
-        /* TODO: move to Group? */
         return getValueOctet(CATEGORY_DESIGNATOR_BYTE) == 2;
     }
 
@@ -108,7 +107,6 @@ public class UL implements Cloneable {
      * @return true if the UL is a Key for a KLV Local Set (see SMPTE ST 336)
      */
     public boolean isLocalSet() {
-        /* TODO: move to Group? */
         return isGroup() && (getRegistryDesignator() & 7) == 3;
     }
 

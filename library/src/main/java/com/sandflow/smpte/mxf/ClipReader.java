@@ -90,7 +90,6 @@ public class ClipReader extends InputStream {
   }
 
   public void seek(long euPosition) throws IOException {
-    /* TODO: handle EOF */
     long ecPosition = this.info.euToECPosition(euPosition);
     long filePosition = this.info.ecToFilePositions(ecPosition) + this.essenceOffset;
     this.source.position(filePosition);

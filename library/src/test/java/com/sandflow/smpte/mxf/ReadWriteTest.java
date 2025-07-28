@@ -151,7 +151,7 @@ public class ReadWriteTest {
 
     OutputStream os = new FileOutputStream("target/test-output/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.new.mxf");
 
-    StreamingWriter outWriter = new StreamingWriter(os, outHeader.getPreface());
+    StreamingWriter outWriter = new StreamingWriter(os, outHeader.getPreface(), null);
 
     var gc = outWriter.addVBEFrameWrappedGC(IMG_BODY_SID, IMG_INDEX_SID);
     var gs = outWriter.addGenericStream(PHDR_METADATA_SID);
@@ -247,7 +247,7 @@ public class ReadWriteTest {
 
     OutputStream os = new FileOutputStream("target/test-output/AUDIO_807d0b4c-69ec-44b0-be74-dfbf1a8c99d3.new.mxf");
 
-    StreamingWriter out = new StreamingWriter(os, outHeader.getPreface());
+    StreamingWriter out = new StreamingWriter(os, outHeader.getPreface(), null);
 
     /* create a single clip wrapped generic container */
 
@@ -415,7 +415,7 @@ public class ReadWriteTest {
 
     OutputStream os = new FileOutputStream("target/test-output/IAB_dd3fabc6-4794-4bae-95ee-6bc2405716a6.new.mxf");
 
-    StreamingWriter out = new StreamingWriter(os, outHeader.getPreface());
+    StreamingWriter out = new StreamingWriter(os, outHeader.getPreface(), null);
 
     /* start reading the clip from the source file */
 

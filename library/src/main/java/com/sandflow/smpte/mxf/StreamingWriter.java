@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -69,6 +70,8 @@ import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UMID;
 import com.sandflow.smpte.util.UUID;
+import com.sandflow.util.events.Event;
+import com.sandflow.util.events.EventHandler;
 
 public class StreamingWriter {
 
@@ -78,8 +81,6 @@ public class StreamingWriter {
     private final long indexSID;
     private long bytesToWrite;
     private long ecOffset = 0;
-
-    /* TODO: warn if the body and index SIDs are not in the preface */
 
     ContainerWriter(long bodySID, long indexSID) {
       this.bodySID = bodySID;
@@ -110,7 +111,7 @@ public class StreamingWriter {
       this.bytesToWrite = bytesToWrite;
     }
 
-    abstract byte[] drainIndexSegments() throws IOException;
+    abstract byte[] drainIndexSegments() throws IOException, MXFException;
 
     long getPosition() {
       return this.ecOffset;
@@ -178,7 +179,15 @@ public class StreamingWriter {
     }
 
     public void nextClip(UL elementKey, long accessUnitSize, long accessUnitCount) throws IOException {
-      /* TODO check parameter validity */
+      Objects.requireNonNull(elementKey, "Element Key cannot be null");
+
+      if (accessUnitCount < 0) {
+        throw new IllegalArgumentException("Access Unit Count cannot be negative");
+      }
+
+      if (accessUnitSize <= 0) {
+        throw new IllegalArgumentException("Access Unit Size must be greater than 0");
+      }
 
       if (!this.isActive()) {
         throw new RuntimeException();
@@ -206,7 +215,7 @@ public class StreamingWriter {
     }
 
     @Override
-    byte[] drainIndexSegments() throws IOException {
+    byte[] drainIndexSegments() throws IOException, MXFException {
       if (this.state != State.WRITTEN) {
         return null;
       }
@@ -221,7 +230,7 @@ public class StreamingWriter {
       its.EssenceStreamID = this.getBodySID();
       its.EditUnitByteCount = this.accessUnitSize;
 
-      return IndexSegmentHelper.toBytes(its);
+      return IndexSegmentHelper.toBytes(its, StreamingWriter.this.evthandler);
     }
 
     @Override
@@ -295,7 +304,11 @@ public class StreamingWriter {
     }
 
     public void nextClip(UL elementKey, long clipSize) throws IOException {
-      /* TODO check parameter validity */
+      Objects.requireNonNull(elementKey, "Element Key cannot be null");
+
+      if (clipSize < 0) {
+        throw new IllegalArgumentException("Clip size cannot be negative");
+      }
 
       if (!this.isActive()) {
         throw new RuntimeException();
@@ -336,7 +349,7 @@ public class StreamingWriter {
     }
 
     @Override
-    byte[] drainIndexSegments() throws IOException {
+    byte[] drainIndexSegments() throws IOException, MXFException {
       if (this.state != State.WRITTEN) {
         return null;
       }
@@ -363,7 +376,7 @@ public class StreamingWriter {
         its.IndexEntryArray.add(e);
       }
 
-      return IndexSegmentHelper.toBytes(its);
+      return IndexSegmentHelper.toBytes(its, StreamingWriter.this.evthandler);
     }
 
     @Override
@@ -407,7 +420,11 @@ public class StreamingWriter {
     }
 
     public void nextElement(UL elementKey, long elementSize) throws IOException {
-      /* TODO check parameter validity */
+      Objects.requireNonNull(elementKey, "Element Key cannot be null");
+
+      if (elementSize < 0) {
+        throw new IllegalArgumentException("Element size cannot be negative");
+      }
 
       if (!this.isActive()) {
         throw new RuntimeException();
@@ -427,7 +444,7 @@ public class StreamingWriter {
     }
 
     @Override
-    byte[] drainIndexSegments() throws IOException {
+    byte[] drainIndexSegments() throws IOException, MXFException {
       if (this.cpPositions.size() == 0) {
         return null;
       }
@@ -456,7 +473,7 @@ public class StreamingWriter {
       this.cpFirstEditUnit = this.duration;
       this.cpPositions.clear();
 
-      return IndexSegmentHelper.toBytes(its);
+      return IndexSegmentHelper.toBytes(its, StreamingWriter.this.evthandler);
     }
 
     @Override
@@ -488,29 +505,37 @@ public class StreamingWriter {
   private final java.util.Map<Long, ContainerWriter> ecs = new HashMap<>();
   private ContainerWriter currentContainer;
   private final Preface preface;
+  private final EventHandler evthandler;
+  private java.util.Set<UL> ecLabels;
 
   /**
    * current partition
    */
   private PartitionPack curPartition;
 
-  public StreamingWriter(OutputStream os, Preface preface) throws IOException, KLVException {
+
+  public StreamingWriter(OutputStream os, Preface preface, EventHandler evthandler)
+      throws IOException, KLVException, MXFException {
     if (os == null) {
       throw new IllegalArgumentException("Output stream must not be null");
     }
     this.fos = new MXFDataOutput(os);
 
     if (preface == null) {
-      throw new RuntimeException();
+      throw new IllegalArgumentException("Preface must not be null");
     }
 
+    if (!preface.OperationalPattern.isUL()) {
+      throw new MXFException("The Operational Pattern label found in the Preface is not a UL");
+    }
+
+    /* TODO: make a copy */
     this.preface = preface;
+
+    this.evthandler = evthandler;
   }
 
   private UL getOP() {
-    if (!this.preface.OperationalPattern.isUL()) {
-      throw new RuntimeException();
-    }
     return this.preface.OperationalPattern.asUL();
   }
 
@@ -607,12 +632,12 @@ public class StreamingWriter {
    * @throws IOException
    * @throws KLVException
    */
-  public void start() throws IOException, KLVException {
+  public void start() throws IOException, KLVException, MXFException {
     if (this.state != State.INIT) {
       throw new RuntimeException();
     }
 
-    /* TODO: fill in ecLabels */
+    this.ecLabels = getECLabels();
 
     /* serialize the header metadata */
     byte[] hmb = serializePreface(this.preface);
@@ -624,7 +649,7 @@ public class StreamingWriter {
     this.state = State.START;
   }
 
-  void startPartition(ContainerWriter cw) throws IOException, KLVException {
+  void startPartition(ContainerWriter cw) throws IOException, KLVException, MXFException {
     if (cw == null) {
       throw new RuntimeException();
     }
@@ -638,7 +663,7 @@ public class StreamingWriter {
     this.currentContainer = cw;
   }
 
-  private void closeCurrentPartition() throws IOException, KLVException {
+  private void closeCurrentPartition() throws IOException, KLVException, MXFException {
     if (this.currentContainer == null) {
       return;
     }
@@ -654,86 +679,83 @@ public class StreamingWriter {
     }
   }
 
-  /**
-   * creates a clip-wrapped essence container with constant size units
-   * 
-   */
-  public GCClipCBEWriter addCBEClipWrappedGC(long bodySID, long indexSID)
-      throws IOException, KLVException {
-    /* TODO: check for valid SIDs */
+  private void addGC(long bodySID, long indexSID, ContainerWriter cw) throws MXFException {
+    if (bodySID <= 0 || indexSID <= 0) {
+      throw new IllegalArgumentException("bodySID and indexSID must be larger than 0");
+    }
 
     if (this.sids.contains(bodySID)) {
-      throw new RuntimeException();
+      throw new RuntimeException(String.format("BodySID %d is already registered.", bodySID));
     }
 
     if (this.sids.contains(indexSID)) {
-      throw new RuntimeException();
+      throw new RuntimeException(String.format("IndexSID %d is already registered.", indexSID));
     }
 
-    /* TODO: check for valid information in the preface */
+    List<EssenceData> gcs = this.preface.ContentStorageObject.EssenceDataObjects.stream()
+        .filter(e -> e.EssenceStreamID == bodySID).toList();
+
+    if (gcs.size() != 1) {
+      MXFException.handle(evthandler, new MXFEvent(
+          MXFEvent.EventCodes.INCONSISTENT_HEADER,
+          String.format("Header metadata does not specify exactly one generic container with BodySID = %d",
+              bodySID)));
+    }
+
+    if (gcs.get(0).IndexStreamID != indexSID) {
+      MXFException.handle(evthandler, new MXFEvent(
+          MXFEvent.EventCodes.INCONSISTENT_HEADER,
+          String.format("Trying to add a generic container with BodySID=%d and IndexSID=%d but the header metadata specifies an IndexSID=%d",
+              bodySID, indexSID, gcs.get(0).IndexStreamID)));
+    }
 
     this.sids.add(bodySID);
     this.sids.add(indexSID);
 
+    this.ecs.put(bodySID, cw);
+  }
+
+  /**
+   * creates a clip-wrapped essence container with constant size units
+   * @throws MXFException 
+   * 
+   */
+  public GCClipCBEWriter addCBEClipWrappedGC(long bodySID, long indexSID)
+      throws IOException, KLVException, MXFException {
+
     GCClipCBEWriter w = new GCClipCBEWriter(bodySID, indexSID);
 
-    this.ecs.put(bodySID, w);
+    this.addGC(bodySID, indexSID, w);
 
     return w;
   }
 
   /**
    * creates a clip-wrapped essence container with variable size access units
+   * @throws MXFException 
    * 
    */
   public GCClipVBEWriter addVBEClipWrappedGC(long bodySID, long indexSID)
-      throws IOException, KLVException {
-    /* TODO: check for valid SIDs */
-
-    if (this.sids.contains(bodySID)) {
-      throw new RuntimeException();
-    }
-
-    if (this.sids.contains(indexSID)) {
-      throw new RuntimeException();
-    }
-
-    /* TODO: check for valid information in the preface */
-
-    this.sids.add(bodySID);
-    this.sids.add(indexSID);
+      throws IOException, KLVException, MXFException {
 
     GCClipVBEWriter w = new GCClipVBEWriter(bodySID, indexSID);
 
-    this.ecs.put(bodySID, w);
+    this.addGC(bodySID, indexSID, w);
 
     return w;
   }
 
   /**
    * creates a framed-wrapped essence container with variable size access units
+   * @throws MXFException 
    * 
    */
   public GCFrameVBEWriter addVBEFrameWrappedGC(long bodySID, long indexSID)
-      throws IOException, KLVException {
-    /* TODO: check for valid SIDs */
-
-    if (this.sids.contains(bodySID)) {
-      throw new RuntimeException();
-    }
-
-    if (this.sids.contains(indexSID)) {
-      throw new RuntimeException();
-    }
-
-    /* TODO: check for valid information in the preface */
-
-    this.sids.add(bodySID);
-    this.sids.add(indexSID);
+      throws IOException, KLVException, MXFException {
 
     GCFrameVBEWriter w = new GCFrameVBEWriter(bodySID, indexSID);
 
-    this.ecs.put(bodySID, w);
+    this.addGC(bodySID, indexSID, w);
 
     return w;
   }
@@ -744,16 +766,17 @@ public class StreamingWriter {
    */
   public GSWriter addGenericStream(long bodySID)
       throws IOException, KLVException {
-    /* TODO: check for valid SIDs */
-
-    if (this.sids.contains(bodySID)) {
-      throw new RuntimeException();
+    if (bodySID <= 0) {
+      throw new IllegalArgumentException("bodySID and indexSID must be larger than 0");
     }
 
-    this.sids.add(bodySID);
+    if (this.sids.contains(bodySID)) {
+      throw new RuntimeException(String.format("BodySID %d is already registered.", bodySID));
+    }
 
     GSWriter w = new GSWriter(bodySID);
 
+    this.sids.add(bodySID);
     this.ecs.put(bodySID, w);
 
     return w;
@@ -765,7 +788,7 @@ public class StreamingWriter {
    * @throws IOException
    * @throws KLVException
    */
-  public void finish() throws IOException, KLVException {
+  public void finish() throws IOException, KLVException, MXFException {
     this.closeCurrentPartition();
 
     /* update header metadata */
@@ -848,7 +871,7 @@ public class StreamingWriter {
    * PRIVATE API
    */
 
-  private byte[] serializePreface(Preface preface) throws IOException {
+  private byte[] serializePreface(Preface preface) throws IOException, MXFException {
     /* write */
     LocalTagRegister reg = new LocalTagRegister();
     LinkedList<Set> sets = new LinkedList<>();
@@ -890,6 +913,11 @@ public class StreamingWriter {
           }
         }
 
+      }
+
+      @Override
+      public void handleEvent(Event evt) throws MXFException {
+        StreamingWriter.this.evthandler.handle(evt);
       }
 
     };
@@ -937,8 +965,6 @@ public class StreamingWriter {
    * Partition utilities
    */
 
-  /* TODO: warn if clip wrapping and partition duration is not null */
-
   private void startPartition(long bodySID, long indexSID, long headerSize, long indexSize, long bodyOffset,
       PartitionPack.Kind kind,
       PartitionPack.Status status) throws IOException, KLVException {
@@ -949,7 +975,7 @@ public class StreamingWriter {
     pp.setIndexByteCount(indexSize);
     pp.setHeaderByteCount(headerSize);
     pp.setOperationalPattern(this.getOP());
-    pp.setEssenceContainers(this.getECLabels());
+    pp.setEssenceContainers(this.ecLabels);
     pp.setThisPartition(this.fos.getWrittenCount());
     if (kind == PartitionPack.Kind.FOOTER) {
       pp.setFooterPartition(pp.getThisPartition());
@@ -968,7 +994,7 @@ public class StreamingWriter {
     this.curPartition = pp;
   }
 
-  private void writeIndexPartition() throws IOException, KLVException {
+  private void writeIndexPartition() throws IOException, KLVException, MXFException {
     byte[] itsBytes = this.currentContainer.drainIndexSegments();
     if (itsBytes == null) {
       return;

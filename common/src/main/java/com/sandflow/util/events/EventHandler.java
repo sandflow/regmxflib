@@ -32,16 +32,16 @@ package com.sandflow.util.events;
  * @author Pierre-Anthony Lemieux
  */
 public interface EventHandler {
-    
+
     /**
-     * Callback to give an opportunity for the client to process an event. The 
-     * return value indicates whether the caller should continue or stop 
+     * Callback to give an opportunity for the client to process an event. The
+     * return value indicates whether the caller should continue or stop
      * processing.
      * 
      * @param evt Event to process
      * 
      * @return true if the caller should continue or false if the caller
-     * should stop.
+     *         should stop.
      */
     public boolean handle(Event evt);
 

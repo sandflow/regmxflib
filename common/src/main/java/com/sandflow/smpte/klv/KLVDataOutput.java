@@ -36,8 +36,7 @@ import com.sandflow.smpte.util.UL;
 
 /**
  * KLVDataOutput allows KLV data structures to be write to an OutputStream
- * 
- * TODO: documentation
+ *
  */
 public class KLVDataOutput {
 

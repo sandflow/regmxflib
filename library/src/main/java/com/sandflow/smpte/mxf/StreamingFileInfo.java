@@ -41,6 +41,7 @@ import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.types.MaterialPackage;
 import com.sandflow.smpte.mxf.types.Preface;
 import com.sandflow.smpte.util.UUID;
+import com.sandflow.util.events.Event;
 import com.sandflow.util.events.EventHandler;
 
 public class StreamingFileInfo {
@@ -61,7 +62,7 @@ public class StreamingFileInfo {
     }
 
     if (localreg == null) {
-      MXFEvent.handle(evthandler, new MXFEvent(
+      MXFException.handle(evthandler, new MXFEvent(
           MXFEvent.EventCodes.MISSING_PRIMER_PACK,
           "No Primer Pack found"));
     }
@@ -91,12 +92,12 @@ public class StreamingFileInfo {
           }
 
         } else {
-          MXFEvent.handle(evthandler, new MXFEvent(
+          MXFException.handle(evthandler, new MXFEvent(
               MXFEvent.EventCodes.GROUP_READ_FAILED,
               String.format("Failed to read Group: %s", t.getKey().toString())));
         }
       } catch (KLVException ke) {
-        MXFEvent.handle(evthandler, new MXFEvent(
+        MXFException.handle(evthandler, new MXFEvent(
             MXFEvent.EventCodes.GROUP_READ_FAILED,
             String.format("Failed to read Group %s with error %s", t.getKey().toString(), ke.getMessage())));
       }
@@ -106,7 +107,7 @@ public class StreamingFileInfo {
      * check that the header metadata length is consistent
      */
     if (mis.getReadCount() != headerByteCount) {
-      MXFEvent.handle(evthandler, new MXFEvent(
+      MXFException.handle(evthandler, new MXFEvent(
           MXFEvent.EventCodes.INCONSISTENT_HEADER_LENGTH,
           String.format("Actual Header Metadata length (%s) does not match the Partition Pack information (%s)",
               mis.getReadCount(), headerByteCount)));
@@ -116,6 +117,11 @@ public class StreamingFileInfo {
       @Override
       public Set getSet(UUID uuid) {
         return setresolver.get(uuid);
+      }
+
+      @Override
+      public void handleEvent(Event evt) throws MXFException {
+        evthandler.handle(evt);
       }
     };
 
@@ -143,7 +149,7 @@ public class StreamingFileInfo {
     }
 
     if (pp == null) {
-      MXFEvent.handle(evthandler,
+      MXFException.handle(evthandler,
           new MXFEvent(MXFEvent.EventCodes.MISSING_PARTITION_PACK, "No Partition Pack found"));
     }
 

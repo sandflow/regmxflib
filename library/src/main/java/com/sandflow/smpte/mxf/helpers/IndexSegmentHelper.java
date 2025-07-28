@@ -36,20 +36,24 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.sandflow.smpte.klv.LocalTagResolver;
 import com.sandflow.smpte.klv.Set;
-import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.MXFDataOutput;
+import com.sandflow.smpte.mxf.MXFException;
+import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.StaticLocalTags;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UMID;
 import com.sandflow.smpte.util.UUID;
+import com.sandflow.util.events.Event;
+import com.sandflow.util.events.EventHandler;
 
 public class IndexSegmentHelper {
-  /* TODO: move to ECIndex.java */
-  public static byte[] toBytes(IndexTableSegment its) throws IOException {
+
+  public static byte[] toBytes(IndexTableSegment its, EventHandler evthandler) throws IOException, MXFException {
     /* serialize the index table segment */
     /*
-     * TODO: the AtomicReference is necessary since the variable is initialized in the
+     * TODO: the AtomicReference is necessary since the variable is initialized in
+     * the
      * inline MXFOutputContext
      */
     AtomicReference<Set> ars = new AtomicReference<>();
@@ -63,9 +67,14 @@ public class IndexSegmentHelper {
       @Override
       public void putSet(Set set) {
         if (ars.get() != null) {
-          throw new RuntimeException("Index Table Segment already serialized");
+          throw new RuntimeException("Serializing an Index Table Segment should not require more than one Set");
         }
         ars.set(set);
+      }
+
+      @Override
+      public void handleEvent(Event evt) throws MXFException {
+        MXFException.handle(evthandler, evt);
       }
 
     };
@@ -89,7 +98,8 @@ public class IndexSegmentHelper {
 
       @Override
       public AUID getAUID(long localtag) {
-        throw new UnsupportedOperationException("Unimplemented method 'getAUID'");
+        throw new UnsupportedOperationException(
+            "Serializing an Index Table Segment should not require resolving a local tag to an AUID");
       }
 
     };
