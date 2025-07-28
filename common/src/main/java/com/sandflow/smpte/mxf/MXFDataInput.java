@@ -32,23 +32,23 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Function;
 
-import com.sandflow.smpte.klv.KLVInputStream;
+import com.sandflow.smpte.klv.KLVDataInput;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.util.IDAU;
 import com.sandflow.smpte.util.UMID;
 import com.sandflow.smpte.util.UUID;
 
 /**
- * MXFInputStream allows MXF data structures to be read from an InputStream
+ * MXFDataInput allows MXF data structures to be read from an InputStream
  */
-public class MXFInputStream extends KLVInputStream {
+public class MXFDataInput extends KLVDataInput {
 
   /**
    * Assumes big endian byte ordering.
    * 
    * @param is InputStream to read from
    */
-  public MXFInputStream(InputStream is) {
+  public MXFDataInput(InputStream is) {
     super(is);
   }
 
@@ -58,7 +58,7 @@ public class MXFInputStream extends KLVInputStream {
    * @param is        InputStream to read from
    * @param byteorder Byte ordering of the file
    */
-  public MXFInputStream(InputStream is, ByteOrder byteorder) {
+  public MXFDataInput(InputStream is, ByteOrder byteorder) {
     super(is, byteorder);
   }
 

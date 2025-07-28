@@ -33,9 +33,9 @@ package com.sandflow.smpte.mxf.adapters;
 import java.io.IOException;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 import com.sandflow.smpte.util.UL;
 
 public class ExtendibleEnumerationAdapter {
@@ -43,11 +43,11 @@ public class ExtendibleEnumerationAdapter {
 
   /* TODO: shouldn't this be a AUID? */
   
-  public static UL fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+  public static UL fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
     return is.readUL();
   }
 
-  public static void toStream(UL value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+  public static void toStream(UL value, MXFDataOutput os, MXFOutputContext ctx) throws IOException {
     os.writeUL(value);
   }
 

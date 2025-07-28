@@ -33,12 +33,6 @@ package com.sandflow.smpte.mxf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URISyntaxException;
-
 import org.apache.commons.numbers.fraction.Fraction;
 import org.junit.jupiter.api.Test;
 
@@ -46,7 +40,6 @@ import com.sandflow.smpte.mxf.types.AudioChannelLabelSubDescriptor;
 import com.sandflow.smpte.mxf.types.SoundfieldGroupLabelSubDescriptor;
 import com.sandflow.smpte.mxf.types.SubDescriptorStrongReferenceVector;
 import com.sandflow.smpte.mxf.types.WAVEPCMDescriptor;
-import com.sandflow.smpte.tools.RegMXFDump;
 import com.sandflow.smpte.util.UUID;
 
 public class ClassGenerationTest {

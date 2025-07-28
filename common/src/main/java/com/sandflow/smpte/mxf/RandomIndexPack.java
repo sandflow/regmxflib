@@ -73,7 +73,7 @@ public class RandomIndexPack {
     long count = (triplet.getLength() - 4) / 12;
 
     try {
-      MXFInputStream kis = new MXFInputStream(triplet.getValueAsStream());
+      MXFDataInput kis = new MXFDataInput(triplet.getValueAsStream());
 
       for (int i = 0; i < count; i++) {
 
@@ -100,7 +100,7 @@ public class RandomIndexPack {
    * @throws IOException
    */
   public void toStream(OutputStream os) throws KLVException, IOException {
-    MXFOutputStream mos = new MXFOutputStream(os);
+    MXFDataOutput mos = new MXFDataOutput(os);
     mos.writeUL(KEY);
     mos.writeBER4Length(12 * this.offsets.size() + 4);
     for (PartitionOffset offset : this.offsets) {

@@ -59,7 +59,7 @@ public class PrimerPack {
 
     LocalTagRegister reg = new LocalTagRegister();
 
-    MXFInputStream kis = new MXFInputStream(triplet.getValueAsStream());
+    MXFDataInput kis = new MXFDataInput(triplet.getValueAsStream());
 
     try {
 
@@ -90,7 +90,7 @@ public class PrimerPack {
    */
   public static Triplet createTriplet(LocalTagRegister reg) throws IOException {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    MXFOutputStream os = new MXFOutputStream(bos);
+    MXFDataOutput os = new MXFDataOutput(bos);
 
     os.writeUnsignedInt(reg.size()); // itemcount
     os.writeUnsignedInt(18); // itemlength
@@ -99,7 +99,6 @@ public class PrimerPack {
       os.writeUnsignedShort((int) entry.localTag().longValue());
       os.writeAUID(entry.auid());
     }
-    os.close();
     return new MemoryTriplet(new AUID(KEY), bos.toByteArray());
   }
 

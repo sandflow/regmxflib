@@ -31,18 +31,18 @@ import java.io.ByteArrayInputStream;
 
 import org.junit.jupiter.api.Test;
 
-class KLVInputStreamTest {
+class KLVDataInputTest {
 
   @Test
   void testReadLong() throws Exception {
     byte[] NEG_ONE = new byte[] {(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF};
-    var kis = new KLVInputStream(new ByteArrayInputStream(NEG_ONE));
+    var kis = new KLVDataInput(new ByteArrayInputStream(NEG_ONE));
     assertEquals(-1L, kis.readLong());
   }
 
   @Test
   void testReadUnsignedByte() throws Exception {
-    var kis = new KLVInputStream(new ByteArrayInputStream(new byte[] {(byte) 0xFF}));
+    var kis = new KLVDataInput(new ByteArrayInputStream(new byte[] {(byte) 0xFF}));
     assertEquals(255, kis.readUnsignedByte());
   }
 

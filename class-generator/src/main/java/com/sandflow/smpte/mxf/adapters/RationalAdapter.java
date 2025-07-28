@@ -31,22 +31,22 @@ import java.io.IOException;
 import org.apache.commons.numbers.fraction.Fraction;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 
 public class RationalAdapter {
 
   public static final Integer ITEM_LENGTH = 8;
 
-  public static Fraction fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+  public static Fraction fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
     int numerator = is.readInt();
     int denominator = is.readInt();
 
     return Fraction.of(numerator, denominator);
   }
 
-  public static void toStream(Fraction value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+  public static void toStream(Fraction value, MXFDataOutput os, MXFOutputContext ctx) throws IOException {
     os.writeInt(value.getNumerator());
     os.writeInt(value.getDenominator());
   }

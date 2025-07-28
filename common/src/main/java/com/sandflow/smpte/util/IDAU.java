@@ -57,7 +57,6 @@ public class IDAU {
 
     private byte[] value;
     
-    private IDAU() { }
 
     /**
      * Returns the underlying bytes of the IDAU

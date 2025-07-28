@@ -33,9 +33,9 @@ package com.sandflow.smpte.mxf.types;
 import java.io.IOException;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 
 public class DeltaEntry {
   public static final int ITEM_LENGTH = 16;
@@ -44,7 +44,7 @@ public class DeltaEntry {
   public Short Slice;
   public Long ElementDelta;
 
-  public static DeltaEntry fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+  public static DeltaEntry fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
     var r = new DeltaEntry();
 
     r.PosTableIndex = is.readByte();
@@ -63,7 +63,7 @@ public class DeltaEntry {
     ElementDelta = elementDelta;
   }
 
-  public static void toStream(DeltaEntry value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+  public static void toStream(DeltaEntry value, MXFDataOutput os, MXFOutputContext ctx) throws IOException {
 
     os.writeByte(value.PosTableIndex);
     os.writeUnsignedByte(value.Slice);

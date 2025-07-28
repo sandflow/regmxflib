@@ -34,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -175,7 +176,7 @@ public class ReadWriteTest {
       } else if (phdrGSElementKey.equalsIgnoreVersion(elementKey)) {
         phdrMetadataPayload = inReader.readNBytes((int) inReader.getElementLength());
       } else {
-        throw new RuntimeException();
+        fail();
       }
 
       byte[] buffer = inReader.readNBytes((int) inReader.getElementLength());
@@ -371,7 +372,7 @@ public class ReadWriteTest {
           assertEquals(0, sourceDDGSSID);
           sourceDDGSSID = gstb.GenericStreamID;
         } else {
-          throw new RuntimeException();
+          fail();
         }
 
         TextBasedFramework dmTBF = new TextBasedFramework();
@@ -498,7 +499,7 @@ public class ReadWriteTest {
         admGS.nextElement(in.getElementKey().asUL(), in.getElementLength());
         admGS.write(in.readNBytes((int) in.getElementLength()));
       } else {
-        throw new RuntimeException();
+        fail();
       }
 
     }

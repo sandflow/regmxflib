@@ -47,7 +47,7 @@ public class StreamingFileInfo {
 
   private static Preface readHeaderMetadataFrom(InputStream is, long headerByteCount, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
-    MXFInputStream mis = new MXFInputStream(is);
+    MXFDataInput mis = new MXFDataInput(is);
 
     /* look for the primer pack */
     LocalTagRegister localreg = null;
@@ -132,7 +132,7 @@ public class StreamingFileInfo {
 
   public StreamingFileInfo(InputStream is, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
-    MXFInputStream mis = new MXFInputStream(is);
+    MXFDataInput mis = new MXFDataInput(is);
 
     /* look for the header partition pack */
     PartitionPack pp = null;
@@ -147,7 +147,7 @@ public class StreamingFileInfo {
           new MXFEvent(MXFEvent.EventCodes.MISSING_PARTITION_PACK, "No Partition Pack found"));
     }
 
-    this.preface = readHeaderMetadataFrom(mis, pp.getHeaderByteCount(), evthandler);
+    this.preface = readHeaderMetadataFrom(is, pp.getHeaderByteCount(), evthandler);
 
     if (this.preface == null) {
       throw new RuntimeException();

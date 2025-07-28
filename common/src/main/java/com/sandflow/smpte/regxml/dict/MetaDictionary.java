@@ -163,6 +163,7 @@ public class MetaDictionary implements DefinitionResolver {
     private final HashMap<AUID, Set<AUID>> membersOf = new HashMap<>();
     private final HashMap<AUID, Set<AUID>> subclassesOf = new HashMap<>();
 
+    @SuppressWarnings("unused")
     private MetaDictionary() {
     }
 

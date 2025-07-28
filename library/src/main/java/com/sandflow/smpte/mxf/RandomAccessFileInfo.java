@@ -165,7 +165,7 @@ public class RandomAccessFileInfo {
 
   RandomAccessFileInfo(RandomAccessInputSource raip, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
-    MXFInputStream mis = new MXFInputStream(raip);
+    MXFDataInput mis = new MXFDataInput(raip);
 
     /* load the RIP */
     raip.position(raip.size() - 4);
@@ -286,7 +286,7 @@ public class RandomAccessFileInfo {
         }
 
         /* Reset MXF Input stream */
-        mis = new MXFInputStream(raip);
+        mis = new MXFDataInput(raip);
 
         /* read Index Segments until the IndexByteCount is exceeded */
         while (mis.getReadCount() < pp.getIndexByteCount()) {

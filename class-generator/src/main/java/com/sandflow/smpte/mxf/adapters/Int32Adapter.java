@@ -29,18 +29,18 @@ package com.sandflow.smpte.mxf.adapters;
 import java.io.IOException;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 
 public class Int32Adapter {
   public static final Integer ITEM_LENGTH = 4;
 
-  public static Integer fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+  public static Integer fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
     return is.readInt();
   }
 
-  public static void toStream(Integer value, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+  public static void toStream(Integer value, MXFDataOutput os, MXFOutputContext ctx) throws IOException {
     os.writeInt(value);
   }
 

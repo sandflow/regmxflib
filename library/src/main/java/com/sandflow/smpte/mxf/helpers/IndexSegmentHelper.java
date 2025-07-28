@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.sandflow.smpte.klv.LocalTagResolver;
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.mxf.MXFOutputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 import com.sandflow.smpte.mxf.StaticLocalTags;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.util.AUID;
@@ -95,7 +95,7 @@ public class IndexSegmentHelper {
     };
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    MXFOutputStream mos = new MXFOutputStream(bos);
+    MXFDataOutput mos = new MXFDataOutput(bos);
     Set.toStreamAsLocalSet(ars.get(), tags, mos);
     mos.flush();
 

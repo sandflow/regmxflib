@@ -32,17 +32,17 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 
 public class UTF8StringAdapter {
-  public static String fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
-    return CharacterAdapterUtilities.readerToString(new InputStreamReader(is, StandardCharsets.UTF_8), false);
+  public static String fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
+    return CharacterAdapterUtilities.readerToString(new InputStreamReader(is.stream(), StandardCharsets.UTF_8), false);
   }
 
-  public static void toStream(String s, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
-    var osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
+  public static void toStream(String s, MXFDataOutput os, MXFOutputContext ctx) throws IOException {
+    var osw = new OutputStreamWriter(os.stream(), StandardCharsets.UTF_8);
     osw.write(s);
     osw.flush();
   }

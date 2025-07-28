@@ -32,9 +32,9 @@ package com.sandflow.smpte.mxf.types;
 
 import java.io.IOException;
 
-import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 
 public class {{name}} {
@@ -42,7 +42,7 @@ public class {{name}} {
 {{#each members}}
   public {{memberTypeName}} {{memberName}};{{/each}}
 
-  public static {{name}} fromStream(MXFInputStream is, MXFInputContext ctx)  throws IOException {
+  public static {{name}} fromStream(MXFDataInput is, MXFInputContext ctx)  throws IOException {
     var r = new {{name}}();
 {{#each members}}
     r.{{memberName}} = {{memberAdapterName}}.fromStream(is, ctx);{{/each}}
@@ -58,7 +58,7 @@ public class {{name}} {
     this.{{memberName}} = {{memberName}};{{/each}}
   }
 
-  public static void toStream({{name}} value, MXFOutputStream os, MXFOutputContext ctx)  throws IOException {
+  public static void toStream({{name}} value, MXFDataOutput os, MXFOutputContext ctx)  throws IOException {
 {{#each members}}
     {{memberAdapterName}}.toStream(value.{{memberName}}, os, ctx);{{/each}}
   }

@@ -32,9 +32,9 @@ package com.sandflow.smpte.mxf.types;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 
 public class DeltaEntryArray extends ArrayList<DeltaEntry> {
@@ -43,7 +43,7 @@ public class DeltaEntryArray extends ArrayList<DeltaEntry> {
     super();
   }
 
-  public static DeltaEntryArray fromStream(MXFInputStream is, MXFInputContext ctx) throws IOException {
+  public static DeltaEntryArray fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
     int itemcount = (int) (is.readInt() & 0xfffffffL);
     @SuppressWarnings("unused")
     int itemlength = (int) (is.readInt() & 0xfffffffL);
@@ -57,7 +57,7 @@ public class DeltaEntryArray extends ArrayList<DeltaEntry> {
     return items;
   }
 
-  public static void toStream(DeltaEntryArray v, MXFOutputStream os, MXFOutputContext ctx) throws IOException {
+  public static void toStream(DeltaEntryArray v, MXFDataOutput os, MXFOutputContext ctx) throws IOException {
     os.writeUnsignedInt(v.size());
     os.writeUnsignedInt(DeltaEntry.ITEM_LENGTH);
 

@@ -102,7 +102,7 @@ public class PartitionPack {
     ppKey[PARTITION_KIND_OCTET] = kind.getByte13();
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    MXFOutputStream mos = new MXFOutputStream(bos);
+    MXFDataOutput mos = new MXFDataOutput(bos);
 
     try {
       mos.writeUnsignedShort(pp.getMajorVersion());
@@ -180,7 +180,7 @@ public class PartitionPack {
         return null;
     }
 
-    MXFInputStream kis = new MXFInputStream(triplet.getValueAsStream());
+    MXFDataInput kis = new MXFDataInput(triplet.getValueAsStream());
 
     try {
 

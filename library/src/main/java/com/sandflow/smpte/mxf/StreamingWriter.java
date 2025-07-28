@@ -312,11 +312,10 @@ public class StreamingWriter {
          * offset for IAB files
          */
         this.setBytesToWrite(50);
-        MXFOutputStream mos = new MXFOutputStream(this);
+        MXFDataOutput mos = new MXFDataOutput(this);
         mos.writeUL(elementKey);
         mos.writeBERLength(clipSize);
         mos.flush();
-        mos.close();
       } else {
         StreamingWriter.this.fos.writeUL(elementKey);
         StreamingWriter.this.fos.writeBERLength(clipSize);
@@ -414,11 +413,10 @@ public class StreamingWriter {
         throw new RuntimeException();
       }
 
-      MXFOutputStream mos = new MXFOutputStream(StreamingWriter.this.fos);
+      MXFDataOutput mos = new MXFDataOutput(StreamingWriter.this.fos);
       mos.writeUL(elementKey);
       mos.writeBERLength(elementSize);
       this.setPosition(this.getPosition() + mos.getWrittenCount());
-      mos.close();
 
       this.setBytesToWrite(elementSize);
     }
@@ -482,7 +480,7 @@ public class StreamingWriter {
     DONE
   }
 
-  private final MXFOutputStream fos;
+  private final MXFDataOutput fos;
 
   private State state = State.INIT;
   private RandomIndexPack rip = new RandomIndexPack();
@@ -500,7 +498,7 @@ public class StreamingWriter {
     if (os == null) {
       throw new IllegalArgumentException("Output stream must not be null");
     }
-    this.fos = new MXFOutputStream(os);
+    this.fos = new MXFDataOutput(os);
 
     if (preface == null) {
       throw new RuntimeException();
@@ -839,7 +837,7 @@ public class StreamingWriter {
     fos.write(headerbytes);
 
     /* write the RIP */
-    this.rip.toStream(fos);
+    this.rip.toStream(fos.stream());
 
     fos.flush();
 
@@ -921,14 +919,14 @@ public class StreamingWriter {
     };
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    MXFOutputStream mos = new MXFOutputStream(bos);
+    MXFDataOutput mos = new MXFDataOutput(bos);
     mos.writeTriplet(PrimerPack.createTriplet(reg));
     for (Set set : sets) {
       Set.toStreamAsLocalSet(set, tags, mos);
     }
 
     /* required 8 KB fill item per ST 2067-5 */
-    FillItem.toStream(mos, (short) 8192);
+    FillItem.toStream(mos.stream(), (short) 8192);
 
     mos.flush();
 

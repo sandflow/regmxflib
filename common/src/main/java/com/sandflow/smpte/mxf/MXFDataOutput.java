@@ -32,25 +32,24 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
-import com.sandflow.smpte.klv.KLVInputStream.ByteOrder;
-import com.sandflow.smpte.klv.KLVOutputStream;
-import com.sandflow.smpte.klv.Triplet;
+import com.sandflow.smpte.klv.KLVDataInput.ByteOrder;
+import com.sandflow.smpte.klv.KLVDataOutput;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.util.IDAU;
 import com.sandflow.smpte.util.UMID;
 import com.sandflow.smpte.util.UUID;
 
 /**
- * MXFOutputStream allows MXF data structures to be write from an OutputStream
+ * MXFDataOutput allows MXF data structures to be write from an OutputStream
  */
-public class MXFOutputStream extends KLVOutputStream {
+public class MXFDataOutput extends KLVDataOutput {
 
   /**
    * Assumes big endian byte ordering.
    * 
    * @param os OutputStream to write from
    */
-  public MXFOutputStream(OutputStream os) {
+  public MXFDataOutput(OutputStream os) {
     super(os);
   }
 
@@ -60,8 +59,18 @@ public class MXFOutputStream extends KLVOutputStream {
    * @param os        OutputStream to write to
    * @param byteorder Byte ordering of the file
    */
-  public MXFOutputStream(OutputStream os, ByteOrder byteorder) {
+  public MXFDataOutput(OutputStream os, ByteOrder byteorder) {
     super(os, byteorder);
+  }
+
+  /**
+   * Uses an existing MXFDataOutput
+   *
+   * @param mos MXFDataOutput from which the byte ordering and underlying
+   * OutputStream will be used
+   */
+  public MXFDataOutput(MXFDataOutput mos) {
+    super(mos.stream(), mos.getByteOrder());
   }
 
   /**

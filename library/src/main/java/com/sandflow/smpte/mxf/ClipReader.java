@@ -53,7 +53,7 @@ public class ClipReader extends InputStream {
 
     long clipStartPosition = this.info.ecToFilePositions(0);
     this.source.position(clipStartPosition);
-    MXFInputStream mis = new MXFInputStream(this.source);
+    MXFDataInput mis = new MXFDataInput(this.source);
     this.elementKey = mis.readAUID();
     this.elementLength = mis.readBERLength();
 

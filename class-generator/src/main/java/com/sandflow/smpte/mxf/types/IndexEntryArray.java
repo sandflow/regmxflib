@@ -33,9 +33,9 @@ package com.sandflow.smpte.mxf.types;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import com.sandflow.smpte.mxf.MXFInputStream;
+import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFInputContext;
-import com.sandflow.smpte.mxf.MXFOutputStream;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 
 public class IndexEntryArray extends ArrayList<IndexEntry> {
@@ -44,7 +44,7 @@ public class IndexEntryArray extends ArrayList<IndexEntry> {
     super();
   }
 
-  public static IndexEntryArray fromStream(MXFInputStream is, MXFInputContext ctx, short nsl, short npe)
+  public static IndexEntryArray fromStream(MXFDataInput is, MXFInputContext ctx, short nsl, short npe)
       throws IOException {
     int itemcount = (int) (is.readInt() & 0xfffffffL);
     @SuppressWarnings("unused")
@@ -59,7 +59,7 @@ public class IndexEntryArray extends ArrayList<IndexEntry> {
     return items;
   }
 
-  public static void toStream(IndexEntryArray v, MXFOutputStream os, MXFOutputContext ctx, short nsl, short npe)
+  public static void toStream(IndexEntryArray v, MXFDataOutput os, MXFOutputContext ctx, short nsl, short npe)
       throws IOException {
     os.writeUnsignedInt(v.size());
     os.writeUnsignedInt(com.sandflow.smpte.mxf.types.IndexEntry.getLength(nsl, npe));
