@@ -49,7 +49,7 @@ import com.sandflow.util.events.EventHandler;
 
 public class IndexSegmentHelper {
 
-  public static byte[] toBytes(IndexTableSegment its, EventHandler evthandler) throws IOException {
+  public static byte[] toBytes(IndexTableSegment its, EventHandler evthandler) throws IOException, MXFException {
     /* serialize the index table segment */
     /*
      * TODO: the AtomicReference is necessary since the variable is initialized in

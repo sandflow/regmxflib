@@ -94,7 +94,11 @@ public class RegMXFEvent extends BasicEvent {
     /**
      * Header metadata set couldn't be found
      */
-    MISSING_HEADER_SET(Event.Severity.WARN);
+    MISSING_HEADER_SET(Event.Severity.WARN),
+    /**
+     * Inconsistent header metadata information
+     */
+    INCONSISTENT_HEADER(Event.Severity.WARN);
 
 
 

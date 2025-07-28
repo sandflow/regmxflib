@@ -39,10 +39,10 @@ import com.sandflow.smpte.util.AUID;
 
 @FunctionalInterface
 public interface SetItemAdapter<T> {
-  void apply(T v, MXFDataOutput os, MXFOutputContext ctx) throws IOException;
+  void apply(T v, MXFDataOutput os, MXFOutputContext ctx) throws IOException, MXFException;
 
   public static <T> void toSetItem(T itemValue, AUID itemKey, SetItemAdapter<T> adapter, Set s, MXFOutputContext ctx)
-      throws IOException {
+      throws IOException, MXFException {
     if (itemValue == null)
       return;
     ByteArrayOutputStream ibos = new ByteArrayOutputStream();

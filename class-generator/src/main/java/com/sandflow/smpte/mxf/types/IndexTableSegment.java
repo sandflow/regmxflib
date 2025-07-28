@@ -42,6 +42,7 @@ import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.MXFDataOutput;
+import com.sandflow.smpte.mxf.MXFException;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 
@@ -294,7 +295,7 @@ public class IndexTableSegment {
     return null;
   }
 
-  void addItemsToSet(Set s, MXFOutputContext ctx) throws IOException {
+  void addItemsToSet(Set s, MXFOutputContext ctx) throws IOException, MXFException {
 
     SetItemAdapter.toSetItem(this.SliceCount, SliceCount_AUID,
         com.sandflow.smpte.mxf.adapters.UInt8Adapter::toStream, s, ctx);
@@ -340,13 +341,13 @@ public class IndexTableSegment {
         com.sandflow.smpte.mxf.adapters.UInt32Adapter::toStream, s, ctx);
   }
 
-  public void toSet(MXFOutputContext ctx) throws IOException {
+  public void toSet(MXFOutputContext ctx) throws IOException, MXFException {
     Set s = new Set(KEY);
     this.addItemsToSet(s, ctx);
     ctx.putSet(s);
   }
 
-  public static void toStream(IndexTableSegment value, MXFDataOutput mos, MXFOutputContext ctx) throws IOException {
+  public static void toStream(IndexTableSegment value, MXFDataOutput mos, MXFOutputContext ctx) throws IOException, MXFException {
     mos.writeUUID(value.InstanceID);
     value.toSet(ctx);
   }

@@ -81,8 +81,6 @@ public class StreamingWriter {
     private long bytesToWrite;
     private long ecOffset = 0;
 
-    /* TODO: warn if the body and index SIDs are not in the preface */
-
     ContainerWriter(long bodySID, long indexSID) {
       this.bodySID = bodySID;
       this.indexSID = indexSID;
@@ -112,7 +110,7 @@ public class StreamingWriter {
       this.bytesToWrite = bytesToWrite;
     }
 
-    abstract byte[] drainIndexSegments() throws IOException;
+    abstract byte[] drainIndexSegments() throws IOException, MXFException;
 
     long getPosition() {
       return this.ecOffset;
@@ -208,7 +206,7 @@ public class StreamingWriter {
     }
 
     @Override
-    byte[] drainIndexSegments() throws IOException {
+    byte[] drainIndexSegments() throws IOException, MXFException {
       if (this.state != State.WRITTEN) {
         return null;
       }
@@ -338,7 +336,7 @@ public class StreamingWriter {
     }
 
     @Override
-    byte[] drainIndexSegments() throws IOException {
+    byte[] drainIndexSegments() throws IOException, MXFException {
       if (this.state != State.WRITTEN) {
         return null;
       }
@@ -429,7 +427,7 @@ public class StreamingWriter {
     }
 
     @Override
-    byte[] drainIndexSegments() throws IOException {
+    byte[] drainIndexSegments() throws IOException, MXFException {
       if (this.cpPositions.size() == 0) {
         return null;
       }
@@ -615,7 +613,7 @@ public class StreamingWriter {
    * @throws IOException
    * @throws KLVException
    */
-  public void start() throws IOException, KLVException {
+  public void start() throws IOException, KLVException, MXFException {
     if (this.state != State.INIT) {
       throw new RuntimeException();
     }
@@ -632,7 +630,7 @@ public class StreamingWriter {
     this.state = State.START;
   }
 
-  void startPartition(ContainerWriter cw) throws IOException, KLVException {
+  void startPartition(ContainerWriter cw) throws IOException, KLVException, MXFException {
     if (cw == null) {
       throw new RuntimeException();
     }
@@ -646,7 +644,7 @@ public class StreamingWriter {
     this.currentContainer = cw;
   }
 
-  private void closeCurrentPartition() throws IOException, KLVException {
+  private void closeCurrentPartition() throws IOException, KLVException, MXFException {
     if (this.currentContainer == null) {
       return;
     }
@@ -662,7 +660,7 @@ public class StreamingWriter {
     }
   }
 
-  private void addGC(long bodySID, long indexSID, ContainerWriter cw) {
+  private void addGC(long bodySID, long indexSID, ContainerWriter cw) throws MXFException {
     if (bodySID <= 0 || indexSID <= 0) {
       throw new IllegalArgumentException("bodySID and indexSID must be larger than 0");
     }
@@ -675,7 +673,22 @@ public class StreamingWriter {
       throw new RuntimeException(String.format("IndexSID %d is already registered.", indexSID));
     }
 
-    /* TODO: check for valid information in the preface */
+    List<EssenceData> gcs = this.preface.ContentStorageObject.EssenceDataObjects.stream()
+        .filter(e -> e.EssenceStreamID == bodySID).toList();
+
+    if (gcs.size() != 1) {
+      MXFException.handle(evthandler, new RegMXFEvent(
+          RegMXFEvent.EventCodes.INCONSISTENT_HEADER,
+          String.format("Header metadata does not specify exactly one generic container with BodySID = %d",
+              bodySID)));
+    }
+
+    if (gcs.get(0).IndexStreamID != indexSID) {
+      MXFException.handle(evthandler, new RegMXFEvent(
+          RegMXFEvent.EventCodes.INCONSISTENT_HEADER,
+          String.format("Trying to add a generic container with BodySID=%d and IndexSID=%d but the header metadata specifies an IndexSID=%d",
+              bodySID, indexSID, gcs.get(0).IndexStreamID)));
+    }
 
     this.sids.add(bodySID);
     this.sids.add(indexSID);
@@ -685,10 +698,11 @@ public class StreamingWriter {
 
   /**
    * creates a clip-wrapped essence container with constant size units
+   * @throws MXFException 
    * 
    */
   public GCClipCBEWriter addCBEClipWrappedGC(long bodySID, long indexSID)
-      throws IOException, KLVException {
+      throws IOException, KLVException, MXFException {
 
     GCClipCBEWriter w = new GCClipCBEWriter(bodySID, indexSID);
 
@@ -699,10 +713,11 @@ public class StreamingWriter {
 
   /**
    * creates a clip-wrapped essence container with variable size access units
+   * @throws MXFException 
    * 
    */
   public GCClipVBEWriter addVBEClipWrappedGC(long bodySID, long indexSID)
-      throws IOException, KLVException {
+      throws IOException, KLVException, MXFException {
 
     GCClipVBEWriter w = new GCClipVBEWriter(bodySID, indexSID);
 
@@ -713,10 +728,11 @@ public class StreamingWriter {
 
   /**
    * creates a framed-wrapped essence container with variable size access units
+   * @throws MXFException 
    * 
    */
   public GCFrameVBEWriter addVBEFrameWrappedGC(long bodySID, long indexSID)
-      throws IOException, KLVException {
+      throws IOException, KLVException, MXFException {
 
     GCFrameVBEWriter w = new GCFrameVBEWriter(bodySID, indexSID);
 
@@ -753,7 +769,7 @@ public class StreamingWriter {
    * @throws IOException
    * @throws KLVException
    */
-  public void finish() throws IOException, KLVException {
+  public void finish() throws IOException, KLVException, MXFException {
     this.closeCurrentPartition();
 
     /* update header metadata */
@@ -836,7 +852,7 @@ public class StreamingWriter {
    * PRIVATE API
    */
 
-  private byte[] serializePreface(Preface preface) throws IOException {
+  private byte[] serializePreface(Preface preface) throws IOException, MXFException {
     /* write */
     LocalTagRegister reg = new LocalTagRegister();
     LinkedList<Set> sets = new LinkedList<>();
@@ -961,7 +977,7 @@ public class StreamingWriter {
     this.curPartition = pp;
   }
 
-  private void writeIndexPartition() throws IOException, KLVException {
+  private void writeIndexPartition() throws IOException, KLVException, MXFException {
     byte[] itsBytes = this.currentContainer.drainIndexSegments();
     if (itsBytes == null) {
       return;

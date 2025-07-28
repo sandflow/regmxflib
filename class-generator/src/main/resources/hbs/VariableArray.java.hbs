@@ -46,7 +46,7 @@ public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
     super();
   }
 
-  public static {{adapterName}} fromStream(MXFDataInput is, MXFInputContext ctx)  throws IOException, MXFException {
+  public static {{adapterName}} fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException, MXFException {
     int itemcount = (int) (is.readInt() & 0xfffffffL);
     @SuppressWarnings("unused")
     int itemlength = (int) (is.readInt() & 0xfffffffL);
@@ -63,7 +63,7 @@ public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
     return items;
   }
 
-  public static void toStream({{adapterName}} v, MXFDataOutput os, MXFOutputContext ctx)  throws IOException {
+  public static void toStream({{adapterName}} v, MXFDataOutput os, MXFOutputContext ctx) throws IOException, MXFException {
     os.writeUnsignedInt(v.size());
     os.writeUnsignedInt({{itemAdapterName}}.ITEM_LENGTH);
 

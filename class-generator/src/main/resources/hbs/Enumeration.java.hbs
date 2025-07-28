@@ -55,7 +55,7 @@ public enum {{symbol}} {
     this.value = value;
   }
 
-  public static {{symbol}} fromStream(MXFDataInput is, MXFInputContext ctx)  throws IOException {
+  public static {{symbol}} fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
     {{valuesTypeName}} value = {{valuesAdapterName}}.fromStream(is, ctx);
 
     for ({{symbol}} s : values()) {
@@ -67,7 +67,7 @@ public enum {{symbol}} {
     return null;
   }
 
-  public static void toStream({{symbol}} value, MXFDataOutput os, MXFOutputContext ctx)  throws IOException {
+  public static void toStream({{symbol}} value, MXFDataOutput os, MXFOutputContext ctx) throws IOException {
       {{valuesAdapterName}}.toStream(value.value, os, ctx);
   }
 

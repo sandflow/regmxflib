@@ -59,7 +59,7 @@ public class {{name}} {
     this.{{memberName}} = {{memberName}};{{/each}}
   }
 
-  public static void toStream({{name}} value, MXFDataOutput os, MXFOutputContext ctx)  throws IOException {
+  public static void toStream({{name}} value, MXFDataOutput os, MXFOutputContext ctx)  throws IOException, MXFException {
 {{#each members}}
     {{memberAdapterName}}.toStream(value.{{memberName}}, os, ctx);{{/each}}
   }

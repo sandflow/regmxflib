@@ -149,20 +149,23 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
     return {{className}}.fromSet(s, ctx);
   }
 
-  void addItemsToSet(Set s, MXFOutputContext ctx) throws IOException {
+  void addItemsToSet(Set s, MXFOutputContext ctx) throws IOException, MXFException {
 {{#if parentClassName}}
     super.addItemsToSet(s, ctx);{{/if}}
 {{#each ownMembers}}
     SetItemAdapter.toSetItem(this.{{symbol}}, {{symbol}}_AUID, {{adapterName}}::toStream, s, ctx);{{/each}}
   }
 
-  public void toSet(MXFOutputContext ctx) throws IOException {
+  public void toSet(MXFOutputContext ctx) throws IOException, MXFException {
     Set s = new Set(KEY);
     this.addItemsToSet(s, ctx);
     ctx.putSet(s);
   }
 
-  public static void toStream({{className}} value, MXFDataOutput mos, MXFOutputContext ctx) throws IOException {
+  public static void toStream({{className}} value, MXFDataOutput mos, MXFOutputContext ctx) throws IOException, MXFException {
+    if (value.InstanceID == null) {
+      throw new MXFException("InstanceID cannot be null");
+    }
     mos.writeUUID(value.InstanceID);
     value.toSet(ctx);
   }
