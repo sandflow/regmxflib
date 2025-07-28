@@ -31,7 +31,6 @@
 package com.sandflow.smpte.mxf;
 
 import com.sandflow.util.events.Event;
-import com.sandflow.util.events.Event.Severity;
 import com.sandflow.util.events.EventHandler;
 
 public class MXFException extends Exception {
@@ -40,13 +39,21 @@ public class MXFException extends Exception {
     super(msg);
   }
 
+  public MXFException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public MXFException(Throwable cause) {
+    super(cause);
+  }
+
   /**
    * Utility function for calling an EventHandler in the context of MXF. If no
    * EventHandler is passed then an event with ERROR or FATAL severity results
    * in an MXF Exception being thrown.
    * 
    * @param handler EventHandler or null
-   * @param evt Event to be handled
+   * @param evt     Event to be handled
    * @throws MXFException
    */
   public static void handle(EventHandler handler, Event evt) throws MXFException {
@@ -55,7 +62,7 @@ public class MXFException extends Exception {
           evt.getSeverity() == Event.Severity.FATAL) {
         /* die on FATAL events or if requested by the handler */
         throw new MXFException(evt.getMessage());
-  
+
       }
     } else if (evt.getSeverity() == Event.Severity.ERROR ||
         evt.getSeverity() == Event.Severity.FATAL) {

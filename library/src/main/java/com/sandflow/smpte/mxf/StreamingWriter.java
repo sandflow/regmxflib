@@ -69,6 +69,8 @@ import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UMID;
 import com.sandflow.smpte.util.UUID;
+import com.sandflow.util.events.Event;
+import com.sandflow.util.events.EventHandler;
 
 public class StreamingWriter {
 
@@ -221,7 +223,7 @@ public class StreamingWriter {
       its.EssenceStreamID = this.getBodySID();
       its.EditUnitByteCount = this.accessUnitSize;
 
-      return IndexSegmentHelper.toBytes(its);
+      return IndexSegmentHelper.toBytes(its, StreamingWriter.this.evthandler);
     }
 
     @Override
@@ -363,7 +365,7 @@ public class StreamingWriter {
         its.IndexEntryArray.add(e);
       }
 
-      return IndexSegmentHelper.toBytes(its);
+      return IndexSegmentHelper.toBytes(its, StreamingWriter.this.evthandler);
     }
 
     @Override
@@ -456,7 +458,7 @@ public class StreamingWriter {
       this.cpFirstEditUnit = this.duration;
       this.cpPositions.clear();
 
-      return IndexSegmentHelper.toBytes(its);
+      return IndexSegmentHelper.toBytes(its, StreamingWriter.this.evthandler);
     }
 
     @Override
@@ -488,29 +490,35 @@ public class StreamingWriter {
   private final java.util.Map<Long, ContainerWriter> ecs = new HashMap<>();
   private ContainerWriter currentContainer;
   private final Preface preface;
+  private final EventHandler evthandler;
 
   /**
    * current partition
    */
   private PartitionPack curPartition;
 
-  public StreamingWriter(OutputStream os, Preface preface) throws IOException, KLVException {
+  public StreamingWriter(OutputStream os, Preface preface, EventHandler evthandler)
+      throws IOException, KLVException, MXFException {
     if (os == null) {
       throw new IllegalArgumentException("Output stream must not be null");
     }
     this.fos = new MXFDataOutput(os);
 
     if (preface == null) {
-      throw new RuntimeException();
+      throw new IllegalArgumentException("Preface must not be null");
     }
 
+    if (!preface.OperationalPattern.isUL()) {
+      throw new MXFException("The Operational Pattern label found in the Preface is not a UL");
+    }
+
+    /* TODO: make a copy */
     this.preface = preface;
+
+    this.evthandler = evthandler;
   }
 
   private UL getOP() {
-    if (!this.preface.OperationalPattern.isUL()) {
-      throw new RuntimeException();
-    }
     return this.preface.OperationalPattern.asUL();
   }
 
@@ -654,20 +662,17 @@ public class StreamingWriter {
     }
   }
 
-  /**
-   * creates a clip-wrapped essence container with constant size units
-   * 
-   */
-  public GCClipCBEWriter addCBEClipWrappedGC(long bodySID, long indexSID)
-      throws IOException, KLVException {
-    /* TODO: check for valid SIDs */
+  private void addGC(long bodySID, long indexSID, ContainerWriter cw) {
+    if (bodySID <= 0 || indexSID <= 0) {
+      throw new IllegalArgumentException("bodySID and indexSID must be larger than 0");
+    }
 
     if (this.sids.contains(bodySID)) {
-      throw new RuntimeException();
+      throw new RuntimeException(String.format("BodySID %d is already registered.", bodySID));
     }
 
     if (this.sids.contains(indexSID)) {
-      throw new RuntimeException();
+      throw new RuntimeException(String.format("IndexSID %d is already registered.", indexSID));
     }
 
     /* TODO: check for valid information in the preface */
@@ -675,9 +680,19 @@ public class StreamingWriter {
     this.sids.add(bodySID);
     this.sids.add(indexSID);
 
+    this.ecs.put(bodySID, cw);
+  }
+
+  /**
+   * creates a clip-wrapped essence container with constant size units
+   * 
+   */
+  public GCClipCBEWriter addCBEClipWrappedGC(long bodySID, long indexSID)
+      throws IOException, KLVException {
+
     GCClipCBEWriter w = new GCClipCBEWriter(bodySID, indexSID);
 
-    this.ecs.put(bodySID, w);
+    this.addGC(bodySID, indexSID, w);
 
     return w;
   }
@@ -688,24 +703,10 @@ public class StreamingWriter {
    */
   public GCClipVBEWriter addVBEClipWrappedGC(long bodySID, long indexSID)
       throws IOException, KLVException {
-    /* TODO: check for valid SIDs */
-
-    if (this.sids.contains(bodySID)) {
-      throw new RuntimeException();
-    }
-
-    if (this.sids.contains(indexSID)) {
-      throw new RuntimeException();
-    }
-
-    /* TODO: check for valid information in the preface */
-
-    this.sids.add(bodySID);
-    this.sids.add(indexSID);
 
     GCClipVBEWriter w = new GCClipVBEWriter(bodySID, indexSID);
 
-    this.ecs.put(bodySID, w);
+    this.addGC(bodySID, indexSID, w);
 
     return w;
   }
@@ -716,24 +717,10 @@ public class StreamingWriter {
    */
   public GCFrameVBEWriter addVBEFrameWrappedGC(long bodySID, long indexSID)
       throws IOException, KLVException {
-    /* TODO: check for valid SIDs */
-
-    if (this.sids.contains(bodySID)) {
-      throw new RuntimeException();
-    }
-
-    if (this.sids.contains(indexSID)) {
-      throw new RuntimeException();
-    }
-
-    /* TODO: check for valid information in the preface */
-
-    this.sids.add(bodySID);
-    this.sids.add(indexSID);
 
     GCFrameVBEWriter w = new GCFrameVBEWriter(bodySID, indexSID);
 
-    this.ecs.put(bodySID, w);
+    this.addGC(bodySID, indexSID, w);
 
     return w;
   }
@@ -744,16 +731,17 @@ public class StreamingWriter {
    */
   public GSWriter addGenericStream(long bodySID)
       throws IOException, KLVException {
-    /* TODO: check for valid SIDs */
-
-    if (this.sids.contains(bodySID)) {
-      throw new RuntimeException();
+    if (bodySID <= 0) {
+      throw new IllegalArgumentException("bodySID and indexSID must be larger than 0");
     }
 
-    this.sids.add(bodySID);
+    if (this.sids.contains(bodySID)) {
+      throw new RuntimeException(String.format("BodySID %d is already registered.", bodySID));
+    }
 
     GSWriter w = new GSWriter(bodySID);
 
+    this.sids.add(bodySID);
     this.ecs.put(bodySID, w);
 
     return w;
@@ -890,6 +878,11 @@ public class StreamingWriter {
           }
         }
 
+      }
+
+      @Override
+      public void handleEvent(Event evt) throws MXFException {
+        StreamingWriter.this.evthandler.handle(evt);
       }
 
     };

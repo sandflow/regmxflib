@@ -36,7 +36,7 @@ import com.sandflow.util.events.Event;
 /**
  * All events raised by this class are instance of this class
  */
-public class MXFEvent extends BasicEvent {
+public class RegMXFEvent extends BasicEvent {
 
   /**
    * Defines all events raised by this class
@@ -82,7 +82,19 @@ public class MXFEvent extends BasicEvent {
     /**
      * Invalid index segment
      */
-    BAD_INDEX_SEGMENT(Event.Severity.FATAL);
+    BAD_INDEX_SEGMENT(Event.Severity.FATAL),
+    /**
+     * No class found
+     */
+    CLASS_NOT_FOUND(Event.Severity.ERROR),
+    /**
+     * Could not read an item
+     */
+    ITEM_READ_FAILED(Event.Severity.WARN),
+    /**
+     * Header metadata set couldn't be found
+     */
+    MISSING_HEADER_SET(Event.Severity.WARN);
 
 
 
@@ -94,7 +106,7 @@ public class MXFEvent extends BasicEvent {
 
   }
 
-  public MXFEvent(MXFEvent.EventCodes kind, String message) {
+  public RegMXFEvent(RegMXFEvent.EventCodes kind, String message) {
     super(kind.severity, kind, message);
   }
 

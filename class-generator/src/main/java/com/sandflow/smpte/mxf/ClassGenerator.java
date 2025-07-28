@@ -154,7 +154,6 @@ public class ClassGenerator {
   }
 
   class TypeMaker extends NullDefinitionVisitor {
-    /* TODO: handle byte ordering */
     private static final UL UUID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01030300.00000000");
     private static final UL J2KExtendedCapabilities_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.03010d00.00000000");
     private static final UL Character_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01100100.00000000");
@@ -225,7 +224,6 @@ public class ClassGenerator {
       ClassDefinition c = def;
       while (true) {
         for (var propertyAUID : resolver.getMembersOf(c)) {
-          /* TODO: separate members into inherited and owned */
 
           PropertyDefinition propertyDef = (PropertyDefinition) resolver.getDefinition(propertyAUID);
           if (propertyDef == null) {
@@ -722,7 +720,7 @@ public class ClassGenerator {
             }
           }
         } catch (Exception e) {
-          /* TODO: log */
+          System.err.println(e.getMessage());
         }
       }
     }

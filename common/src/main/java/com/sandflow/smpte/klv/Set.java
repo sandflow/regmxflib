@@ -26,7 +26,6 @@
 package com.sandflow.smpte.klv;
 
 import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -71,7 +70,7 @@ public class Set implements Group {
   }
 
   public static void toStreamAsLocalSet(Group g, LocalTagResolver tags, MXFDataOutput mos)
-      throws EOFException, IOException {
+      throws IOException {
     if (g == null || !g.getKey().isGroup()) {
       throw new IllegalArgumentException("Not a group");
     }

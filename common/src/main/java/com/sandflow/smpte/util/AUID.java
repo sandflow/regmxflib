@@ -159,7 +159,10 @@ public class AUID {
    * @return Underlying UL, or null if not a UL
    */
   public UL asUL() {
-    return isUL() ? new UL(value) : null;
+    if (! this.isUL()) {
+      throw new IllegalArgumentException("Was asked to expressed AUID " + this + " as a UL but it is not a UL");
+    }
+    return new UL(value);
   }
 
   /**

@@ -46,6 +46,7 @@ import com.sandflow.smpte.mxf.FillItem;
 import com.sandflow.smpte.mxf.HeaderMetadataSet;
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFDataInput;
+import com.sandflow.smpte.mxf.MXFException;
 import com.sandflow.smpte.mxf.PartitionPack;
 import com.sandflow.smpte.mxf.PrimerPack;
 import com.sandflow.smpte.mxf.RandomIndexPack;
@@ -177,6 +178,11 @@ public class RegMXFDump {
             public Set getSet(UUID uuid) {
               return setresolver.get(uuid);
             }
+
+            @Override
+            public void handleEvent(Event evt) throws MXFException {
+              evthandler.handle(evt);
+            }
           };
 
           for (Set s : setresolver.values()) {
@@ -203,6 +209,11 @@ public class RegMXFDump {
                 @Override
                 public Set getSet(UUID uuid) {
                   throw new UnsupportedOperationException("Unimplemented method 'getSet'");
+                }
+
+                @Override
+                public void handleEvent(Event evt) throws MXFException {
+                  evthandler.handle(evt);
                 }
               });
 

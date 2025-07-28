@@ -157,7 +157,7 @@ class StreamingWriterTest {
 
     OutputStream os = new FileOutputStream("target/test-output/test-cbeclip.mch.mxf");
 
-    StreamingWriter sw = new StreamingWriter(os, header.getPreface());
+    StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null);
 
     GCClipCBEWriter ec = sw.addCBEClipWrappedGC(1, 2);
 
@@ -269,7 +269,7 @@ class StreamingWriterTest {
 
     /* Initialize the streaming writer */
     OutputStream os = new FileOutputStream("target/test-output/clipvbe-test.iab.mxf");
-    StreamingWriter sw = new StreamingWriter(os, header.getPreface());
+    StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null);
 
     /* configure the clip-wrapped generic container */
 
@@ -521,7 +521,7 @@ class StreamingWriterTest {
 
     OutputStream os = new FileOutputStream("target/test-output/test-vbeframe.j2k.mxf");
 
-    StreamingWriter sw = new StreamingWriter(os, header.getPreface());
+    StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null);
 
     var cw = sw.addVBEFrameWrappedGC(BODY_SID, INDEX_SID);
     sw.start();
@@ -631,7 +631,7 @@ class StreamingWriterTest {
 
     OutputStream os = new FileOutputStream("target/test-output/test-vbeframe.j2k.mxf");
 
-    StreamingWriter sw = new StreamingWriter(os, header.getPreface());
+    StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null);
 
     var cw = sw.addVBEFrameWrappedGC(BODY_SID, INDEX_SID);
     sw.start();

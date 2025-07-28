@@ -33,9 +33,12 @@ package com.sandflow.smpte.mxf;
 import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.util.UMID;
 import com.sandflow.smpte.util.UUID;
+import com.sandflow.util.events.Event;
 
 public interface MXFOutputContext {
   UUID getPackageInstanceID(UMID packageID);
 
   void putSet(Set set);
+
+  void handleEvent(Event evt) throws MXFException;
 }

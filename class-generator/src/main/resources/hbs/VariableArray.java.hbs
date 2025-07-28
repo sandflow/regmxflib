@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFDataOutput;
+import com.sandflow.smpte.mxf.MXFException;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 
 
@@ -45,7 +46,7 @@ public class {{adapterName}} extends ArrayList<{{itemTypeName}}> {
     super();
   }
 
-  public static {{adapterName}} fromStream(MXFDataInput is, MXFInputContext ctx)  throws IOException {
+  public static {{adapterName}} fromStream(MXFDataInput is, MXFInputContext ctx)  throws IOException, MXFException {
     int itemcount = (int) (is.readInt() & 0xfffffffL);
     @SuppressWarnings("unused")
     int itemlength = (int) (is.readInt() & 0xfffffffL);

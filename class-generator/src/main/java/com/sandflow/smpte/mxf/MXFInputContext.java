@@ -36,5 +36,6 @@ import com.sandflow.util.events.Event;
 
 public interface MXFInputContext {
   Set getSet(UUID uuid);
-  void handleEvent(Event evt);
+
+  void handleEvent(Event evt) throws MXFException;
 }

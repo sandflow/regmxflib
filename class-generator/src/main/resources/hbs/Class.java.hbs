@@ -36,12 +36,16 @@ import java.io.IOException;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.mxf.SetItemAdapter;{{/if}}
 import com.sandflow.smpte.util.UL;
+import com.sandflow.smpte.util.UUID;
 import com.sandflow.smpte.mxf.ClassFactory;
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.MXFDataOutput;
+import com.sandflow.smpte.mxf.MXFException;
+import com.sandflow.smpte.mxf.RegMXFEvent;
 import com.sandflow.smpte.klv.Set;
+
 
 /**
   * {{#if isAbstract}}<<abstract>> {{/if}}{{className}}
@@ -89,53 +93,60 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
     return obj.copyOf();
   }
 
-  void readFromSet(Set s, MXFInputContext ctx) throws IOException {
+  void readFromSet(Set s, MXFInputContext ctx) throws MXFException {
 {{#if parentClassName}}
     super.readFromSet(s, ctx);
 {{/if}}
 {{#if ownMembers}}
     Triplet t;{{/if}}
 {{#each ownMembers}}
-    if ((t = s.getItem({{symbol}}_AUID)) != null) {
-      this.{{symbol}} = {{adapterName}}.fromStream(new MXFDataInput(t.getValueAsStream()), ctx);
+    try {
+      if ((t = s.getItem({{symbol}}_AUID)) != null) {
+        this.{{symbol}} = {{adapterName}}.fromStream(new MXFDataInput(t.getValueAsStream()), ctx);
+      }
+    } catch (IOException e) {
+      ctx.handleEvent(new RegMXFEvent(
+        RegMXFEvent.EventCodes.ITEM_READ_FAILED,
+        "Reading item {{symbol}} from Set "+ s.getKey().toString() + " failed"));
     }
 {{/each}}
 
   }
-  public static {{className}} fromSet(Set s, MXFInputContext ctx) {
+  public static {{className}} fromSet(Set s, MXFInputContext ctx) throws MXFException {
+    if (s == null) {
+      throw new IllegalArgumentException("Cannot read from an empty Set");
+    }
     Class<?> clazz = ClassFactory.getClass(s.getKey());
     if (clazz == null) {
-      /* TODO: record error */
-      System.err.println("Class not found: "+ s.getKey().toString());
+      ctx.handleEvent(new RegMXFEvent(
+        RegMXFEvent.EventCodes.CLASS_NOT_FOUND,
+        "Class not found: "+ s.getKey().toString()));
       return null;
     }
+
+    {{className}} obj;
     try {
-      {{className}} obj;
       obj = ({{className}}) clazz.getConstructor().newInstance();
-      obj.readFromSet(s, ctx);
-      return obj;
     } catch (Exception e) {
-      /* TODO: log error */
-      System.out.println(e.getMessage());
+      throw new RuntimeException(e);
     }
 
-    return null;
+    obj.readFromSet(s, ctx);
+    return obj;
   }
 
-  public static {{className}} fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
-    try {
-      var uuid = is.readUUID();
-      var s = ctx.getSet(uuid);
-      if (s == null)
-        return null;
+  public static {{className}} fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException, MXFException {
+    UUID uuid = is.readUUID();
 
-      return {{className}}.fromSet(s, ctx);
-    } catch (Exception e) {
-      /* TODO: log error */
-      System.err.println(e.getMessage());
+    var s = ctx.getSet(uuid);
+    if (s == null) {
+      ctx.handleEvent(new RegMXFEvent(
+              RegMXFEvent.EventCodes.MISSING_HEADER_SET,
+              "Cannot find header metadata set " + uuid));
+      return null;
     }
 
-    return null;
+    return {{className}}.fromSet(s, ctx);
   }
 
   void addItemsToSet(Set s, MXFOutputContext ctx) throws IOException {
