@@ -51,9 +51,9 @@ public class IndexSegmentHelper {
 
   public static byte[] toBytes(IndexTableSegment its, EventHandler evthandler) throws IOException, MXFException {
     /* serialize the index table segment */
+
     /*
-     * TODO: the AtomicReference is necessary since the variable is initialized in
-     * the
+     * The AtomicReference is necessary since the variable is initialized in the
      * inline MXFOutputContext
      */
     AtomicReference<Set> ars = new AtomicReference<>();
