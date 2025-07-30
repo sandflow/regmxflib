@@ -32,6 +32,7 @@ package com.sandflow.smpte.mxf;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -39,6 +40,7 @@ import java.io.RandomAccessFile;
 
 import org.junit.jupiter.api.Test;
 
+import com.sandflow.smpte.mxf.types.IABEssenceDescriptor;
 import com.sandflow.smpte.mxf.types.RGBADescriptor;
 import com.sandflow.smpte.util.FileRandomAccessInputSource;
 
@@ -65,6 +67,35 @@ class RandomAccessReaderTest {
   }
 
   @Test
+  void testFrameVBEAndGS() throws Exception {
+    File f = new File(ClassLoader.getSystemResource("imps/imp_1/IAB_dd3fabc6-4794-4bae-95ee-6bc2405716a6.mxf").toURI());
+    FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
+
+    RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
+    GCEssenceTracks tracks = new GCEssenceTracks(fi.getPreface());
+    assertEquals(1, tracks.getTrackCount());
+    assertInstanceOf(IABEssenceDescriptor.class, tracks.getTrackInfo(0).descriptor());
+
+    final byte[] iaFrameMagic = { 01, 00, 00, 06, 67, 17, 01, 14 };
+    byte[] buffer = new byte[iaFrameMagic.length];
+
+    ClipReader fr = new ClipReader(fi, rais);
+    for (int i = 0; i < fi.getEUCount(); i++) {
+      fr.seek(i);
+      fr.read(buffer);  
+      assertArrayEquals(buffer, iaFrameMagic);
+    }
+    fr.close();
+
+    GenericStreamReader gsr = new GenericStreamReader(fi, rais);
+    for (var sid : fi.getGenericStreams()) {
+      gsr.seek(sid);
+      assertTrue(gsr.getElementLength() > 0);
+    }
+    gsr.close();
+  }
+
+  @Test
   void testClipCBE() throws Exception {
     File f = new File(ClassLoader.getSystemResource("mxf-files/audio.mxf").toURI());
     FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
@@ -83,8 +114,6 @@ class RandomAccessReaderTest {
 
   @Test
   void testClipVBE() throws Exception {
-    final byte[] iaFrameMagic = { 01, 00, 00, 00, 00, 02, 00, 00 };
-
     File f = new File(ClassLoader.getSystemResource("mxf-files/iab.mxf").toURI());
     FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
 
@@ -93,6 +122,7 @@ class RandomAccessReaderTest {
     assertEquals(1, tracks.getTrackCount());
     assertEquals(2, fi.getEUCount());
 
+    final byte[] iaFrameMagic = { 01, 00, 00, 00, 00, 02, 00, 00 };
     byte[] buffer = new byte[iaFrameMagic.length];
 
     ClipReader fr = new ClipReader(fi, rais);

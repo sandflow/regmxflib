@@ -375,27 +375,27 @@ public class RandomAccessFileInfo {
     return this.basicInfo.getPreface();
   }
 
-  public Collection<Long> getGenericStreams() {
+  public java.util.Set<Long> getGenericStreams() {
     return Collections.unmodifiableSet(this.gsToFilePositions.keySet());
   }
 
   public long gsToFilePosition(long gsSID, long position) {
-    /* check for no generic stream */
+    /* TODO: check for no generic stream */
     return this.gsToFilePositions.get(gsSID).getFilePosition(position);
   }
 
   public long euToECPosition(long position) {
-    /* check for no index */
+    /* TODO: check for no index */
     return this.euToECPosition.getECPosition(position);
   }
 
   public long ecToFilePositions(long position) {
-    /* check for no ec */
+    /* TODO: check for no ec */
     return this.ecToFilePositions.getFilePosition(position);
   }
 
   public long getEUCount() {
-    /* check for no index */
+    /* TODO: check for no index */
     return this.euToECPosition.length();
   }
 
