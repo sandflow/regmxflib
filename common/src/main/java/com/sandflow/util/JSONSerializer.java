@@ -38,6 +38,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Collection;
+import java.util.HexFormat;
 import java.util.Set;
 
 import org.apache.commons.numbers.fraction.Fraction;
@@ -125,6 +126,8 @@ public class JSONSerializer {
       w.write(String.format("\"%s\"", escapeJSONString(obj.toString())));
     } else if (NUMBERS.contains(obj.getClass())) {
       w.write(obj.toString());
+    } else if (obj instanceof byte[]) {
+      w.write(String.format("\"%s\"", HexFormat.of().formatHex((byte[]) obj)));
     } else {
       w.write("{\n");
       boolean first = true;

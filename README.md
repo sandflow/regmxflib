@@ -1,5 +1,12 @@
 # REGMXFLIB
 
+## Quick start
+
+    mvn package
+    java -cp library/target/library-1.0.0-alpha.1-jar-with-dependencies.jar com.sandflow.smpte.tools.RegMXFDump \
+      library/src/test/resources/imps/imp_1/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.mxf > \
+      library/target/test-output/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.json
+
 ## MXF concepts
 
 ### Data model

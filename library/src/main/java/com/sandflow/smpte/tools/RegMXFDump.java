@@ -101,20 +101,25 @@ public class RegMXFDump {
 
     try {
       osw.write("[\n");
+      boolean first = true;
       while (true) {
         AUID elementKey = mis.readAUID();
         long elementLength = mis.readBERLength();
+
+        if (!first) {
+          osw.write(",\n");
+        }
+        first = false;
 
         if (RandomIndexPack.getKey().equalsIgnoreVersion(elementKey)) {
           byte[] value = new byte[(int) elementLength];
           mis.readFully(value);
           JSONSerializer.serialize(RandomIndexPack.fromTriplet(new MemoryTriplet(elementKey, value)), osw);
           osw.flush();
-          osw.write(",\n");
           continue;
         } else if (!PartitionPack.isInstance(elementKey)) {
           /* we have reached something other than a partition */
-          osw.write(String.format("{\"key\": \"%s\", \"length\": %d},\n", elementKey, elementLength));
+          osw.write(String.format("{\"key\": \"%s\", \"length\": %d}", elementKey, elementLength));
           osw.flush();
           mis.skipFully(elementLength);
           continue;
@@ -128,7 +133,6 @@ public class RegMXFDump {
 
         JSONSerializer.serialize(pp, osw);
         osw.flush();
-        osw.write(",\n");
 
         mis.resetCount();
 
@@ -187,9 +191,9 @@ public class RegMXFDump {
 
           for (Set s : setresolver.values()) {
             if (Preface.getKey().equalsIgnoreVersionAndGroupCoding(s.getKey())) {
+              osw.write(",\n");
               JSONSerializer.serialize(Preface.fromSet(s, mic), osw);
               osw.flush();
-              osw.write(",\n");
             }
           }
         }
@@ -218,8 +222,8 @@ public class RegMXFDump {
               });
 
           if (its != null) {
-            JSONSerializer.serialize(its, osw);
             osw.write(",\n");
+            JSONSerializer.serialize(its, osw);
             osw.flush();
           }
 
