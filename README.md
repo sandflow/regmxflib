@@ -1,0 +1,104 @@
+# REGMXFLIB
+
+## MXF concepts
+
+### Data model
+
+At the highest level, an MXF file consists of:
+
+- essence containers and generic streams, which each consists of a sequence of KLV packets containing essence or metadata;
+
+- header metadata, which describes the contents of these essence containers and generic streams and contains additional metadata; and
+
+- index tables, which allow temporal offset within these these essence containers and generic streams to be accessed in constant time and in any order.
+
+### Physical structure
+
+An MXF file is divided into partitions:
+
+- two copies of the header metadata is typically stored in an MXF: at the beginning of the file (file header) and at the end of the file (file footer). The latter is assumed to contain the definitive information, once the entire file is has been written.
+
+- each essence container and generic stream is partitioned into one or more partitions on KLV Triplet boundaries. Partitions from different essence containers and generic streams can be interleaved.
+
+- Each partition that contains data from an essence container or generic stream that is indexed is followed by a partition that contains an index table for that partition.
+
+- At the very end of the file, a random index pack (RIP) contains a table of contents of all the partitions contained in the file
+
+### Essence wrapping and indexing
+
+- Frame-wrapping (VBE)
+- Clip-wrapping (CBE)
+- Clip-wrapping (VBE)
+
+## Reading
+
+### General
+
+The library implements two ways of reading the contents of an MXF file:
+
+- the `StreamingReader` reads an MXF file sequentially, from beginning to end, starting with the header metadata and then each essence element as they occur in the file, across all Essence Containers and Generic Streams, and across all partitions. Index Tables, the RIP and any Header Metadata other than that from the Header Partition are ignored.
+
+- the `RandomAccessReader` requires random access to the file, but allows seeking to any access unit within the file in constant time and in any order. The file must contain a RIP and Index Tables. It is limited to a single Essence Container but can contain any number of Generic Stream partitions.
+
+### Streaming reader
+
+The first step to using the `StreamingReader` is to read the Header Metadata from the file's header by instantiating a `StreamingFileInfo` object, which advances the file pointer just past the file header. The application can retrieve and inspect the Header Metadata using the `getPreface()` method. The Header Metadata can be used, for example, to determine which tracks are present in the file using the `GCEssenceTracks` helper class.
+
+The next steps is to instantiate a `StreamingReader` object (typically using the same `InputStream` used with the `StreamingFileInfo` object). Each essence and generic stream element contained in the file can then be read in turn by calling the `nextElement()` method until it returns `false`. Each time the method returns, the `StreamingReader` object, which extends `InputStream` will be positioned at the first byte of the value of the element. The element key and length can be read using the `getElementKey()` and `getElementLength()`, respectively.
+
+The `StreamingReader` does not differentiate between kinds of essence wrapping and between essence containers and generic streams: clip-wrapped essence is returned a single element, each element of a frame-wrapped essence container is returned as an individual element and each element within a Generic Stream Partition is also returned as an individual element. 
+
+The operation of the `StreamingReader` is demonstrated at
+<library/src/test/java/com/sandflow/smpte/mxf/StreamingReaderTest.java> and at <library/src/test/java/com/sandflow/smpte/mxf/ReadWriteTest.java>.
+
+### Random access reader
+
+The first step to using the `RandomAccessReader` is to read-in the file's Header Metadata, Index Tables and RIP by instantiating a `RandomAccessFileInfo` object. In addition to retrieving the Header Metadata (`getPreface()`), this object can be used, for example, to determine which generic streams tracks are present in the file (`getGenericStreams()`) or the number of essence edit units present (`getEUCount()`).
+
+The next step depends on the kind of wrapping used for the essence, something that the library cannot unfortunately determine on its own and which determines how the essence is indexed:
+
+- if the essence is clip-wrapped, then a `ClipReader` is instantiated and the `seek()` method seeks to the first byte of essence of the specified edit unit.
+
+- if the essence is frame-wrapped, then a `FrameReader` is instantiated and the `seek()` method seeks to the first byte of the key of the first element of the specified edit unit. Each subsequent element of the edit unit can be accessed using the `nextElement()` method
+
+To access a Generic Stream, a `GenericStreamReader` is instantiated and the `seek()` method seeks to the first byte of the key of the first element of the specified generic stream.
+
+The `ClipReader`, `FrameReader` and `GenericStreamReader` objects extend `InputStream` and behave similarly to the `StreamingReader`.
+
+The operation of the `RandomAccessReader` is demonstrated at
+<library/src/test/java/com/sandflow/smpte/mxf/RandomAccessReaderTest.java>.
+
+## Writing
+
+The library implements a `StreamingWriter` class that writes an MXF file sequentially, from beginning to end.
+
+The first step is to instantiate a `StreamingWriter` object from a complete snapshot of the Header Metadata. This snapshot can be generated from an existing file, manually or by using the `OP1aHelper` class. The latter generates the Header Metadata for an OP1a MXF file that contains one or more essence tracks.
+
+The next step is to register the essence containers and generic stream that the file contains:
+
+- `addCBEClipWrappedGC()` registers a clip-wrapped essence container with constant rate essence, e.g., multichannel audio samples, and returns a `GCClipCBEWriter` instance;
+
+- `addVBEClipWrappedGC()` registers a clip-wrapped essence container with variable rate essence, e.g., IA bitstream, and returns a `GCClipVBEWriter` instance;
+
+- `addVBEFrameWrappedGC()` registers a frame-wrapped essence container, e.g., J2K image essence, and returns a `GCFrameVBEWriter` instance;
+
+- `addGenericStream()` registers a generic stream, and returns a `GSWriter` instance.
+
+These functions return a `ContainerWriter` instance that extends `OutputStream` will be used the write the essence or generic stream data across file partitions. 
+
+The writing of the file body can then begin by calling the `start()` method.
+
+Each body partition contained within the file is written in turn by calling the `startPartition()` method with the `ContainerWriter` subclass instance returned previously and then writing the partition data using the methods of the `ContainerWriter` instance:
+
+- in the case of `GSWriter`, each element within the Generic Stream partition is written in turn by calling the `nextElement()` method and writing the value of the element using the `GSWriter` itself;
+
+- in the case of `GCClipCBEWriter`, the clip is written by calling the `nextClip()` method and writing the contents of the clip using the `GCClipCBEWriter` itself;
+
+- in the case of `GCClipVBEWriter`, the clip is written by calling the `nextClip()` method and writing the contents of the clip using the `GCClipVBEWriter` itself, prefacing each access unit by a call to `nextAccessUnit()`;
+
+- in the case of `GCFrameVBEWriter`, each element within a content package is written by calling the `nextElement()` method and writing the contents of the element using the `GCFrameVBEWriter` itself, prefacing each access unit by a call to `nextContentPackage()`;
+
+The writing of the file ends with the `finish()` method.
+
+The operation of the `StreamingWriter` is demonstrated at
+<library/src/test/java/com/sandflow/smpte/mxf/StreamingWriterTest.java> and at <library/src/test/java/com/sandflow/smpte/mxf/ReadWriteTest.java>.
