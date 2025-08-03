@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Pierre-Anthony Lemieux (pal@sandflow.com)
+ * Copyright (c) Sandflow Consulting LLC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
