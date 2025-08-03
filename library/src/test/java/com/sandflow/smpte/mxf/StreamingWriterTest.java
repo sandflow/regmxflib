@@ -636,7 +636,7 @@ class StreamingWriterTest {
     var cw = sw.addVBEFrameWrappedGC(BODY_SID, INDEX_SID);
     sw.start();
     for (int i = 0; i < frameCount; i++) {
-      if (i % 50 == 0) {
+      if (i % 4 == 0) {
         sw.startPartition(cw);
       }
       cw.nextContentPackage();
