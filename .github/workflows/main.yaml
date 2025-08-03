@@ -10,7 +10,6 @@ jobs:
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'pull_request'
 
     steps:
-    - name: install dependencies
     - name: Checkout repo
       uses: actions/checkout@v3
     - name: Set up JDK 17
