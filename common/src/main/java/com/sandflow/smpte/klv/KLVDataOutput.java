@@ -109,7 +109,7 @@ public class KLVDataOutput {
 
   /**
    * Writes a single BER-encoded length. The maximum length of the encoded
-   * length is 8 bytes. DEVIATION: the minimum length is 4 bytes for
+   * length is 8 bytes. ECXEPTION: the minimum length is 4 bytes for
    * compatibility with ASDCPLib
    *
    * @return Length

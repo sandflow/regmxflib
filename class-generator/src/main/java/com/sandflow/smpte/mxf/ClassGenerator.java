@@ -204,7 +204,7 @@ public class ClassGenerator {
 
       data.put("className", def.getSymbol());
       data.put("identification", def.getIdentification().toString());
-      /* DEVIATION: PictureDescriptor is marked Abstract but should be Concrete */
+      /* ECXEPTION: PictureDescriptor is marked Abstract but should be Concrete */
       if (!def.isConcrete() && !PICTUREDESCRIPTOR_UL.equalsIgnoreVersion(def.getIdentification())) {
         data.put("isAbstract", "1");
       }
@@ -714,7 +714,7 @@ public class ClassGenerator {
             g.getTypeInformation(def);
           } else if (def instanceof PropertyDefinition) {
             var propDef = (PropertyDefinition) def;
-            /* DEVIATION: some elements have local tags > 0x8000 */
+            /* ECXEPTION: some elements have local tags > 0x8000 */
             if (propDef.getLocalIdentification() != 0 && propDef.getLocalIdentification() < 0x8000) {
               propList.add(propDef);
             }

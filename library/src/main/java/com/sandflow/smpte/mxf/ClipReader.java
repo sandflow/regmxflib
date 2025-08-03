@@ -58,7 +58,7 @@ public class ClipReader extends InputStream {
     this.elementLength = mis.readBERLength();
 
     /*
-     * DEVIATION: Some versions of ASDCPLib index from the start of the K of the
+     * ECXEPTION: Some versions of ASDCPLib index from the start of the K of the
      * clip instead of from the start of the V of the clip
      */
     GCEssenceTracks tracks = new GCEssenceTracks(this.info.getPreface());
