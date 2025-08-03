@@ -46,103 +46,99 @@ import jakarta.xml.bind.annotation.XmlType;
 @XmlTransient
 public abstract class LabelsRegister {
 
-    private final HashMap<QualifiedSymbol, Entry> entriesBySymbol = new HashMap<>();
+  private final HashMap<QualifiedSymbol, Entry> entriesBySymbol = new HashMap<>();
 
-    private final HashMap<UL, Entry> entriesByUL = new HashMap<>();
+  private final HashMap<UL, Entry> entriesByUL = new HashMap<>();
 
-    public LabelsRegister() {
+  public LabelsRegister() {
+  }
+
+  public Entry getEntryByUL(UL ul) {
+    return entriesByUL.get(ul);
+  }
+
+  public Entry getEntryBySymbol(QualifiedSymbol qs) {
+    return entriesBySymbol.get(qs);
+  }
+
+  public abstract Collection<? extends Entry> getEntries();
+
+  public void toXML(Writer writer) throws JAXBException, IOException {
+
+    JAXBContext ctx = JAXBContext.newInstance(this.getClass());
+
+    Marshaller m = ctx.createMarshaller();
+    m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+    m.marshal(this, writer);
+    writer.close();
+  }
+
+  public static LabelsRegister fromXML(Reader reader) throws JAXBException, IOException, DuplicateEntryException {
+
+    JAXBContext ctx = JAXBContext.newInstance(com.sandflow.smpte.register.catsup.LabelsRegisterModel.class);
+
+    Unmarshaller m = ctx.createUnmarshaller();
+    LabelsRegister reg = (LabelsRegister) m.unmarshal(reader);
+
+    for (Entry te : reg.getEntries()) {
+      QualifiedSymbol sym = new QualifiedSymbol(te.getSymbol(), te.getNamespaceName());
+
+      if (reg.getEntryByUL(te.getUL()) != null) {
+        throw new DuplicateEntryException(
+            String.format("UL = %s is already present (symbol = %s).",
+                te.getUL(),
+                te.getSymbol()));
+      }
+
+      if (reg.entriesBySymbol.get(sym) != null) {
+        throw new DuplicateEntryException(
+            String.format(
+                "Symbol = %s  is already present (UL = %s).",
+                te.getSymbol(),
+                te.getUL()));
+      }
+
+      reg.entriesByUL.put(te.getUL(), te);
+      reg.entriesBySymbol.put(sym, te);
     }
 
-    public Entry getEntryByUL(UL ul) {
-        return entriesByUL.get(ul);
+    return reg;
+
+  }
+
+  /**
+   * Single Entry in a Labels Register (SMPTE ST 400)
+   */
+  /**
+   *
+   * @author pal
+   */
+  public static interface Entry {
+
+    String getApplications();
+
+    String getDefiningDocument();
+
+    String getDefinition();
+
+    Kind getKind();
+
+    String getName();
+
+    URI getNamespaceName();
+
+    String getNotes();
+
+    String getSymbol();
+
+    UL getUL();
+
+    boolean isDeprecated();
+
+    @XmlType(name = "")
+    public enum Kind {
+
+      NODE, LEAF
     }
-
-    public Entry getEntryBySymbol(QualifiedSymbol qs) {
-        return entriesBySymbol.get(qs);
-    }
-
-    public abstract Collection<? extends Entry> getEntries();
-
-    public void toXML(Writer writer) throws JAXBException, IOException {
-
-        JAXBContext ctx = JAXBContext.newInstance(this.getClass());
-
-        Marshaller m = ctx.createMarshaller();
-        m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-        m.marshal(this, writer);
-        writer.close();
-    }
-
-    public static LabelsRegister fromXML(Reader reader) throws JAXBException, IOException, DuplicateEntryException {
-
-        JAXBContext ctx = JAXBContext.newInstance(com.sandflow.smpte.register.catsup.LabelsRegisterModel.class);
-
-        Unmarshaller m = ctx.createUnmarshaller();
-        LabelsRegister reg = (LabelsRegister) m.unmarshal(reader);
-
-        for (Entry te : reg.getEntries()) {
-            QualifiedSymbol sym = new QualifiedSymbol(te.getSymbol(), te.getNamespaceName());
-
-            if (reg.getEntryByUL(te.getUL()) != null) {
-                throw new DuplicateEntryException(
-                        String.format("UL = %s is already present (symbol = %s).",
-                                te.getUL(),
-                                te.getSymbol()
-                        )
-                );
-            }
-
-            if (reg.entriesBySymbol.get(sym) != null) {
-                throw new DuplicateEntryException(
-                        String.format(
-                                "Symbol = %s  is already present (UL = %s).",
-                                te.getSymbol(),
-                                te.getUL()
-                        )
-                );
-            }
-
-            reg.entriesByUL.put(te.getUL(), te);
-            reg.entriesBySymbol.put(sym, te);
-        }
-
-        return reg;
-
-    }
-
-    /**
-     * Single Entry in a Labels Register (SMPTE ST 400)
-     */
-    /**
-     *
-     * @author pal
-     */
-    public static interface Entry {
-
-        String getApplications();
-
-        String getDefiningDocument();
-
-        String getDefinition();
-
-        Kind getKind();
-
-        String getName();
-
-        URI getNamespaceName();
-
-        String getNotes();
-
-        String getSymbol();
-
-        UL getUL();
-
-        boolean isDeprecated();
-
-        @XmlType(name = "")
-        public enum Kind {
-
-            NODE, LEAF
-        }
-    }
+  }
 }

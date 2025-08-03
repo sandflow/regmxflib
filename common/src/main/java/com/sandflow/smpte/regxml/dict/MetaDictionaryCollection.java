@@ -36,115 +36,120 @@ import java.util.Collection;
 import java.util.HashMap;
 
 /**
- * A collection of multiple RegXML Metadictionary as specified in SMPTE ST 2001-1
+ * A collection of multiple RegXML Metadictionary as specified in SMPTE ST
+ * 2001-1
  */
 public class MetaDictionaryCollection implements DefinitionResolver {
 
-    final private HashMap<URI, MetaDictionary> dicts = new HashMap<>();
+  final private HashMap<URI, MetaDictionary> dicts = new HashMap<>();
 
-    @Override
-    public Definition getDefinition(AUID auid) {
-        Definition def = null;
+  @Override
+  public Definition getDefinition(AUID auid) {
+    Definition def = null;
 
-        for (MetaDictionary md : dicts.values()) {
-            if ((def = md.getDefinition(auid)) != null) {
-                break;
-            }
-        }
-
-        return def;
-    }
-    
-    /**
-     * Retrieves a definition from the collection based on its symbol
-     * @param namespace Namespace of the definition
-     * @param symbol Symbol of the definition
-     * @return Definition, or null if none found
-     */
-    public Definition getDefinition(URI namespace, String symbol) {
-        Definition def = null;
-        
-        MetaDictionary md = dicts.get(namespace);
-        
-        if (md != null) {
-            def = md.getDefinition(symbol);
-        }
-
-        return def;
+    for (MetaDictionary md : dicts.values()) {
+      if ((def = md.getDefinition(auid)) != null) {
+        break;
+      }
     }
 
-    /**
-     * Adds a MetaDictionary to the collection. 
-     * 
-     * @param metadictionary MetaDictionary to be added
-     * @throws IllegalDictionaryException If the MetaDictionary
-     */
-    public void addDictionary(MetaDictionary metadictionary) throws IllegalDictionaryException {
-        MetaDictionary oldmd = dicts.get(metadictionary.getSchemeURI());
+    return def;
+  }
 
-        if (oldmd == null) {
-            dicts.put(metadictionary.getSchemeURI(), metadictionary);
-        } else {
-            throw new IllegalDictionaryException("Metadictionary already present in group.");
-        }
+  /**
+   * Retrieves a definition from the collection based on its symbol
+   * 
+   * @param namespace Namespace of the definition
+   * @param symbol    Symbol of the definition
+   * @return Definition, or null if none found
+   */
+  public Definition getDefinition(URI namespace, String symbol) {
+    Definition def = null;
+
+    MetaDictionary md = dicts.get(namespace);
+
+    if (md != null) {
+      def = md.getDefinition(symbol);
+    }
+
+    return def;
+  }
+
+  /**
+   * Adds a MetaDictionary to the collection.
+   * 
+   * @param metadictionary MetaDictionary to be added
+   * @throws IllegalDictionaryException If the MetaDictionary
+   */
+  public void addDictionary(MetaDictionary metadictionary) throws IllegalDictionaryException {
+    MetaDictionary oldmd = dicts.get(metadictionary.getSchemeURI());
+
+    if (oldmd == null) {
+      dicts.put(metadictionary.getSchemeURI(), metadictionary);
+    } else {
+      throw new IllegalDictionaryException("Metadictionary already present in group.");
+    }
+
+  }
+
+  /**
+   * Adds a definition to the collection. Automatically creates a MetaDictionary
+   * if none exists with the namespace of the definition.
+   * 
+   * @param def Definition to be added
+   * @throws IllegalDefinitionException
+   */
+  public void addDefinition(Definition def) throws IllegalDefinitionException {
+    MetaDictionary md = dicts.get(def.getNamespace());
+
+    if (md == null) {
+      md = new MetaDictionary(def.getNamespace());
+
+      dicts.put(md.getSchemeURI(), md);
+    }
+
+    md.add(def);
+  }
+
+  /**
+   * Returns all the members of the collection
+   * 
+   * @return Collection of MetaDictionaries
+   */
+  public Collection<MetaDictionary> getDictionaries() {
+    return dicts.values();
+  }
+
+  @Override
+  public Collection<AUID> getSubclassesOf(ClassDefinition parent) {
+
+    ArrayList<AUID> subclasses = new ArrayList<>();
+
+    for (MetaDictionary md : dicts.values()) {
+
+      Collection<AUID> defs = md.getSubclassesOf(parent);
+
+      if (defs != null)
+        subclasses.addAll(defs);
 
     }
 
-    /**
-     * Adds a definition to the collection. Automatically creates a MetaDictionary
-     * if none exists with the namespace of the definition.
-     * 
-     * @param def Definition to be added
-     * @throws IllegalDefinitionException 
-     */
-    public void addDefinition(Definition def) throws IllegalDefinitionException {
-        MetaDictionary md = dicts.get(def.getNamespace());
+    return subclasses;
+  }
 
-        if (md == null) {
-            md = new MetaDictionary(def.getNamespace());
+  @Override
+  public Collection<AUID> getMembersOf(ClassDefinition parent) {
+    ArrayList<AUID> members = new ArrayList<>();
 
-            dicts.put(md.getSchemeURI(), md);
-        }
+    for (MetaDictionary md : dicts.values()) {
 
-        md.add(def);
+      Collection<AUID> defs = md.getMembersOf(parent);
+
+      if (defs != null)
+        members.addAll(defs);
     }
 
-    /**
-     * Returns all the members of the collection
-     * @return Collection of MetaDictionaries
-     */
-    public Collection<MetaDictionary> getDictionaries() {
-        return dicts.values();
-    }
-
-    @Override
-    public Collection<AUID> getSubclassesOf(ClassDefinition parent) {
-
-        ArrayList<AUID> subclasses = new ArrayList<>();
-
-        for (MetaDictionary md : dicts.values()) {
-            
-            Collection<AUID> defs = md.getSubclassesOf(parent);
-            
-            if (defs != null) subclasses.addAll(defs);
-
-        }
-
-        return subclasses;
-    }
-
-    @Override
-    public Collection<AUID> getMembersOf(ClassDefinition parent) {
-        ArrayList<AUID> members = new ArrayList<>();
-
-        for (MetaDictionary md : dicts.values()) {
-            
-            Collection<AUID> defs = md.getMembersOf(parent);
-
-            if (defs != null) members.addAll(defs);
-        }
-
-        return members;
-    }
+    return members;
+  }
 
 }

@@ -39,59 +39,59 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
  */
 @XmlAccessorType(XmlAccessType.NONE)
 public class ExtendibleEnumerationTypeDefinition extends Definition {
-    
 
-    private ArrayList<Element> elements;
+  private ArrayList<Element> elements;
 
-    public ExtendibleEnumerationTypeDefinition() {}
+  public ExtendibleEnumerationTypeDefinition() {
+  }
 
-    public ExtendibleEnumerationTypeDefinition(Collection<Element> elements) {
-        this.elements = new ArrayList<>(elements);
+  public ExtendibleEnumerationTypeDefinition(Collection<Element> elements) {
+    this.elements = new ArrayList<>(elements);
+  }
+
+  @Override
+  public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
+    visitor.visit(this);
+  }
+
+  public Collection<Element> getElements() {
+    return elements;
+  }
+
+  @XmlAccessorType(value = XmlAccessType.NONE)
+  public static class Element {
+
+    @XmlElement(name = "Name")
+    private String name;
+    @XmlJavaTypeAdapter(value = AUIDAdapter.class)
+    @XmlElement(name = "Value")
+    private AUID value;
+    @XmlElement(name = "Description")
+    private String description;
+
+    public String getName() {
+      return name;
     }
 
-    @Override
-    public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
-        visitor.visit(this);
+    public void setName(String name) {
+      this.name = name;
     }
 
-    public Collection<Element> getElements() {
-        return elements;
+    public AUID getValue() {
+      return value;
     }
 
-    @XmlAccessorType(value = XmlAccessType.NONE)
-    public static class Element {
-
-        @XmlElement(name = "Name")
-        private String name;
-        @XmlJavaTypeAdapter(value = AUIDAdapter.class)
-        @XmlElement(name = "Value")
-        private AUID value;
-        @XmlElement(name = "Description")
-        private String description;
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public AUID getValue() {
-            return value;
-        }
-
-        public void setValue(AUID value) {
-            this.value = value;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
+    public void setValue(AUID value) {
+      this.value = value;
     }
+
+    public String getDescription() {
+      return description;
+    }
+
+    public void setDescription(String description) {
+      this.description = description;
+    }
+  }
 
 }

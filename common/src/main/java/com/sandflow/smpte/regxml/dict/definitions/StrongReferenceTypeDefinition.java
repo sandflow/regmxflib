@@ -38,24 +38,24 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @XmlAccessorType(XmlAccessType.NONE)
 public class StrongReferenceTypeDefinition extends Definition {
 
-    @XmlJavaTypeAdapter(value = AUIDAdapter.class)
-    @XmlElement(name = "ReferencedType")
-    private AUID referenceType;
+  @XmlJavaTypeAdapter(value = AUIDAdapter.class)
+  @XmlElement(name = "ReferencedType")
+  private AUID referenceType;
 
-    public StrongReferenceTypeDefinition() {
-    }
+  public StrongReferenceTypeDefinition() {
+  }
 
-    @Override
-    public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
-        visitor.visit(this);
-    }
+  @Override
+  public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
+    visitor.visit(this);
+  }
 
-    public AUID getReferencedType() {
-        return referenceType;
-    }
+  public AUID getReferencedType() {
+    return referenceType;
+  }
 
-    public void setReferenceType(AUID referenceType) {
-        this.referenceType = referenceType;
-    }
+  public void setReferenceType(AUID referenceType) {
+    this.referenceType = referenceType;
+  }
 
 }

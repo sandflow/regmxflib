@@ -38,71 +38,69 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @XmlAccessorType(XmlAccessType.NONE)
 public class PropertyDefinition extends Definition {
 
-    public PropertyDefinition() {
-    }
-    
-    
+  public PropertyDefinition() {
+  }
 
-    @XmlJavaTypeAdapter(value = AUIDAdapter.class)
-    @XmlElement(name = "Type")
-    private AUID type;
+  @XmlJavaTypeAdapter(value = AUIDAdapter.class)
+  @XmlElement(name = "Type")
+  private AUID type;
 
-    @XmlElement(name = "IsOptional")
-    private boolean optional;
+  @XmlElement(name = "IsOptional")
+  private boolean optional;
 
-    @XmlElement(name = "IsUniqueIdentifier")
-    private boolean uniqueIdentifier;
+  @XmlElement(name = "IsUniqueIdentifier")
+  private boolean uniqueIdentifier;
 
-    @XmlElement(name = "LocalIdentification")
-    private int localIdentification;
+  @XmlElement(name = "LocalIdentification")
+  private int localIdentification;
 
-    @XmlJavaTypeAdapter(value = AUIDAdapter.class)
-    @XmlElement(name = "MemberOf")
-    private AUID memberOf;
+  @XmlJavaTypeAdapter(value = AUIDAdapter.class)
+  @XmlElement(name = "MemberOf")
+  private AUID memberOf;
 
-    @Override
-    public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
-        visitor.visit(this);
-    }
+  @Override
+  public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
+    visitor.visit(this);
+  }
 
-    public AUID getType() {
-        return type;
-    }
+  public AUID getType() {
+    return type;
+  }
 
-    public void setType(AUID type) {
-        this.type = type;
-    }
+  public void setType(AUID type) {
+    this.type = type;
+  }
 
-    public boolean isOptional() {
-        return optional;
-    }
+  public boolean isOptional() {
+    return optional;
+  }
 
-    public void setOptional(boolean optional) {
-        this.optional = optional;
-    }
+  public void setOptional(boolean optional) {
+    this.optional = optional;
+  }
 
-    public boolean isUniqueIdentifier() {
-        return uniqueIdentifier;
-    }
+  public boolean isUniqueIdentifier() {
+    return uniqueIdentifier;
+  }
 
-    public void setUniqueIdentifier(boolean uniqueIdentifier) {
-        this.uniqueIdentifier = uniqueIdentifier;
-    }
+  public void setUniqueIdentifier(boolean uniqueIdentifier) {
+    this.uniqueIdentifier = uniqueIdentifier;
+  }
 
-    public int getLocalIdentification() {
-        return localIdentification;
-    }
+  public int getLocalIdentification() {
+    return localIdentification;
+  }
 
-    public void setLocalIdentification(int localIdentification) {
-        this.localIdentification = localIdentification;
-    }
+  public void setLocalIdentification(int localIdentification) {
+    this.localIdentification = localIdentification;
+  }
 
-    public AUID getMemberOf() {
-        return memberOf;
-    }
+  public AUID getMemberOf() {
+    return memberOf;
+  }
 
-    public void setMemberOf(AUID memberOf) {
-        this.memberOf = memberOf;
-    }
+  public void setMemberOf(AUID memberOf) {
+    this.memberOf = memberOf;
+  }
 
 }

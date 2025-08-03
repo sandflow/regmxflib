@@ -34,43 +34,44 @@ import jakarta.xml.bind.annotation.adapters.XmlAdapter;
  */
 public class HexBinaryLongAdapter extends XmlAdapter<String, Long> {
 
-    @Override
-    public Long unmarshal(String s) throws Exception {
-        
-        byte[] val = DatatypeConverter.parseHexBinary(s);
-        
-        if (val.length > 4) throw new Exception();
-        
-        long out = 0;
-        
-        for(int i = 0; i < val.length; i++) {
-            out = out << 8 | (val[i] & 0xFF);
-        } 
-        
-        return out;
+  @Override
+  public Long unmarshal(String s) throws Exception {
+
+    byte[] val = DatatypeConverter.parseHexBinary(s);
+
+    if (val.length > 4)
+      throw new Exception();
+
+    long out = 0;
+
+    for (int i = 0; i < val.length; i++) {
+      out = out << 8 | (val[i] & 0xFF);
     }
 
-    @Override
-    public String marshal(Long val) throws Exception {
-        byte[] out = new byte[8];
-        
-        long l = val;
+    return out;
+  }
 
-        for(int i = out.length - 1; i >= 0; i--) {
-            out[i] = (byte) (l & 0xFF);
-            l >>= 8;
-        }
-        
-        /* look for the first non-zero value */
-        
-        int first = 0;
-        
-        for(; first < out.length - 1; first++) {
-            if (out[first] != 0) break; 
-        }
-        
-        return DatatypeConverter.printHexBinary(
-                Arrays.copyOfRange(out, first, out.length)
-        );
+  @Override
+  public String marshal(Long val) throws Exception {
+    byte[] out = new byte[8];
+
+    long l = val;
+
+    for (int i = out.length - 1; i >= 0; i--) {
+      out[i] = (byte) (l & 0xFF);
+      l >>= 8;
     }
+
+    /* look for the first non-zero value */
+
+    int first = 0;
+
+    for (; first < out.length - 1; first++) {
+      if (out[first] != 0)
+        break;
+    }
+
+    return DatatypeConverter.printHexBinary(
+        Arrays.copyOfRange(out, first, out.length));
+  }
 }

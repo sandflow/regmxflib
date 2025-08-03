@@ -32,36 +32,36 @@ package com.sandflow.util.events;
  * @author pal
  */
 public class BasicEvent implements Event {
-    String message;
-    Severity severity;
-    Enum<?> code;
+  String message;
+  Severity severity;
+  Enum<?> code;
 
-    /**
-     * Creates an immutable BasicEvent instance
-     * 
-     * @param severity Severity of the event
-     * @param code Uniquely identifies the event
-     * @param message Describes the event
-     */
-    public BasicEvent(Severity severity, Enum<?> code, String message) {
-        this.message = message;
-        this.severity = severity;
-        this.code = code;
-    }
+  /**
+   * Creates an immutable BasicEvent instance
+   * 
+   * @param severity Severity of the event
+   * @param code     Uniquely identifies the event
+   * @param message  Describes the event
+   */
+  public BasicEvent(Severity severity, Enum<?> code, String message) {
+    this.message = message;
+    this.severity = severity;
+    this.code = code;
+  }
 
-    @Override
-    public String getMessage() {
-        return this.message;
-    }
+  @Override
+  public String getMessage() {
+    return this.message;
+  }
 
-    @Override
-    public Severity getSeverity() {
-        return this.severity;
-    }
+  @Override
+  public Severity getSeverity() {
+    return this.severity;
+  }
 
-    @Override
-    public Enum<?> getCode() {
-        return this.code;
-    }
-    
+  @Override
+  public Enum<?> getCode() {
+    return this.code;
+  }
+
 }

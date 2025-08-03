@@ -47,135 +47,129 @@ import jakarta.xml.bind.annotation.XmlType;
 @XmlTransient
 public abstract class GroupsRegister {
 
+  private final HashMap<QualifiedSymbol, Entry> entriesBySymbol = new HashMap<>();
 
-    private final HashMap<QualifiedSymbol, Entry> entriesBySymbol = new HashMap<>();
+  private final HashMap<UL, Entry> entriesByUL = new HashMap<>();
 
-    private final HashMap<UL, Entry> entriesByUL = new HashMap<>();
+  public GroupsRegister() {
+  }
 
-    public GroupsRegister() {
+  public Entry getEntryByUL(UL ul) {
+    return entriesByUL.get(ul);
+  }
+
+  public Entry getEntryBySymbol(QualifiedSymbol qs) {
+    return entriesBySymbol.get(qs);
+  }
+
+  public abstract Collection<? extends Entry> getEntries();
+
+  public void toXML(Writer writer) throws JAXBException, IOException {
+
+    JAXBContext ctx = JAXBContext.newInstance(this.getClass());
+
+    Marshaller m = ctx.createMarshaller();
+    m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+    m.marshal(this, writer);
+    writer.close();
+  }
+
+  public static GroupsRegister fromXML(Reader reader) throws JAXBException, IOException, DuplicateEntryException {
+
+    JAXBContext ctx = JAXBContext.newInstance(com.sandflow.smpte.register.brown_sauce.GroupsRegisterModel.class,
+        com.sandflow.smpte.register.catsup.GroupsRegisterModel.class);
+
+    Unmarshaller m = ctx.createUnmarshaller();
+    GroupsRegister reg = (GroupsRegister) m.unmarshal(reader);
+
+    for (Entry te : reg.getEntries()) {
+      QualifiedSymbol sym = new QualifiedSymbol(te.getSymbol(), te.getNamespaceName());
+
+      if (reg.getEntryByUL(te.getUL()) != null) {
+        throw new DuplicateEntryException(
+            String.format("UL = %s is already present (symbol = %s).",
+                te.getUL(),
+                te.getSymbol()));
+      }
+
+      if (reg.entriesBySymbol.get(sym) != null) {
+        throw new DuplicateEntryException(
+            String.format(
+                "Symbol = %s  is already present (UL = %s).",
+                te.getSymbol(),
+                te.getUL()));
+      }
+
+      reg.entriesByUL.put(te.getUL(), te);
+      reg.entriesBySymbol.put(sym, te);
     }
 
-    public Entry getEntryByUL(UL ul) {
-        return entriesByUL.get(ul);
-    }
+    return reg;
 
-    public Entry getEntryBySymbol(QualifiedSymbol qs) {
-        return entriesBySymbol.get(qs);
-    }
+  }
 
-    public abstract Collection<? extends Entry> getEntries();
+  /**
+   *
+   * @author pal
+   */
+  public static interface Entry {
 
-    public void toXML(Writer writer) throws JAXBException, IOException {
+    String getApplications();
 
-        JAXBContext ctx = JAXBContext.newInstance(this.getClass());
+    Collection<? extends Record> getContents();
 
-        Marshaller m = ctx.createMarshaller();
-        m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-        m.marshal(this, writer);
-        writer.close();
-    }
+    String getDefiningDocument();
 
-    public static GroupsRegister fromXML(Reader reader) throws JAXBException, IOException, DuplicateEntryException {
+    String getDefinition();
 
-        JAXBContext ctx = JAXBContext.newInstance(com.sandflow.smpte.register.brown_sauce.GroupsRegisterModel.class,
-                        com.sandflow.smpte.register.catsup.GroupsRegisterModel.class);
+    Kind getKind();
 
-        Unmarshaller m = ctx.createUnmarshaller();
-        GroupsRegister reg = (GroupsRegister) m.unmarshal(reader);
+    Set<Byte> getKlvSyntax();
 
-        for (Entry te : reg.getEntries()) {
-            QualifiedSymbol sym = new QualifiedSymbol(te.getSymbol(), te.getNamespaceName());
+    String getName();
 
-            if (reg.getEntryByUL(te.getUL()) != null) {
-                throw new DuplicateEntryException(
-                        String.format("UL = %s is already present (symbol = %s).",
-                                te.getUL(),
-                                te.getSymbol()
-                        )
-                );
-            }
+    URI getNamespaceName();
 
-            if (reg.entriesBySymbol.get(sym) != null) {
-                throw new DuplicateEntryException(
-                        String.format(
-                                "Symbol = %s  is already present (UL = %s).",
-                                te.getSymbol(),
-                                te.getUL()
-                        )
-                );
-            }
+    String getNotes();
 
-            reg.entriesByUL.put(te.getUL(), te);
-            reg.entriesBySymbol.put(sym, te);
-        }
+    UL getParent();
 
-        return reg;
+    String getSymbol();
 
+    UL getUL();
+
+    Boolean isConcrete();
+
+    boolean isDeprecated();
+
+    @XmlType(name = "")
+    public static enum Kind {
+      NODE, LEAF
     }
 
     /**
      *
      * @author pal
      */
-    public static interface Entry {
+    public static interface Record {
 
-        String getApplications();
+      Boolean getDistinguished();
 
-        Collection<? extends Record> getContents();
+      Boolean getIgnorable();
 
-        String getDefiningDocument();
+      UL getItem();
 
-        String getDefinition();
+      Long getLimitLength();
 
-        Kind getKind();
+      Long getLocalTag();
 
-        Set<Byte> getKlvSyntax();
+      Boolean getOptional();
 
-        String getName();
+      Boolean getUniqueID();
 
-        URI getNamespaceName();
+      String getValue();
 
-        String getNotes();
-
-        UL getParent();
-
-        String getSymbol();
-
-        UL getUL();
-
-        Boolean isConcrete();
-
-        boolean isDeprecated();
-
-
-        @XmlType(name = "")
-        public static enum Kind {
-            NODE, LEAF
-        }
-
-        /**
-         *
-         * @author pal
-         */
-        public static interface Record {
-
-            Boolean getDistinguished();
-
-            Boolean getIgnorable();
-
-            UL getItem();
-
-            Long getLimitLength();
-
-            Long getLocalTag();
-
-            Boolean getOptional();
-
-            Boolean getUniqueID();
-
-            String getValue();
-
-        }
     }
+  }
 
 }

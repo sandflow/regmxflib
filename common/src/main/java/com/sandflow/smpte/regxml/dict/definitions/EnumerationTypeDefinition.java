@@ -48,145 +48,145 @@ import static org.w3c.dom.Node.ELEMENT_NODE;
 @XmlAccessorType(XmlAccessType.NONE)
 public class EnumerationTypeDefinition extends Definition {
 
-    private static class EnumerationElementAdapter extends XmlAdapter<Object, ArrayList<Element>> {
+  private static class EnumerationElementAdapter extends XmlAdapter<Object, ArrayList<Element>> {
 
-        @Override
-        public ArrayList<Element> unmarshal(Object v) throws Exception {
+    @Override
+    public ArrayList<Element> unmarshal(Object v) throws Exception {
 
-            ArrayList<Element> al = new ArrayList<>();
+      ArrayList<Element> al = new ArrayList<>();
 
-            org.w3c.dom.Node node = ((org.w3c.dom.Element) v).getFirstChild();
+      org.w3c.dom.Node node = ((org.w3c.dom.Element) v).getFirstChild();
 
-            while (node != null) {
+      while (node != null) {
 
-                if (node.getNodeType() == ELEMENT_NODE) {
+        if (node.getNodeType() == ELEMENT_NODE) {
 
-                    org.w3c.dom.Element elem = (org.w3c.dom.Element) node;
+          org.w3c.dom.Element elem = (org.w3c.dom.Element) node;
 
-                    if ("Name".equals(elem.getNodeName())) {
-                        
-                        al.add(new Element());
-                        al.get(al.size() - 1).setName(elem.getTextContent());
-                        
-                    } else if ("Value".equals(elem.getNodeName())) {
-                        
-                        al.get(al.size() - 1).setValue(Integer.parseInt(elem.getTextContent()));
-                        
-                    } else if ("Description".equals(elem.getNodeName())) {
-                        
-                        al.get(al.size() - 1).setDescription(elem.getTextContent());
-                        
-                    }
-                }
+          if ("Name".equals(elem.getNodeName())) {
 
-                node = node.getNextSibling();
-            }
+            al.add(new Element());
+            al.get(al.size() - 1).setName(elem.getTextContent());
 
-            return al;
+          } else if ("Value".equals(elem.getNodeName())) {
+
+            al.get(al.size() - 1).setValue(Integer.parseInt(elem.getTextContent()));
+
+          } else if ("Description".equals(elem.getNodeName())) {
+
+            al.get(al.size() - 1).setDescription(elem.getTextContent());
+
+          }
         }
 
-        @Override
-        public Object marshal(ArrayList<Element> v) throws Exception {
+        node = node.getNextSibling();
+      }
 
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            Document doc = db.newDocument();
-            org.w3c.dom.Element elem = doc.createElementNS(MetaDictionary.XML_NS, "Elements");
-
-            for (Element e : v) {
-
-                org.w3c.dom.Element e1 = doc.createElementNS(MetaDictionary.XML_NS, "Name");
-
-                e1.setTextContent(e.getName());
-
-                elem.appendChild(e1);
-
-                e1 = doc.createElementNS(MetaDictionary.XML_NS, "Value");
-
-                e1.setTextContent(Integer.toString(e.getValue()));
-
-                elem.appendChild(e1);
-
-                if (e.getDescription() != null) {
-                    e1 = doc.createElementNS(MetaDictionary.XML_NS, "Description");
-
-                    e1.setTextContent(e.getDescription());
-
-                    elem.appendChild(e1);
-                }
-
-            }
-
-            return elem;
-        }
-    }
-
-    @XmlJavaTypeAdapter(value = AUIDAdapter.class)
-    @XmlElement(name = "ElementType")
-    private AUID elementType;
-
-    @XmlJavaTypeAdapter(value = EnumerationElementAdapter.class)
-    @XmlAnyElement(lax = false)
-    private ArrayList<Element> elements;
-
-    public EnumerationTypeDefinition() {
-    }
-
-    public EnumerationTypeDefinition(Collection<Element> elements) {
-        this.elements = new ArrayList<>(elements);
-    }
-
-    public AUID getElementType() {
-        return elementType;
-    }
-
-    public void setElementType(AUID elementType) {
-        this.elementType = elementType;
+      return al;
     }
 
     @Override
-    public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
-        visitor.visit(this);
+    public Object marshal(ArrayList<Element> v) throws Exception {
+
+      DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+      DocumentBuilder db = dbf.newDocumentBuilder();
+      Document doc = db.newDocument();
+      org.w3c.dom.Element elem = doc.createElementNS(MetaDictionary.XML_NS, "Elements");
+
+      for (Element e : v) {
+
+        org.w3c.dom.Element e1 = doc.createElementNS(MetaDictionary.XML_NS, "Name");
+
+        e1.setTextContent(e.getName());
+
+        elem.appendChild(e1);
+
+        e1 = doc.createElementNS(MetaDictionary.XML_NS, "Value");
+
+        e1.setTextContent(Integer.toString(e.getValue()));
+
+        elem.appendChild(e1);
+
+        if (e.getDescription() != null) {
+          e1 = doc.createElementNS(MetaDictionary.XML_NS, "Description");
+
+          e1.setTextContent(e.getDescription());
+
+          elem.appendChild(e1);
+        }
+
+      }
+
+      return elem;
+    }
+  }
+
+  @XmlJavaTypeAdapter(value = AUIDAdapter.class)
+  @XmlElement(name = "ElementType")
+  private AUID elementType;
+
+  @XmlJavaTypeAdapter(value = EnumerationElementAdapter.class)
+  @XmlAnyElement(lax = false)
+  private ArrayList<Element> elements;
+
+  public EnumerationTypeDefinition() {
+  }
+
+  public EnumerationTypeDefinition(Collection<Element> elements) {
+    this.elements = new ArrayList<>(elements);
+  }
+
+  public AUID getElementType() {
+    return elementType;
+  }
+
+  public void setElementType(AUID elementType) {
+    this.elementType = elementType;
+  }
+
+  @Override
+  public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
+    visitor.visit(this);
+  }
+
+  public Collection<Element> getElements() {
+    return elements;
+  }
+
+  @XmlType(name = "")
+  @XmlAccessorType(value = XmlAccessType.NONE)
+  public static class Element {
+
+    @XmlElement(name = "Name")
+    private String name;
+    @XmlElement(name = "Value")
+    private int value;
+    @XmlElement(name = "Description")
+    private String description;
+
+    public String getName() {
+      return name;
     }
 
-    public Collection<Element> getElements() {
-        return elements;
+    public void setName(String name) {
+      this.name = name;
     }
 
-    @XmlType(name = "")
-    @XmlAccessorType(value = XmlAccessType.NONE)
-    public static class Element {
-
-        @XmlElement(name = "Name")
-        private String name;
-        @XmlElement(name = "Value")
-        private int value;
-        @XmlElement(name = "Description")
-        private String description;
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public int getValue() {
-            return value;
-        }
-
-        public void setValue(int value) {
-            this.value = value;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
+    public int getValue() {
+      return value;
     }
+
+    public void setValue(int value) {
+      this.value = value;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+
+    public void setDescription(String description) {
+      this.description = description;
+    }
+  }
 
 }

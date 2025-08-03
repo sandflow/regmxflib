@@ -32,22 +32,24 @@ import com.sandflow.smpte.util.UUID;
  */
 public class UUIDValueAdapter {
 
-    /**
-     * Converts a KLV Triplet Value to a UUID.
-     * @param value KLV Triplet Value
-     * @return UUID
-     */
-    public static UUID fromValue(byte[] value) {
-        return new UUID(value);
-    }
+  /**
+   * Converts a KLV Triplet Value to a UUID.
+   * 
+   * @param value KLV Triplet Value
+   * @return UUID
+   */
+  public static UUID fromValue(byte[] value) {
+    return new UUID(value);
+  }
 
-    /**
-     * Converts a UUID to a KLV Triplet Value.
-     * @param obj UUID
-     * @return KLV Triplet Value
-     */
-    public static byte[] toValue(UUID obj) {
-        return obj.getValue();
-    }
-    
+  /**
+   * Converts a UUID to a KLV Triplet Value.
+   * 
+   * @param obj UUID
+   * @return KLV Triplet Value
+   */
+  public static byte[] toValue(UUID obj) {
+    return obj.getValue();
+  }
+
 }

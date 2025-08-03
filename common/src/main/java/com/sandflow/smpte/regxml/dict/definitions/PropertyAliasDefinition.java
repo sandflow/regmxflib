@@ -39,27 +39,24 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @XmlAccessorType(XmlAccessType.NONE)
 public class PropertyAliasDefinition extends PropertyDefinition {
 
-    public PropertyAliasDefinition() {
-    }
-    
-    @XmlJavaTypeAdapter(value = AUIDAdapter.class)
-    @XmlElement(name = "OriginalProperty")
-    private AUID originalProperty;
+  public PropertyAliasDefinition() {
+  }
 
-    @Override
-    public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
-       visitor.visit(this);
-    }
+  @XmlJavaTypeAdapter(value = AUIDAdapter.class)
+  @XmlElement(name = "OriginalProperty")
+  private AUID originalProperty;
 
-    public AUID getOriginalProperty() {
-        return originalProperty;
-    }
+  @Override
+  public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
+    visitor.visit(this);
+  }
 
-    public void setOriginalProperty(AUID originalProperty) {
-        this.originalProperty = originalProperty;
-    }
+  public AUID getOriginalProperty() {
+    return originalProperty;
+  }
 
-    
-    
-    
+  public void setOriginalProperty(AUID originalProperty) {
+    this.originalProperty = originalProperty;
+  }
+
 }

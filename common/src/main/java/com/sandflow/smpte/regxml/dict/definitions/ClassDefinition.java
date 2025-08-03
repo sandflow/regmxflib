@@ -38,37 +38,36 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
  */
 @XmlAccessorType(XmlAccessType.NONE)
 public class ClassDefinition extends Definition {
-    
-    @XmlJavaTypeAdapter(value = AUIDAdapter.class)
-    @XmlElement(name = "ParentClass")
-    private AUID    parentClass;
-    
-    @XmlElement(name = "IsConcrete")
-    private boolean concrete;
 
-    public ClassDefinition() {}
+  @XmlJavaTypeAdapter(value = AUIDAdapter.class)
+  @XmlElement(name = "ParentClass")
+  private AUID parentClass;
 
-    public AUID getParentClass() {
-        return parentClass;
-    }
+  @XmlElement(name = "IsConcrete")
+  private boolean concrete;
 
-    public void setParentClass(AUID parentClass) {
-        this.parentClass = parentClass;
-    }
+  public ClassDefinition() {
+  }
 
-    public boolean isConcrete() {
-        return concrete;
-    }
+  public AUID getParentClass() {
+    return parentClass;
+  }
 
-    public void setConcrete(boolean concrete) {
-        this.concrete = concrete;
-    }
+  public void setParentClass(AUID parentClass) {
+    this.parentClass = parentClass;
+  }
 
-    @Override
-    public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
-        visitor.visit(this);
-    }
+  public boolean isConcrete() {
+    return concrete;
+  }
 
+  public void setConcrete(boolean concrete) {
+    this.concrete = concrete;
+  }
 
-    
+  @Override
+  public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
+    visitor.visit(this);
+  }
+
 }

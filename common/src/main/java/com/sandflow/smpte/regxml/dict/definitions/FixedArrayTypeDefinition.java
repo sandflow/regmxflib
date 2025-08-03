@@ -37,35 +37,36 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
  */
 @XmlAccessorType(XmlAccessType.NONE)
 public class FixedArrayTypeDefinition extends Definition {
-    
-    public FixedArrayTypeDefinition() {}
 
-    @XmlElement(name = "ElementCount")
-    private int elementCount;
+  public FixedArrayTypeDefinition() {
+  }
 
-    @XmlJavaTypeAdapter(value = AUIDAdapter.class)
-    @XmlElement(name = "ElementType")
-    private AUID elementType;
+  @XmlElement(name = "ElementCount")
+  private int elementCount;
 
-    @Override
-    public void accept(DefinitionVisitor visitor)  throws DefinitionVisitor.VisitorException {
-        visitor.visit(this);
-    }
+  @XmlJavaTypeAdapter(value = AUIDAdapter.class)
+  @XmlElement(name = "ElementType")
+  private AUID elementType;
 
-    public int getElementCount() {
-        return elementCount;
-    }
+  @Override
+  public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
+    visitor.visit(this);
+  }
 
-    public void setElementCount(int elementCount) {
-        this.elementCount = elementCount;
-    }
+  public int getElementCount() {
+    return elementCount;
+  }
 
-    public AUID getElementType() {
-        return elementType;
-    }
+  public void setElementCount(int elementCount) {
+    this.elementCount = elementCount;
+  }
 
-    public void setElementType(AUID elementType) {
-        this.elementType = elementType;
-    }
+  public AUID getElementType() {
+    return elementType;
+  }
+
+  public void setElementType(AUID elementType) {
+    this.elementType = elementType;
+  }
 
 }

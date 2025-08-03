@@ -34,28 +34,32 @@ import java.io.InputStream;
  */
 public interface Triplet {
 
-    /**
-     * Returns the Key of the KLV Triplet
-     * @return Triplet Key
-     */
-    AUID getKey();
-    
-    /**
-     * Returns the Length of the KLV Triplet
-     * @return Triplet Length
-     */
-    long getLength();
-    
-    /**
-     * Return the Value of the KLV Triplet as a byte array
-     * @return Triplet Value
-     */
-    byte[] getValue();
-    
-    /**
-     * Return the Value of the KLV Triplet as an Input Stream
-     * @return Triplet Value
-     */ 
-    InputStream getValueAsStream();
+  /**
+   * Returns the Key of the KLV Triplet
+   * 
+   * @return Triplet Key
+   */
+  AUID getKey();
+
+  /**
+   * Returns the Length of the KLV Triplet
+   * 
+   * @return Triplet Length
+   */
+  long getLength();
+
+  /**
+   * Return the Value of the KLV Triplet as a byte array
+   * 
+   * @return Triplet Value
+   */
+  byte[] getValue();
+
+  /**
+   * Return the Value of the KLV Triplet as an Input Stream
+   * 
+   * @return Triplet Value
+   */
+  InputStream getValueAsStream();
 
 }

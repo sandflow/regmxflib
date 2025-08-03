@@ -31,7 +31,7 @@ package com.sandflow.smpte.klv.exceptions;
  */
 public class TripletLengthException extends RuntimeException {
 
-    public TripletLengthException() {
-    }
-    
+  public TripletLengthException() {
+  }
+
 }

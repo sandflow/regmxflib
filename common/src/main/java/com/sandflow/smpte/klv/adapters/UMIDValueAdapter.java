@@ -32,22 +32,24 @@ import com.sandflow.smpte.util.UMID;
  */
 public class UMIDValueAdapter {
 
-    /**
-     * Converts a KLV Triplet Value to a UMID.
-     * @param value KLV Triplet Value
-     * @return UMID
-     */
-    public static UMID fromValue(byte[] value) {
-        return new UMID(value);
-    }
+  /**
+   * Converts a KLV Triplet Value to a UMID.
+   * 
+   * @param value KLV Triplet Value
+   * @return UMID
+   */
+  public static UMID fromValue(byte[] value) {
+    return new UMID(value);
+  }
 
-    /**
-     * Converts a UMID to a KLV Triplet Value.
-     * @param obj UMID
-     * @return KLV Triplet Value
-     */
-    public static byte[] toValue(UMID obj) {
-        return obj.getValue();
-    }
-    
+  /**
+   * Converts a UMID to a KLV Triplet Value.
+   * 
+   * @param obj UMID
+   * @return KLV Triplet Value
+   */
+  public static byte[] toValue(UMID obj) {
+    return obj.getValue();
+  }
+
 }

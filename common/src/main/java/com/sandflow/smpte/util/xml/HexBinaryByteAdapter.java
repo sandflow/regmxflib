@@ -34,22 +34,23 @@ import jakarta.xml.bind.annotation.adapters.XmlAdapter;
  */
 public class HexBinaryByteAdapter extends XmlAdapter<String, Byte> {
 
-    @Override
-    public Byte unmarshal(String s) throws Exception {
-        
-        byte[] val = parseHexBinary(s);
-        
-        if (val.length != 1) throw new Exception();
-        
-        return val[0];
-    }
+  @Override
+  public Byte unmarshal(String s) throws Exception {
 
-    @Override
-    public String marshal(Byte val) throws Exception {
-        byte[] out = new byte[1];
+    byte[] val = parseHexBinary(s);
 
-        out[0] = val;
-        
-        return printHexBinary(out);
-    }
+    if (val.length != 1)
+      throw new Exception();
+
+    return val[0];
+  }
+
+  @Override
+  public String marshal(Byte val) throws Exception {
+    byte[] out = new byte[1];
+
+    out[0] = val;
+
+    return printHexBinary(out);
+  }
 }

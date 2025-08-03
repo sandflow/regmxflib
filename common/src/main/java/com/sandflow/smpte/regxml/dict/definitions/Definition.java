@@ -36,75 +36,78 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * Base type for the MetaDictionary definitions. Each concrete subclass corresponds to 
+ * Base type for the MetaDictionary definitions. Each concrete subclass
+ * corresponds to
  * a particular type of definition allowed in a MetaDictionary, as specified in
- * SMPTE ST 2001-1. XML Annotations are used to map the subclasses to an XML representation
+ * SMPTE ST 2001-1. XML Annotations are used to map the subclasses to an XML
+ * representation
  * consistent with that defined in SMPTE ST 2001-1.
  */
 @XmlAccessorType(XmlAccessType.NONE)
 abstract public class Definition {
-    
-    @XmlJavaTypeAdapter(value = AUIDAdapter.class)
-    @XmlElement(name = "Identification")
-    private AUID identification; 
 
-    @XmlElement(name = "Symbol")
-    private String symbol;
+  @XmlJavaTypeAdapter(value = AUIDAdapter.class)
+  @XmlElement(name = "Identification")
+  private AUID identification;
 
-    @XmlElement(name = "Description")
-    private String description;
+  @XmlElement(name = "Symbol")
+  private String symbol;
 
-    @XmlElement(name = "Name")
-    private String name;
-    
-    @XmlTransient()
-    private URI namespace;
+  @XmlElement(name = "Description")
+  private String description;
 
-    public URI getNamespace() {
-        return namespace;
-    }
+  @XmlElement(name = "Name")
+  private String name;
 
-    public void setNamespace(URI namespace) {
-        this.namespace = namespace;
-    }
+  @XmlTransient()
+  private URI namespace;
 
-    public AUID getIdentification() {
-        return identification;
-    }
+  public URI getNamespace() {
+    return namespace;
+  }
 
-    public String getSymbol() {
-        return symbol;
-    }
+  public void setNamespace(URI namespace) {
+    this.namespace = namespace;
+  }
 
-    public String getDescription() {
-        return description;
-    }
+  public AUID getIdentification() {
+    return identification;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public String getSymbol() {
+    return symbol;
+  }
 
-    public void setIdentification(AUID identification) {
-        this.identification = identification;
-    }
+  public String getDescription() {
+    return description;
+  }
 
-    public void setSymbol(String symbol) {
-        this.symbol = symbol;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+  public void setIdentification(AUID identification) {
+    this.identification = identification;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-    
-    /**
-     * Supports the visitor design pattern.
-     * @see DefinitionVisitor
-     * @param visitor Visitor instance that will process the definition
-     */
-    abstract public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException;
-    
+  public void setSymbol(String symbol) {
+    this.symbol = symbol;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  /**
+   * Supports the visitor design pattern.
+   * 
+   * @see DefinitionVisitor
+   * @param visitor Visitor instance that will process the definition
+   */
+  abstract public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException;
+
 }

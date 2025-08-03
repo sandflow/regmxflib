@@ -47,140 +47,139 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @XmlAccessorType(XmlAccessType.NONE)
 @XmlType(name = "")
 public class EssenceKeyRegisterModel extends com.sandflow.smpte.register.EssenceKeyRegister {
-    
-    public final static String XML_NAMESPACE = "http://www.smpte-ra.org/schemas/2088/2019";
 
-    @XmlElement(name = "Entry", namespace = XML_NAMESPACE)
-    @XmlElementWrapper(name = "Entries", namespace = XML_NAMESPACE)
-    private final ArrayList<Entry> entries = new ArrayList<>();
+  public final static String XML_NAMESPACE = "http://www.smpte-ra.org/schemas/2088/2019";
 
-    public EssenceKeyRegisterModel() {
+  @XmlElement(name = "Entry", namespace = XML_NAMESPACE)
+  @XmlElementWrapper(name = "Entries", namespace = XML_NAMESPACE)
+  private final ArrayList<Entry> entries = new ArrayList<>();
+
+  public EssenceKeyRegisterModel() {
+  }
+
+  @Override
+  public Collection<? extends Entry> getEntries() {
+    return entries;
+  }
+
+  /**
+   * Single Entry in an Elements Register (SMPTE ST 2088)
+   */
+  @XmlType(name = "Entry", namespace = EssenceKeyRegisterModel.XML_NAMESPACE)
+  @XmlAccessorType(value = XmlAccessType.NONE)
+  public static class Entry implements com.sandflow.smpte.register.EssenceKeyRegister.Entry {
+
+    @XmlElement(name = "Register")
+    static final String register = "Essence";
+
+    @XmlElement(name = "NamespaceName", required = true)
+    protected URI namespaceName;
+
+    @XmlElement(name = "Symbol", required = true)
+    protected String symbol;
+
+    @XmlJavaTypeAdapter(value = ULAdapter.class)
+    @XmlElement(name = "UL", required = true)
+    protected UL ul;
+
+    @XmlElement(name = "Kind")
+    private Kind kind;
+
+    @XmlElement(name = "Name")
+    private String name;
+
+    @XmlElement(name = "Definition")
+    private String definition;
+
+    @XmlElement(name = "Notes")
+    private String notes;
+
+    @XmlElement(name = "DefiningDocument")
+    private String definingDocument;
+
+    @XmlElement(name = "IsDeprecated")
+    private boolean deprecated;
+
+    @Override
+    public URI getNamespaceName() {
+      return namespaceName;
     }
 
     @Override
-    public Collection<? extends Entry> getEntries() {
-        return entries;
+    public String getSymbol() {
+      return symbol;
     }
 
-    /**
-     * Single Entry in an Elements Register (SMPTE ST 2088)
-     */
-    @XmlType(name = "Entry", namespace = EssenceKeyRegisterModel.XML_NAMESPACE)
-    @XmlAccessorType(value = XmlAccessType.NONE)
-    public static class Entry implements com.sandflow.smpte.register.EssenceKeyRegister.Entry {
-
-        @XmlElement(name = "Register")
-        static final String register = "Essence";
-        
-        @XmlElement(name = "NamespaceName", required = true)
-        protected URI namespaceName;
-        
-        @XmlElement(name = "Symbol", required = true)
-        protected String symbol;
-        
-        @XmlJavaTypeAdapter(value = ULAdapter.class)
-        @XmlElement(name = "UL", required = true)
-        protected UL ul;
-        
-        @XmlElement(name = "Kind")
-        private Kind kind;
-        
-        @XmlElement(name = "Name")
-        private String name;
-        
-        @XmlElement(name = "Definition")
-        private String definition;
-        
-        @XmlElement(name = "Notes")
-        private String notes;
-        
-        @XmlElement(name = "DefiningDocument")
-        private String definingDocument;
-        
-        @XmlElement(name = "IsDeprecated")
-        private boolean deprecated;
-        
-        @Override
-        public URI getNamespaceName() {
-            return namespaceName;
-        }
-
-        @Override
-        public String getSymbol() {
-            return symbol;
-        }
-
-        @Override
-        public UL getUL() {
-            return ul;
-        }
-
-        public void setNamespaceName(URI namespaceName) {
-            this.namespaceName = namespaceName;
-        }
-
-        public void setSymbol(String symbol) {
-            this.symbol = symbol;
-        }
-
-        public void setUL(UL ul) {
-            this.ul = ul;
-        }
-
-        @Override
-        public Kind getKind() {
-            return kind;
-        }
-
-        public void setKind(Kind kind) {
-            this.kind = kind;
-        }
-
-        @Override
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String getDefinition() {
-            return definition;
-        }
-
-        public void setDefinition(String definition) {
-            this.definition = definition;
-        }
-
-        @Override
-        public String getDefiningDocument() {
-            return definingDocument;
-        }
-
-        public void setDefiningDocument(String definingDocument) {
-            this.definingDocument = definingDocument;
-        }
-
-        @Override
-        public String getNotes() {
-            return notes;
-        }
-
-        public void setNotes(String notes) {
-            this.notes = notes;
-        }
-
-        @Override
-        public boolean isDeprecated() {
-            return deprecated;
-        }
-
-        public void setDeprecated(boolean deprecated) {
-            this.deprecated = deprecated;
-        }
+    @Override
+    public UL getUL() {
+      return ul;
     }
 
+    public void setNamespaceName(URI namespaceName) {
+      this.namespaceName = namespaceName;
+    }
+
+    public void setSymbol(String symbol) {
+      this.symbol = symbol;
+    }
+
+    public void setUL(UL ul) {
+      this.ul = ul;
+    }
+
+    @Override
+    public Kind getKind() {
+      return kind;
+    }
+
+    public void setKind(Kind kind) {
+      this.kind = kind;
+    }
+
+    @Override
+    public String getName() {
+      return name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public String getDefinition() {
+      return definition;
+    }
+
+    public void setDefinition(String definition) {
+      this.definition = definition;
+    }
+
+    @Override
+    public String getDefiningDocument() {
+      return definingDocument;
+    }
+
+    public void setDefiningDocument(String definingDocument) {
+      this.definingDocument = definingDocument;
+    }
+
+    @Override
+    public String getNotes() {
+      return notes;
+    }
+
+    public void setNotes(String notes) {
+      this.notes = notes;
+    }
+
+    @Override
+    public boolean isDeprecated() {
+      return deprecated;
+    }
+
+    public void setDeprecated(boolean deprecated) {
+      this.deprecated = deprecated;
+    }
+  }
 
 }

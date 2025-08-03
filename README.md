@@ -53,6 +53,18 @@ The following snippet illustrates the creation of an `RGBADescriptor` using the 
       library/src/test/resources/imps/imp_1/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.mxf > \
       library/target/test-output/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.json
 
+## Organization
+
+The library consists of 3 modules:
+
+- `class-generator` generates POJO classes in <library/target/generated-sources> when
+  compiling the library, using the register files at <library/src/main/resources>
+- `library` holds the generated POJO classes and classes for reading and writing MXF files
+- `common` holds classes that do not depend on the generated classes
+
+_NOTE_: `common` is largely based on [regxmllib](https://github.com/sandflow/regxmllib) and
+combining the two libraries is expected in the long run.
+
 ## MXF concepts
 
 ### Data model
@@ -91,7 +103,9 @@ Index entries point to the first byte of the K of each element.
 
 In the case of clip-wrapping, the entire essence stream is wrapped into a single KLV triplet (also called an _element_).
 
-Index entries point to the first byte of the V of each element.
+Index entries are relative to the first byte of the V of each element, _with the
+exception of IAB Track Files, where they are relative to the K of the IAB Clip
+Wrap element.
 
 ### Indexing
 

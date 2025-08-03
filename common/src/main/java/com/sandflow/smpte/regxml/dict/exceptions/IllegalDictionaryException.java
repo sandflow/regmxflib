@@ -27,8 +27,8 @@ package com.sandflow.smpte.regxml.dict.exceptions;
 
 public class IllegalDictionaryException extends Exception {
 
-    public IllegalDictionaryException(String msg) {
-        super(msg);
-    }
-    
+  public IllegalDictionaryException(String msg) {
+    super(msg);
+  }
+
 }

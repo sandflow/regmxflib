@@ -34,13 +34,12 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 @XmlAccessorType(XmlAccessType.NONE)
 public class OpaqueTypeDefinition extends Definition {
 
-    public OpaqueTypeDefinition() {
-    }
+  public OpaqueTypeDefinition() {
+  }
 
-
-    @Override
-    public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
-        visitor.visit(this);
-    }
+  @Override
+  public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
+    visitor.visit(this);
+  }
 
 }

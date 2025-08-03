@@ -38,24 +38,24 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @XmlAccessorType(XmlAccessType.NONE)
 public class VariableArrayTypeDefinition extends Definition {
 
-    @XmlJavaTypeAdapter(value = AUIDAdapter.class)
-    @XmlElement(name = "ElementType")
-    private AUID elementType;
+  @XmlJavaTypeAdapter(value = AUIDAdapter.class)
+  @XmlElement(name = "ElementType")
+  private AUID elementType;
 
-    public VariableArrayTypeDefinition() {
-    }
+  public VariableArrayTypeDefinition() {
+  }
 
-    @Override
-    public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
-        visitor.visit(this);
-    }
+  @Override
+  public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
+    visitor.visit(this);
+  }
 
-    public AUID getElementType() {
-        return elementType;
-    }
+  public AUID getElementType() {
+    return elementType;
+  }
 
-    public void setElementType(AUID elementType) {
-        this.elementType = elementType;
-    }
+  public void setElementType(AUID elementType) {
+    this.elementType = elementType;
+  }
 
 }

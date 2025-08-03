@@ -47,117 +47,118 @@ import static org.w3c.dom.Node.ELEMENT_NODE;
 @XmlAccessorType(XmlAccessType.NONE)
 public class RecordTypeDefinition extends Definition {
 
-    @XmlJavaTypeAdapter(value = RecordMemberAdapter.class)
-    @XmlAnyElement(lax = false)
-    ArrayList<Member> members = new ArrayList<>();
+  @XmlJavaTypeAdapter(value = RecordMemberAdapter.class)
+  @XmlAnyElement(lax = false)
+  ArrayList<Member> members = new ArrayList<>();
 
-    public RecordTypeDefinition() {
+  public RecordTypeDefinition() {
+  }
+
+  @Override
+  public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
+    visitor.visit(this);
+  }
+
+  public void addMember(Member record) {
+    members.add(record);
+  }
+
+  public Collection<Member> getMembers() {
+    return members;
+  }
+
+  @XmlAccessorType(XmlAccessType.NONE)
+  public static class Member {
+    @XmlElement(name = "Name")
+    private String name;
+    @XmlJavaTypeAdapter(value = AUIDAdapter.class)
+    @XmlElement(name = "Type")
+    private AUID type;
+    @XmlElement(name = "Description")
+    private String description;
+
+    public String getName() {
+      return name;
     }
 
-    @Override
-    public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
-        visitor.visit(this);
+    public void setName(String name) {
+      this.name = name;
     }
 
-    public void addMember(Member record) {
-        members.add(record);
+    public AUID getType() {
+      return type;
     }
 
-    public Collection<Member> getMembers() {
-        return members;
-    }
-    
-  
-    @XmlAccessorType(XmlAccessType.NONE)
-    public static class Member {
-        @XmlElement(name = "Name")
-        private String name;
-        @XmlJavaTypeAdapter(value = AUIDAdapter.class)
-        @XmlElement(name = "Type")
-        private AUID type;
-        @XmlElement(name = "Description")
-        private String description;
-        public String getName() {
-            return name;
-        }
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public AUID getType() {
-            return type;
-        }
-
-        public void setType(AUID type) {
-            this.type = type;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
+    public void setType(AUID type) {
+      this.type = type;
     }
 
-    private static class RecordMemberAdapter extends XmlAdapter<Object, ArrayList<RecordTypeDefinition.Member>> {
-
-        public ArrayList<RecordTypeDefinition.Member> unmarshal(Object v) throws Exception {
-
-            ArrayList<RecordTypeDefinition.Member> al = new ArrayList<>();
-
-            org.w3c.dom.Node node = ((org.w3c.dom.Element) v).getFirstChild();
-
-            while (node != null) {
-
-                if (node.getNodeType() == ELEMENT_NODE) {
-
-                    org.w3c.dom.Element elem = (org.w3c.dom.Element) node;
-
-                    if ("Name".equals(elem.getNodeName())) {
-                        
-                        al.add(new RecordTypeDefinition.Member());
-                        al.get(al.size() - 1).setName(elem.getTextContent());
-                        
-                    } else if ("Type".equals(elem.getNodeName())) {
-                        
-                        al.get(al.size() - 1).setType(AUID.fromURN(elem.getTextContent()));
-                        
-                    }
-                }
-
-                node = node.getNextSibling();
-            }
-
-            return al;
-        }
-
-        public Object marshal(ArrayList<RecordTypeDefinition.Member> v) throws Exception {
-
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            Document doc = db.newDocument();
-            org.w3c.dom.Element elem = doc.createElementNS(MetaDictionary.XML_NS, "Members");
-
-            for (RecordTypeDefinition.Member e : v) {
-
-                org.w3c.dom.Element e1 = doc.createElementNS(MetaDictionary.XML_NS, "Name");
-
-                e1.setTextContent(e.getName());
-
-                elem.appendChild(e1);
-
-                e1 = doc.createElementNS(MetaDictionary.XML_NS, "Type");
-
-                e1.setTextContent(e.getType().toString());
-
-                elem.appendChild(e1);
-
-            }
-
-            return elem;
-        }
+    public String getDescription() {
+      return description;
     }
+
+    public void setDescription(String description) {
+      this.description = description;
+    }
+  }
+
+  private static class RecordMemberAdapter extends XmlAdapter<Object, ArrayList<RecordTypeDefinition.Member>> {
+
+    public ArrayList<RecordTypeDefinition.Member> unmarshal(Object v) throws Exception {
+
+      ArrayList<RecordTypeDefinition.Member> al = new ArrayList<>();
+
+      org.w3c.dom.Node node = ((org.w3c.dom.Element) v).getFirstChild();
+
+      while (node != null) {
+
+        if (node.getNodeType() == ELEMENT_NODE) {
+
+          org.w3c.dom.Element elem = (org.w3c.dom.Element) node;
+
+          if ("Name".equals(elem.getNodeName())) {
+
+            al.add(new RecordTypeDefinition.Member());
+            al.get(al.size() - 1).setName(elem.getTextContent());
+
+          } else if ("Type".equals(elem.getNodeName())) {
+
+            al.get(al.size() - 1).setType(AUID.fromURN(elem.getTextContent()));
+
+          }
+        }
+
+        node = node.getNextSibling();
+      }
+
+      return al;
+    }
+
+    public Object marshal(ArrayList<RecordTypeDefinition.Member> v) throws Exception {
+
+      DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+      DocumentBuilder db = dbf.newDocumentBuilder();
+      Document doc = db.newDocument();
+      org.w3c.dom.Element elem = doc.createElementNS(MetaDictionary.XML_NS, "Members");
+
+      for (RecordTypeDefinition.Member e : v) {
+
+        org.w3c.dom.Element e1 = doc.createElementNS(MetaDictionary.XML_NS, "Name");
+
+        e1.setTextContent(e.getName());
+
+        elem.appendChild(e1);
+
+        e1 = doc.createElementNS(MetaDictionary.XML_NS, "Type");
+
+        e1.setTextContent(e.getType().toString());
+
+        elem.appendChild(e1);
+
+      }
+
+      return elem;
+    }
+  }
 
 }

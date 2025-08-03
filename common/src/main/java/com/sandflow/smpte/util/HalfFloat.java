@@ -30,31 +30,31 @@ package com.sandflow.smpte.util;
  */
 public class HalfFloat {
 
-    /**
-     * Converts a half-float stored in an int into a double
-     * 
-     * @param hf half-float stored in an int
-     * @return Half-float value as a double
-     */
-    public static double toDouble(int hf) {
-        double val;
+  /**
+   * Converts a half-float stored in an int into a double
+   * 
+   * @param hf half-float stored in an int
+   * @return Half-float value as a double
+   */
+  public static double toDouble(int hf) {
+    double val;
 
-        double sign = (hf & 0x8000) >> 15 == 0 ? 1 : -1;
-        int exponent = (hf & 0x7c00) >> 10;
-        int mantissa = hf & 0x03ff;
+    double sign = (hf & 0x8000) >> 15 == 0 ? 1 : -1;
+    int exponent = (hf & 0x7c00) >> 10;
+    int mantissa = hf & 0x03ff;
 
-        if (exponent == 31) {
-            if (mantissa == 0) {
-                val = sign > 0 ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
-            } else {
-                val = Double.NaN;
-            }
-        } else if (exponent == 0) {
-            val = sign * Math.pow(2, -24) * mantissa;
-        } else {
-            val = sign * Math.pow(2, exponent - 15) * (1024 + mantissa) * Math.pow(2, -10);
-        }
-        
-        return val;
+    if (exponent == 31) {
+      if (mantissa == 0) {
+        val = sign > 0 ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
+      } else {
+        val = Double.NaN;
+      }
+    } else if (exponent == 0) {
+      val = sign * Math.pow(2, -24) * mantissa;
+    } else {
+      val = sign * Math.pow(2, exponent - 15) * (1024 + mantissa) * Math.pow(2, -10);
     }
+
+    return val;
+  }
 }

@@ -38,187 +38,191 @@ import java.util.regex.Pattern;
  */
 public class UUID {
 
-    private byte[] value;
+  private byte[] value;
 
-    /**
-     * Instantiates a UUID from a sequence of 16 bytes
-     *
-     * @param uuid Sequence of 16 bytes
-     */
-    public UUID(byte[] uuid) {
-        this.value = java.util.Arrays.copyOf(uuid, 16);
+  /**
+   * Instantiates a UUID from a sequence of 16 bytes
+   *
+   * @param uuid Sequence of 16 bytes
+   */
+  public UUID(byte[] uuid) {
+    this.value = java.util.Arrays.copyOf(uuid, 16);
+  }
+
+  /**
+   * Returns the sequence of bytes that make up the UUID (in the order specified
+   * by RFC 4122)
+   * 
+   * @return Sequence of 16 bytes
+   */
+  public byte[] getValue() {
+    return this.value;
+  }
+
+  @Override
+  public int hashCode() {
+    int hash = 7;
+    hash = 37 * hash + Arrays.hashCode(this.value);
+    return hash;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    final UUID other = (UUID) obj;
+    if (!Arrays.equals(this.value, other.value)) {
+      return false;
+    }
+    return true;
+  }
+
+  private final static Pattern URN_PATTERN = Pattern
+      .compile("urn:uuid:[a-fA-F0-9]{8}-(?:[a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}");
+
+  /**
+   * Generate a Class 4 random UUID
+   * 
+   * @return Class 4 UUID
+   */
+  public static UUID fromRandom() {
+    SecureRandom random = new SecureRandom();
+    byte bytes[] = new byte[16];
+    random.nextBytes(bytes);
+
+    bytes[6] = (byte) ((bytes[6] & 0x0f) | 0x4f);
+    bytes[8] = (byte) ((bytes[8] & 0x3f) | 0x7f);
+
+    return new UUID(bytes);
+  }
+
+  /**
+   * Generate a Class 5 UUID from a URI
+   * 
+   * @param uri URI
+   * @return Class 5 UUID
+   */
+  public static UUID fromURIName(URI uri) {
+    MessageDigest digest;
+
+    UUID nsid = UUID.fromURN("urn:uuid:6ba7b811-9dad-11d1-80b4-00c04fd430c8");
+
+    try {
+      digest = MessageDigest.getInstance("SHA-1");
+      digest.update(nsid.getValue());
+      digest.update(uri.toString().getBytes("ASCII"));
+    } catch (NoSuchAlgorithmException | UnsupportedEncodingException ex) {
+      throw new RuntimeException(ex);
     }
 
-    /**
-     * Returns the sequence of bytes that make up the UUID (in the order specified by RFC 4122)
-     * 
-     * @return Sequence of 16 bytes
-     */
-    public byte[] getValue() {
-        return this.value;
-    }
+    byte[] result = digest.digest();
 
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 37 * hash + Arrays.hashCode(this.value);
-        return hash;
-    }
+    result[6] = (byte) ((result[6] & 0x0f) | 0x5f);
+    result[8] = (byte) ((result[8] & 0x3f) | 0x7f);
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final UUID other = (UUID) obj;
-        if (!Arrays.equals(this.value, other.value)) {
-            return false;
-        }
-        return true;
-    }
+    return new UUID(result);
+  }
 
-    private final static Pattern URN_PATTERN = Pattern.compile("urn:uuid:[a-fA-F0-9]{8}-(?:[a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}");
+  /**
+   * Creates a UUID from a URN
+   * (urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6)
+   *
+   * @param val URN-representation of the UUID
+   * @return UUID, or null if invalid URN
+   */
+  public static UUID fromURN(String val) {
 
-    /**
-     * Generate a Class 4 random UUID
-     * @return Class 4 UUID
-     */
-    public static UUID fromRandom() {
-        SecureRandom random = new SecureRandom();
-        byte bytes[] = new byte[16];
-        random.nextBytes(bytes);
+    byte[] uuid = new byte[16];
 
-        bytes[6] = (byte) ((bytes[6] & 0x0f) | 0x4f);
-        bytes[8] = (byte) ((bytes[8] & 0x3f) | 0x7f);
+    if (URN_PATTERN.matcher(val).matches()) {
 
-        return new UUID(bytes);
-    }
+      int inoff = 0;
+      int outoff = 9;
 
-    /**
-     * Generate a Class 5 UUID from a URI
-     * @param uri URI
-     * @return Class 5 UUID
-     */
-    public static UUID fromURIName(URI uri) {
-        MessageDigest digest;
+      for (int j = 0; j < 4; j++) {
 
-        UUID nsid = UUID.fromURN("urn:uuid:6ba7b811-9dad-11d1-80b4-00c04fd430c8");
+        uuid[inoff++] = (byte) Integer.parseInt(val.substring(outoff, outoff + 2), 16);
 
-        try {
-            digest = MessageDigest.getInstance("SHA-1");
-            digest.update(nsid.getValue());
-            digest.update(uri.toString().getBytes("ASCII"));
-        } catch (NoSuchAlgorithmException | UnsupportedEncodingException ex) {
-            throw new RuntimeException(ex);
-        }
+        outoff += 2;
 
-        byte[] result = digest.digest();
+      }
 
-        result[6] = (byte) ((result[6] & 0x0f) | 0x5f);
-        result[8] = (byte) ((result[8] & 0x3f) | 0x7f);
-
-        return new UUID(result);
-    }
-
-    /**
-     * Creates a UUID from a URN
-     * (urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6)
-     *
-     * @param val URN-representation of the UUID
-     * @return UUID, or null if invalid URN
-     */
-    public static UUID fromURN(String val) {
-
-        byte[] uuid = new byte[16];
-
-        if (URN_PATTERN.matcher(val).matches()) {
-
-            int inoff = 0;
-            int outoff = 9;
-
-            for (int j = 0; j < 4; j++) {
-
-                uuid[inoff++] = (byte) Integer.parseInt(val.substring(outoff, outoff + 2), 16);
-
-                outoff += 2;
-
-            }
-
-            for (int i = 0; i < 3; i++) {
-
-                outoff++;
-
-                for (int j = 0; j < 2; j++) {
-
-                    uuid[inoff++] = (byte) Integer.parseInt(val.substring(outoff, outoff + 2), 16);
-                    outoff += 2;
-                }
-            }
-
-            outoff++;
-
-            for (int j = 0; j < 6; j++) {
-
-                uuid[inoff++] = (byte) Integer.parseInt(val.substring(outoff, outoff + 2), 16);
-                outoff += 2;
-            }
-
-            return new UUID(uuid);
-
-        } else {
-
-            return null;
-
-        }
-
-    }
-
-    final static char[] HEXMAP = "0123456789abcdef".toCharArray();
-    final static char[] URNTEMPLATE = "urn:uuid:3e0993c0-66e0-11e4-9803-0800200c9a66".toCharArray();
-
-    @Override
-    public String toString() {
-
-        char[] out = Arrays.copyOf(URNTEMPLATE, URNTEMPLATE.length);
-
-        int inoff = 0;
-        int outoff = 9;
-
-        for (int j = 0; j < 4; j++) {
-
-            int v = value[inoff++] & 0xFF;
-            out[outoff++] = HEXMAP[v >>> 4];
-            out[outoff++] = HEXMAP[v & 0x0F];
-
-        }
-
-        for (int i = 0; i < 3; i++) {
-
-            outoff++;
-
-            for (int j = 0; j < 2; j++) {
-
-                int v = value[inoff++] & 0xFF;
-                out[outoff++] = HEXMAP[v >>> 4];
-                out[outoff++] = HEXMAP[v & 0x0F];
-
-            }
-        }
+      for (int i = 0; i < 3; i++) {
 
         outoff++;
 
-        for (int j = 0; j < 6; j++) {
+        for (int j = 0; j < 2; j++) {
 
-            int v = value[inoff++] & 0xFF;
-            out[outoff++] = HEXMAP[v >>> 4];
-            out[outoff++] = HEXMAP[v & 0x0F];
-
+          uuid[inoff++] = (byte) Integer.parseInt(val.substring(outoff, outoff + 2), 16);
+          outoff += 2;
         }
+      }
 
-        return new String(out);
+      outoff++;
+
+      for (int j = 0; j < 6; j++) {
+
+        uuid[inoff++] = (byte) Integer.parseInt(val.substring(outoff, outoff + 2), 16);
+        outoff += 2;
+      }
+
+      return new UUID(uuid);
+
+    } else {
+
+      return null;
+
     }
+
+  }
+
+  final static char[] HEXMAP = "0123456789abcdef".toCharArray();
+  final static char[] URNTEMPLATE = "urn:uuid:3e0993c0-66e0-11e4-9803-0800200c9a66".toCharArray();
+
+  @Override
+  public String toString() {
+
+    char[] out = Arrays.copyOf(URNTEMPLATE, URNTEMPLATE.length);
+
+    int inoff = 0;
+    int outoff = 9;
+
+    for (int j = 0; j < 4; j++) {
+
+      int v = value[inoff++] & 0xFF;
+      out[outoff++] = HEXMAP[v >>> 4];
+      out[outoff++] = HEXMAP[v & 0x0F];
+
+    }
+
+    for (int i = 0; i < 3; i++) {
+
+      outoff++;
+
+      for (int j = 0; j < 2; j++) {
+
+        int v = value[inoff++] & 0xFF;
+        out[outoff++] = HEXMAP[v >>> 4];
+        out[outoff++] = HEXMAP[v & 0x0F];
+
+      }
+    }
+
+    outoff++;
+
+    for (int j = 0; j < 6; j++) {
+
+      int v = value[inoff++] & 0xFF;
+      out[outoff++] = HEXMAP[v >>> 4];
+      out[outoff++] = HEXMAP[v & 0x0F];
+
+    }
+
+    return new String(out);
+  }
 
 }

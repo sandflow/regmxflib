@@ -27,11 +27,11 @@ package com.sandflow.smpte.regxml.dict.exceptions;
 
 public class IllegalDefinitionException extends Exception {
 
-    public IllegalDefinitionException() {
-    }
+  public IllegalDefinitionException() {
+  }
 
-    public IllegalDefinitionException(String msg) {
-        super(msg);
-    }
+  public IllegalDefinitionException(String msg) {
+    super(msg);
+  }
 
 }

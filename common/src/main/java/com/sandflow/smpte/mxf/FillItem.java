@@ -37,42 +37,45 @@ import com.sandflow.smpte.util.UL;
  * Represents an MXF Fill Item (see SMPTE ST 377-1)
  */
 public class FillItem {
-    
-    static final UL KEY = new UL(new byte[]{0x06, 0x0e, 0x2b, 0x34, 0x01, 0x01, 0x01, 0x02, 0x03, 0x01, 0x02, 0x10, 0x01, 0x00, 0x00, 0x00});
 
-    public static boolean isInstance(AUID key) {
-        return KEY.equalsIgnoreVersion(key);
+  static final UL KEY = new UL(
+      new byte[] { 0x06, 0x0e, 0x2b, 0x34, 0x01, 0x01, 0x01, 0x02, 0x03, 0x01, 0x02, 0x10, 0x01, 0x00, 0x00, 0x00 });
+
+  public static boolean isInstance(AUID key) {
+    return KEY.equalsIgnoreVersion(key);
+  }
+
+  /**
+   * Creates a Fill Item from a Triplet
+   * 
+   * @param triplet Triplet from which to create the Fill Item
+   * @return FillItem or null if the Triplet is not a FillItem
+   * @throws KLVException
+   */
+  public static FillItem fromTriplet(Triplet triplet) throws KLVException {
+
+    FillItem fi = new FillItem();
+
+    if (!getKey().equalsIgnoreVersion(triplet.getKey())) {
+      return null;
     }
 
-    /**
-     * Creates a Fill Item from a Triplet
-     * @param triplet Triplet from which to create the Fill Item
-     * @return FillItem or null if the Triplet is not a FillItem
-     * @throws KLVException 
-     */
-    public static FillItem fromTriplet(Triplet triplet) throws KLVException {
+    return fi;
+  }
 
-        FillItem fi = new FillItem();
+  public static void toStream(OutputStream os, short size) throws IOException {
+    MXFDataOutput mos = new MXFDataOutput(os);
+    mos.writeUL(KEY);
+    mos.writeBERLength(size);
+    mos.write(new byte[size]);
+  }
 
-        if (!getKey().equalsIgnoreVersion(triplet.getKey())) {
-            return null;
-        }
-
-        return fi;
-    }
-
-    public static void toStream(OutputStream os, short size) throws IOException {
-        MXFDataOutput mos = new MXFDataOutput(os);
-        mos.writeUL(KEY);
-        mos.writeBERLength(size);
-        mos.write(new byte[size]);
-    }
-    
-    /**
-     * Returns the Fill Item Key
-     * @return Key
-     */
-    public static UL getKey() {
-        return KEY;
-    }
+  /**
+   * Returns the Fill Item Key
+   * 
+   * @return Key
+   */
+  public static UL getKey() {
+    return KEY;
+  }
 }

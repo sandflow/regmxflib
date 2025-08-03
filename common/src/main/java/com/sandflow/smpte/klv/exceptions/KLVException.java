@@ -30,26 +30,24 @@ package com.sandflow.smpte.klv.exceptions;
  */
 public class KLVException extends Exception {
 
-    public static String MAX_LENGTH_EXCEEED = "Maximum in-memory KLV size exceeded.";
-    public static String INVALID_BER_LENGTH = "Invalid BER encoding.";
-    public static String MAX_BER_SIZE_EXCEEED = "Maximum BER length exceeded.";
+  public static String MAX_LENGTH_EXCEEED = "Maximum in-memory KLV size exceeded.";
+  public static String INVALID_BER_LENGTH = "Invalid BER encoding.";
+  public static String MAX_BER_SIZE_EXCEEED = "Maximum BER length exceeded.";
 
-    public KLVException() {
-        super();
-    }
+  public KLVException() {
+    super();
+  }
 
-    public KLVException(String msg) {
-        super(msg);
-    }
+  public KLVException(String msg) {
+    super(msg);
+  }
 
-    public KLVException(Exception e) {
-        super(e);
-    }
+  public KLVException(Exception e) {
+    super(e);
+  }
 
-    public KLVException(String string, Throwable thrwbl) {
-        super(string, thrwbl);
-    }
-    
-    
+  public KLVException(String string, Throwable thrwbl) {
+    super(string, thrwbl);
+  }
 
 }

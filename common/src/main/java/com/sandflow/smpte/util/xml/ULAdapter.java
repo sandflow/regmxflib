@@ -33,13 +33,13 @@ import jakarta.xml.bind.annotation.adapters.XmlAdapter;
  */
 public class ULAdapter extends XmlAdapter<String, UL> {
 
-    @Override
-    public UL unmarshal(String val) throws Exception {
-        return UL.fromURN(val);
-    }
+  @Override
+  public UL unmarshal(String val) throws Exception {
+    return UL.fromURN(val);
+  }
 
-    @Override
-    public String marshal(UL val) throws Exception {
-        return val.toString();
-    }
+  @Override
+  public String marshal(UL val) throws Exception {
+    return val.toString();
+  }
 }

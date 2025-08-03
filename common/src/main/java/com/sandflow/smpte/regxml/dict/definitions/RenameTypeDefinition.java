@@ -38,24 +38,24 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @XmlAccessorType(XmlAccessType.NONE)
 public class RenameTypeDefinition extends Definition {
 
-    @XmlJavaTypeAdapter(value = AUIDAdapter.class)
-    @XmlElement(name = "RenamedType")
-    private AUID renamedType;
+  @XmlJavaTypeAdapter(value = AUIDAdapter.class)
+  @XmlElement(name = "RenamedType")
+  private AUID renamedType;
 
-    public RenameTypeDefinition() {
-    }
+  public RenameTypeDefinition() {
+  }
 
-    @Override
-    public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
-        visitor.visit(this);
-    }
+  @Override
+  public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
+    visitor.visit(this);
+  }
 
-    public AUID getRenamedType() {
-        return renamedType;
-    }
+  public AUID getRenamedType() {
+    return renamedType;
+  }
 
-    public void setRenamedType(AUID renamedType) {
-        this.renamedType = renamedType;
-    }
+  public void setRenamedType(AUID renamedType) {
+    this.renamedType = renamedType;
+  }
 
 }

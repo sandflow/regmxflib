@@ -31,142 +31,150 @@ import java.util.Arrays;
  * IDAU as specified in SMPTE ST 377-1
  */
 public class IDAU {
-    
-    /**
-     * Creates a AUID from a UL or UUID URN. 
-     * @param urn URN from which to create the AUID
-     * @return AUID, or null if invalid URN
-     */
-    public static IDAU fromURN(String urn) {
-        
-        if (urn == null) return null;
-        
-        if (urn.startsWith("urn:smpte:ul:")) {
-            
-            return new IDAU(UL.fromURN(urn));
-            
-        } else if (urn.startsWith("urn:uuid:")) {
-            
-            return new IDAU(UUID.fromURN(urn));
-            
-        }
 
-        return null;
- 
+  /**
+   * Creates a AUID from a UL or UUID URN.
+   * 
+   * @param urn URN from which to create the AUID
+   * @return AUID, or null if invalid URN
+   */
+  public static IDAU fromURN(String urn) {
+
+    if (urn == null)
+      return null;
+
+    if (urn.startsWith("urn:smpte:ul:")) {
+
+      return new IDAU(UL.fromURN(urn));
+
+    } else if (urn.startsWith("urn:uuid:")) {
+
+      return new IDAU(UUID.fromURN(urn));
+
     }
 
-    private byte[] value;
-    
+    return null;
 
-    /**
-     * Returns the underlying bytes of the IDAU
-     * @return Bytes of the IDAU
-     */
-    public byte[] getValue() {
-        return this.value;
-    }
-    
-    /**
-     * Instantiates a IDAU from a 16-byte buffer
-     * @param idau 16-bytes
-     */
-    public IDAU(byte[] idau) {
-        this.value = java.util.Arrays.copyOf(idau, 16);
-    }
+  }
 
-    
-    /**
-     * Instantiates a IDAU from a UL
-     * @param ul UL from which to create the IDAU
-     */
-    public IDAU(UL ul) {
-        this.value = new byte[16];
-        
-        System.arraycopy(ul.getValue(), 8, this.value, 0, 8);
-        System.arraycopy(ul.getValue(), 0, this.value, 8, 8);
-    }
+  private byte[] value;
 
-    /**
-     * Instantiates a IDAU from a UUID
-     * @param uuid UUID from which to create the IDAU
-     */
-    public IDAU(UUID uuid) {
-        
-        this.value = java.util.Arrays.copyOf(uuid.getValue(), 16);
-        
-    }
+  /**
+   * Returns the underlying bytes of the IDAU
+   * 
+   * @return Bytes of the IDAU
+   */
+  public byte[] getValue() {
+    return this.value;
+  }
 
-    @Override
-    public boolean equals(Object idau) {
-        if (!(idau instanceof IDAU)) {
-            return false;
-        }
-        return Arrays.equals(((IDAU) idau).value, this.value);
-    }
+  /**
+   * Instantiates a IDAU from a 16-byte buffer
+   * 
+   * @param idau 16-bytes
+   */
+  public IDAU(byte[] idau) {
+    this.value = java.util.Arrays.copyOf(idau, 16);
+  }
 
-    
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(value);
-    }
+  /**
+   * Instantiates a IDAU from a UL
+   * 
+   * @param ul UL from which to create the IDAU
+   */
+  public IDAU(UL ul) {
+    this.value = new byte[16];
 
-    @Override
-    public String toString() {
-        if (isUL()) {
-            return asUL().toString();
-        } else {           
-            return asUUID().toString();
-        }
-    }
+    System.arraycopy(ul.getValue(), 8, this.value, 0, 8);
+    System.arraycopy(ul.getValue(), 0, this.value, 8, 8);
+  }
 
-    /**
-     * Is the IDAU a UL?
-     * @return true if the IDAU is a UL
-     */
-    public boolean isUL() {
-        return (value[9] & 0x80) == 0;
-    }
-    
-    /**
-     * Is the IDAU a UUID?
-     * @return true if the IDAU is a UUID
-     */
-    public boolean isUUID() {
-        return ! isUL();
-    }
-    
-    /**
-     * Returns the underlying UUID if available
-     * @return Underlying UUID, or null if not a UUID
-     */
-    public UUID asUUID() {
-        
-        if (isUL()) return null;
-        
-        return new UUID(this.value);
-    }
-    
-    /**
-     * Returns as AUID
-     * @return A newly-created AUID
-     */
-    public AUID asAUID() {
-        
-        byte[] auid = new byte[16];
-        
-        System.arraycopy(this.value, 8, auid, 0, 8);
-        System.arraycopy(this.value, 0, auid, 8, 8);
-        
-        return new AUID(auid);
-    }
-    
+  /**
+   * Instantiates a IDAU from a UUID
+   * 
+   * @param uuid UUID from which to create the IDAU
+   */
+  public IDAU(UUID uuid) {
 
-    /**
-     * Returns the underlying UL if available
-     * @return Underlying UL, or null if not a UL
-     */
-    public UL asUL() {
-        return isUL() ? asAUID().asUL() : null;
+    this.value = java.util.Arrays.copyOf(uuid.getValue(), 16);
+
+  }
+
+  @Override
+  public boolean equals(Object idau) {
+    if (!(idau instanceof IDAU)) {
+      return false;
     }
+    return Arrays.equals(((IDAU) idau).value, this.value);
+  }
+
+  @Override
+  public int hashCode() {
+    return Arrays.hashCode(value);
+  }
+
+  @Override
+  public String toString() {
+    if (isUL()) {
+      return asUL().toString();
+    } else {
+      return asUUID().toString();
+    }
+  }
+
+  /**
+   * Is the IDAU a UL?
+   * 
+   * @return true if the IDAU is a UL
+   */
+  public boolean isUL() {
+    return (value[9] & 0x80) == 0;
+  }
+
+  /**
+   * Is the IDAU a UUID?
+   * 
+   * @return true if the IDAU is a UUID
+   */
+  public boolean isUUID() {
+    return !isUL();
+  }
+
+  /**
+   * Returns the underlying UUID if available
+   * 
+   * @return Underlying UUID, or null if not a UUID
+   */
+  public UUID asUUID() {
+
+    if (isUL())
+      return null;
+
+    return new UUID(this.value);
+  }
+
+  /**
+   * Returns as AUID
+   * 
+   * @return A newly-created AUID
+   */
+  public AUID asAUID() {
+
+    byte[] auid = new byte[16];
+
+    System.arraycopy(this.value, 8, auid, 0, 8);
+    System.arraycopy(this.value, 0, auid, 8, 8);
+
+    return new AUID(auid);
+  }
+
+  /**
+   * Returns the underlying UL if available
+   * 
+   * @return Underlying UL, or null if not a UL
+   */
+  public UL asUL() {
+    return isUL() ? asAUID().asUL() : null;
+  }
 
 }

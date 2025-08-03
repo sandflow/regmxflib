@@ -40,38 +40,37 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @XmlAccessorType(XmlAccessType.NONE)
 public class WeakReferenceTypeDefinition extends Definition {
 
+  @XmlJavaTypeAdapter(value = AUIDAdapter.class)
+  @XmlElement(name = "ReferencedType")
+  private AUID referencedType;
 
-    @XmlJavaTypeAdapter(value = AUIDAdapter.class)
-    @XmlElement(name = "ReferencedType")
-    private AUID referencedType;
+  @XmlElementWrapper(name = "TargetSet")
+  @XmlElement(name = "MetaDefRef")
+  @XmlJavaTypeAdapter(value = AUIDAdapter.class)
+  private ArrayList<AUID> targetSet = new ArrayList<>();
 
-    @XmlElementWrapper(name = "TargetSet")
-    @XmlElement(name = "MetaDefRef")
-    @XmlJavaTypeAdapter(value = AUIDAdapter.class)
-    private ArrayList<AUID> targetSet = new ArrayList<>();
+  public WeakReferenceTypeDefinition() {
+  }
 
-    public WeakReferenceTypeDefinition() {
-    }
+  @Override
+  public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
+    visitor.visit(this);
+  }
 
-    @Override
-    public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
-        visitor.visit(this);
-    }
+  public AUID getReferencedType() {
+    return referencedType;
+  }
 
-    public AUID getReferencedType() {
-        return referencedType;
-    }
+  public void setReferencedType(AUID referencedType) {
+    this.referencedType = referencedType;
+  }
 
-    public void setReferencedType(AUID referencedType) {
-        this.referencedType = referencedType;
-    }
+  public ArrayList<AUID> getTargetSet() {
+    return targetSet;
+  }
 
-    public ArrayList<AUID> getTargetSet() {
-        return targetSet;
-    }
-
-    public void setTargetSet(ArrayList<AUID> targetSet) {
-        this.targetSet = targetSet;
-    }
+  public void setTargetSet(ArrayList<AUID> targetSet) {
+    this.targetSet = targetSet;
+  }
 
 }

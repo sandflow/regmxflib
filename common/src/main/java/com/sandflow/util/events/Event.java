@@ -32,52 +32,53 @@ package com.sandflow.util.events;
  */
 public interface Event {
 
-    /**
-     * Defines the four potential severity of an event
-     */
-    public static enum Severity {
-
-        /**
-         * Indicates a routine event that has no impact on processing
-         */
-        INFO,
-        
-        /**
-         * Indicates an unexpected event that may have an impact on processing
-         */
-        WARN,
-        
-        /**
-         * Indicates an unexpected event that has an impact, albeit non-fatal, on processing
-         */
-        ERROR,
-       
-        /**
-         * Indicates an unexpected event that generally results in termination
-         * of processing
-         */
-        FATAL
-    }
+  /**
+   * Defines the four potential severity of an event
+   */
+  public static enum Severity {
 
     /**
-     * Human-readable description of the event
-     * 
-     * @return Human readable message
+     * Indicates a routine event that has no impact on processing
      */
-    public String getMessage();
+    INFO,
 
     /**
-     * Uniquely indicates the kind of event
-     * 
-     * @return Implementation-specific code as an Enum
+     * Indicates an unexpected event that may have an impact on processing
      */
-    public Enum<?> getCode();
+    WARN,
 
     /**
-     * Indicates the severity of the event, and likely impact on processing
-     * 
-     * @return Severity
+     * Indicates an unexpected event that has an impact, albeit non-fatal, on
+     * processing
      */
-    public Severity getSeverity();
+    ERROR,
+
+    /**
+     * Indicates an unexpected event that generally results in termination
+     * of processing
+     */
+    FATAL
+  }
+
+  /**
+   * Human-readable description of the event
+   * 
+   * @return Human readable message
+   */
+  public String getMessage();
+
+  /**
+   * Uniquely indicates the kind of event
+   * 
+   * @return Implementation-specific code as an Enum
+   */
+  public Enum<?> getCode();
+
+  /**
+   * Indicates the severity of the event, and likely impact on processing
+   * 
+   * @return Severity
+   */
+  public Severity getSeverity();
 
 }

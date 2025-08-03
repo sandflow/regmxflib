@@ -35,40 +35,42 @@ import java.security.InvalidParameterException;
  */
 public class MemoryTriplet implements Triplet {
 
-    final private AUID key;
-    final private byte[] value;
+  final private AUID key;
+  final private byte[] value;
 
-    /**
-     * Creates a Triplet from a Key and an array of bytes as the Value
-     * @param key Triplet Key
-     * @param value Triplet Value
-     */
-    public MemoryTriplet(AUID key, byte[] value) {
-        
-        if (key == null || value == null) throw new InvalidParameterException("Triplet muse have key and value.");
-        
-        this.key = key;
-        this.value = value;
-    }
+  /**
+   * Creates a Triplet from a Key and an array of bytes as the Value
+   * 
+   * @param key   Triplet Key
+   * @param value Triplet Value
+   */
+  public MemoryTriplet(AUID key, byte[] value) {
 
-    @Override
-    public AUID getKey() {
-        return key;
-    }
+    if (key == null || value == null)
+      throw new InvalidParameterException("Triplet muse have key and value.");
 
-    @Override
-    public long getLength() {
-        return value.length;
-    }
+    this.key = key;
+    this.value = value;
+  }
 
-    @Override
-    public byte[] getValue() {
-        return value;
-    }
+  @Override
+  public AUID getKey() {
+    return key;
+  }
 
-    @Override
-    public InputStream getValueAsStream() {
-        return new ByteArrayInputStream(value);
-    }
-    
+  @Override
+  public long getLength() {
+    return value.length;
+  }
+
+  @Override
+  public byte[] getValue() {
+    return value;
+  }
+
+  @Override
+  public InputStream getValueAsStream() {
+    return new ByteArrayInputStream(value);
+  }
+
 }

@@ -38,37 +38,37 @@ import jakarta.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.NONE)
 public class FloatTypeDefinition extends Definition {
 
+  /**
+   * specifies the number of bytes to store the value
+   */
+  @XmlElement(name = "Size")
+  private Size size;
 
+  public FloatTypeDefinition() {
+  }
 
-    /**
-     * specifies the number of bytes to store the value
-     */
-    @XmlElement(name = "Size")
-    private Size size;
+  @Override
+  public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
+    visitor.visit(this);
+  }
 
-    public FloatTypeDefinition() {
-    }
+  public Size getSize() {
+    return size;
+  }
 
-    @Override
-    public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
-        visitor.visit(this);
-    }
+  public void setSize(Size size) {
+    this.size = size;
+  }
 
-    public Size getSize() {
-        return size;
-    }
+  @XmlEnum(Integer.class)
+  @XmlType(name = "FloatSize")
+  public enum Size {
+    @XmlEnumValue("2")
+    HALF,
+    @XmlEnumValue("4")
+    SINGLE,
+    @XmlEnumValue("8")
+    DOUBLE
+  }
 
-    public void setSize(Size size) {
-        this.size = size;
-    }
-
-    @XmlEnum(Integer.class)
-    @XmlType(name="FloatSize")
-    public enum Size {
-        @XmlEnumValue("2") HALF, 
-        @XmlEnumValue("4") SINGLE, 
-        @XmlEnumValue("8") DOUBLE
-    }
-
-    
 }

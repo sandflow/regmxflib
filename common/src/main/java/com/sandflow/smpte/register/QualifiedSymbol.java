@@ -29,63 +29,64 @@ import java.net.URI;
 import java.util.Objects;
 
 /**
- * Qualified Symbol for Register entry. Consists of a namespace and symbol string, with
+ * Qualified Symbol for Register entry. Consists of a namespace and symbol
+ * string, with
  * no two entries with identical namespace having also identical symbols.
  */
 public class QualifiedSymbol {
-    private final String symbol;
-    private final URI namespace;
-    
-    /**
-     * Instantiates a Qualified Symbol.
-     * @param symbol Symbol
-     * @param namespace Namespace
-     */
-    public QualifiedSymbol(String symbol, URI namespace) {
-        this.symbol = symbol;
-        this.namespace = namespace;
-    }
+  private final String symbol;
+  private final URI namespace;
 
-    /**
-     * @return Namespace component of the Qualified Symbol
-     */
-    public String getSymbol() {
-        return symbol;
-    }
+  /**
+   * Instantiates a Qualified Symbol.
+   * 
+   * @param symbol    Symbol
+   * @param namespace Namespace
+   */
+  public QualifiedSymbol(String symbol, URI namespace) {
+    this.symbol = symbol;
+    this.namespace = namespace;
+  }
 
-    /**
-     *
-     * @return Namespace component of the Qualified Symbol
-     */
-    public URI getNamespace() {
-        return namespace;
-    }
+  /**
+   * @return Namespace component of the Qualified Symbol
+   */
+  public String getSymbol() {
+    return symbol;
+  }
 
-    @Override
-    public int hashCode() {
-        int hash = 5;
-        hash = 13 * hash + Objects.hashCode(this.symbol);
-        hash = 13 * hash + Objects.hashCode(this.namespace);
-        return hash;
-    }
+  /**
+   *
+   * @return Namespace component of the Qualified Symbol
+   */
+  public URI getNamespace() {
+    return namespace;
+  }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final QualifiedSymbol other = (QualifiedSymbol) obj;
-        if (!Objects.equals(this.symbol, other.symbol)) {
-            return false;
-        }
-        if (!Objects.equals(this.namespace, other.namespace)) {
-            return false;
-        }
-        return true;
+  @Override
+  public int hashCode() {
+    int hash = 5;
+    hash = 13 * hash + Objects.hashCode(this.symbol);
+    hash = 13 * hash + Objects.hashCode(this.namespace);
+    return hash;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null) {
+      return false;
     }
-    
-    
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    final QualifiedSymbol other = (QualifiedSymbol) obj;
+    if (!Objects.equals(this.symbol, other.symbol)) {
+      return false;
+    }
+    if (!Objects.equals(this.namespace, other.namespace)) {
+      return false;
+    }
+    return true;
+  }
+
 }

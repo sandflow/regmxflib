@@ -34,18 +34,18 @@ import java.util.Collection;
  */
 public interface Group {
 
-    /**
-     * Retrieves the items of the Group
-     * 
-     * @return Ordered collection of all items within the Group
-    */
-    Collection<Triplet> getItems();
+  /**
+   * Retrieves the items of the Group
+   * 
+   * @return Ordered collection of all items within the Group
+   */
+  Collection<Triplet> getItems();
 
-    /**
-     * Returns the Key of the Group
-     * 
-     * @return Key of the Group
-     */
-    UL getKey();
+  /**
+   * Returns the Key of the Group
+   * 
+   * @return Key of the Group
+   */
+  UL getKey();
 
 }

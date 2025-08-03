@@ -27,12 +27,12 @@ package com.sandflow.smpte.regxml.dict.exceptions;
 
 public class DuplicateSymbolException extends IllegalDefinitionException {
 
-    public DuplicateSymbolException() {
-        super();
-    }
+  public DuplicateSymbolException() {
+    super();
+  }
 
-    public DuplicateSymbolException(String msg) {
-        super(msg);
-    }
-    
+  public DuplicateSymbolException(String msg) {
+    super(msg);
+  }
+
 }

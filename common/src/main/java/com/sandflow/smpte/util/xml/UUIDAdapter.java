@@ -33,13 +33,13 @@ import jakarta.xml.bind.annotation.adapters.XmlAdapter;
  */
 public class UUIDAdapter extends XmlAdapter<String, UUID> {
 
-    @Override
-    public UUID unmarshal(String val) throws Exception {
-        return UUID.fromURN(val);
-    }
+  @Override
+  public UUID unmarshal(String val) throws Exception {
+    return UUID.fromURN(val);
+  }
 
-    @Override
-    public String marshal(UUID val) throws Exception {
-        return val.toString();
-    }
+  @Override
+  public String marshal(UUID val) throws Exception {
+    return val.toString();
+  }
 }

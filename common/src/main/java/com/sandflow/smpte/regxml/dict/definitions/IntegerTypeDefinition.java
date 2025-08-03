@@ -37,43 +37,46 @@ import jakarta.xml.bind.annotation.XmlEnumValue;
 @XmlAccessorType(XmlAccessType.NONE)
 public class IntegerTypeDefinition extends Definition {
 
-    @XmlElement(name = "Size")
-    private Size size;
+  @XmlElement(name = "Size")
+  private Size size;
 
-    @XmlElement(name = "IsSigned")
-    private boolean signed;
+  @XmlElement(name = "IsSigned")
+  private boolean signed;
 
-    public IntegerTypeDefinition() {
-    }
+  public IntegerTypeDefinition() {
+  }
 
-    @Override
-    public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
-        visitor.visit(this);
-    }
+  @Override
+  public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
+    visitor.visit(this);
+  }
 
-    public Size getSize() {
-        return size;
-    }
+  public Size getSize() {
+    return size;
+  }
 
-    public void setSize(Size size) {
-        this.size = size;
-    }
+  public void setSize(Size size) {
+    this.size = size;
+  }
 
-    public boolean isSigned() {
-        return signed;
-    }
+  public boolean isSigned() {
+    return signed;
+  }
 
-    public void setSigned(boolean signed) {
-        this.signed = signed;
-    }
+  public void setSigned(boolean signed) {
+    this.signed = signed;
+  }
 
-    @XmlEnum(Integer.class)
-    public enum Size {
-        @XmlEnumValue("1") ONE, 
-        @XmlEnumValue("2") TWO, 
-        @XmlEnumValue("4") FOUR, 
-        @XmlEnumValue("8") EIGHT
-    }
+  @XmlEnum(Integer.class)
+  public enum Size {
+    @XmlEnumValue("1")
+    ONE,
+    @XmlEnumValue("2")
+    TWO,
+    @XmlEnumValue("4")
+    FOUR,
+    @XmlEnumValue("8")
+    EIGHT
+  }
 
-    
 }

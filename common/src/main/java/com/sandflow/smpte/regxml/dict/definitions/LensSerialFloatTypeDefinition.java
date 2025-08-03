@@ -30,19 +30,18 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 
 /**
  * Corresponds to a type defined in RDD 18.
- * @deprecated 
+ * 
+ * @deprecated
  */
 @XmlAccessorType(XmlAccessType.NONE)
 public class LensSerialFloatTypeDefinition extends Definition {
 
-    public LensSerialFloatTypeDefinition() {
-    }
+  public LensSerialFloatTypeDefinition() {
+  }
 
-    @Override
-    public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
-        visitor.visit(this);
-    }
+  @Override
+  public void accept(DefinitionVisitor visitor) throws DefinitionVisitor.VisitorException {
+    visitor.visit(this);
+  }
 
-
-    
 }

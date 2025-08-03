@@ -34,29 +34,29 @@ import jakarta.xml.bind.annotation.adapters.XmlAdapter;
  */
 public class AUIDAdapter extends XmlAdapter<String, AUID> {
 
-    @Override
-    public AUID unmarshal(String val) throws Exception {
+  @Override
+  public AUID unmarshal(String val) throws Exception {
 
-        AUID auid;
+    AUID auid;
 
-        if (val.charAt(15) == '.') {
-            byte[] ul = new byte[16];
+    if (val.charAt(15) == '.') {
+      byte[] ul = new byte[16];
 
-            for (int i = 0; i < 16; i++) {
-                ul[i] = (byte) Integer.parseInt(val.substring(13 + i * 3, 13 + i * 3 + 2), 16);
-            }
+      for (int i = 0; i < 16; i++) {
+        ul[i] = (byte) Integer.parseInt(val.substring(13 + i * 3, 13 + i * 3 + 2), 16);
+      }
 
-            auid = new AUID(new UL(ul));
-        } else {
+      auid = new AUID(new UL(ul));
+    } else {
 
-            auid = AUID.fromURN(val);
-        }
-
-        return auid;
+      auid = AUID.fromURN(val);
     }
 
-    @Override
-    public String marshal(AUID val) throws Exception {
-        return val.toString();
-    }
+    return auid;
+  }
+
+  @Override
+  public String marshal(AUID val) throws Exception {
+    return val.toString();
+  }
 }

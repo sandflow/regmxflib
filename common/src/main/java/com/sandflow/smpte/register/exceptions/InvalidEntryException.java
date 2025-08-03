@@ -30,12 +30,12 @@ package com.sandflow.smpte.register.exceptions;
  */
 public class InvalidEntryException extends Exception {
 
-    public InvalidEntryException(String msg) {
-        super(msg);
-    }
+  public InvalidEntryException(String msg) {
+    super(msg);
+  }
 
-    public InvalidEntryException(String msg, Throwable ex) {
-        super(msg, ex);
-    }
-    
+  public InvalidEntryException(String msg, Throwable ex) {
+    super(msg, ex);
+  }
+
 }
