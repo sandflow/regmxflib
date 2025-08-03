@@ -1,4 +1,50 @@
-# REGMXFLIB
+# regmxflib
+
+
+                                         _    _        _   
+                                        | |  | |  o   | |  
+     ,_     _    __,   _  _  _          | |  | |      | |  
+    /  |   |/   /  |  / |/ |/ |   /\/   |/   |/   |   |/ \_
+       |_/ |__/ \_/|/   |  |  |_/  /\_/ |__/ |__/ |_/  \_/ 
+                  /|                    |\                 
+                  \|                    |/                 
+
+
+## Introduction
+
+regmxflib is a pure Java library that:
+
+- creates bindings between MXF header metadata classes and POJOs
+  using the [SMPTE metadata registers](https://registry.smpte-ra.org/apps/pages/),
+  allowing applications to remain up-to-date with recent additions to the MXF standard
+  with minimal effort
+
+- implements MXF reading and writing classes
+
+- implements a simple tool that creates a JSON summary of an input MXF file
+
+The following snippet illustrates the creation of an `RGBADescriptor` using the library:
+
+    RGBADescriptor d = new RGBADescriptor();
+    d.InstanceID = UUID.fromRandom();
+    d.SampleRate = sampleRate;
+    d.FrameLayout = LayoutType.FullFrame;
+    d.StoredWidth = 640L;
+    d.StoredHeight = 360L;
+    d.DisplayF2Offset = 0;
+    d.ImageAspectRatio = Fraction.of(640, 360);
+    d.TransferCharacteristic = Labels.TransferCharacteristic_ITU709.asUL();
+    d.PictureCompression = Labels.JPEG2000BroadcastContributionSingleTileProfileLevel5;
+    d.ColorPrimaries = Labels.ColorPrimaries_ITU709.asUL();
+    d.VideoLineMap = new Int32Array();
+    d.VideoLineMap.add(0);
+    d.VideoLineMap.add(0);
+    d.ComponentMaxRef = 65535L;
+    d.ComponentMinRef = 0L;
+    d.ScanningDirection = ScanningDirectionType.ScanningDirection_LeftToRightTopToBottom;
+    d.PixelLayout = new RGBALayout();
+    d.PixelLayout.add(new RGBAComponent(RGBAComponentKind.CompRed, (short) 16));
+    ...
 
 ## Quick start
 
@@ -31,11 +77,28 @@ An MXF file is divided into partitions:
 
 - At the very end of the file, a random index pack (RIP) contains a table of contents of all the partitions contained in the file
 
-### Essence wrapping and indexing
+### Essence wrapping
 
-- Frame-wrapping (VBE)
-- Clip-wrapping (CBE)
-- Clip-wrapping (VBE)
+#### Frame-wrapping
+
+In the case of frame-wrapping, each access unit of the essence or data stream is
+wrapped into its own KLV triplet (called an _element_) and all elements that belong to
+the same edit unit are grouped into a logical _content package_.
+
+Index entries point to the first byte of the K of each element.
+
+#### Clip-wrapping
+
+In the case of clip-wrapping, the entire essence stream is wrapped into a single KLV triplet (also called an _element_).
+
+Index entries point to the first byte of the V of each element.
+
+### Indexing
+
+Indexes come in one of two forms:
+
+- CBE, where all index entries point to elements of the same size in bytes
+- VBE, in all other cases
 
 ## Reading
 
@@ -109,3 +172,9 @@ The writing of the file ends with the `finish()` method.
 
 The operation of the `StreamingWriter` is demonstrated at
 <library/src/test/java/com/sandflow/smpte/mxf/StreamingWriterTest.java> and at <library/src/test/java/com/sandflow/smpte/mxf/ReadWriteTest.java>.
+
+## Prerequisites
+
+- Java 17
+- Maven
+- (recommended) Git
