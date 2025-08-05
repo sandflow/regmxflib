@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.sandflow</groupId>
         <artifactId>regmxflib</artifactId>
-        <version>1.0.0-alpha.1</version>
+        <version>1.0.0-beta.1</version>
     </parent>
 
     <artifactId>library</artifactId>
@@ -64,17 +64,17 @@
         <dependency>
             <groupId>com.sandflow</groupId>
             <artifactId>common</artifactId>
-            <version>1.0.0-alpha.1</version>
+            <version>1.0.0-beta.1</version>
         </dependency>
         <dependency>
             <groupId>com.sandflow</groupId>
             <artifactId>class-generator</artifactId>
-            <version>1.0.0-alpha.1</version>
+            <version>1.0.0-beta.1</version>
         </dependency>
         <!-- <dependency>
             <groupId>com.sandflow</groupId>
             <artifactId>annotation-processor</artifactId>
-            <version>1.0.0-alpha.1</version>
+            <version>1.0.0-beta.1</version>
             <scope>provided</scope>
         </dependency> -->
     </dependencies>
