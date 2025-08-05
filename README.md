@@ -106,7 +106,7 @@ In the case of clip-wrapping, the entire essence stream is wrapped into a single
 
 Index entries are relative to the first byte of the V of each element, _with the
 exception of IAB Track Files, where they are relative to the K of the IAB Clip
-Wrap element.
+Wrap element._
 
 ### Indexing
 
