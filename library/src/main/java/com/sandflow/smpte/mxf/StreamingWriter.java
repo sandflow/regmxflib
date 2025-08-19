@@ -318,21 +318,8 @@ public class StreamingWriter {
         throw new RuntimeException();
       }
 
-      if (StreamingWriter.this.preface.EssenceContainers != null
-          && StreamingWriter.this.preface.EssenceContainers.contains(Labels.IMF_IABEssenceClipWrappedContainer)) {
-        /**
-         * EXCPTION: ASDCPLib incorrectly includes the Clip KL in the essence container
-         * offset for IAB files
-         */
-        this.setBytesToWrite(50);
-        MXFDataOutput mos = new MXFDataOutput(this);
-        mos.writeUL(elementKey);
-        mos.writeBERLength(clipSize);
-        mos.flush();
-      } else {
-        StreamingWriter.this.fos.writeUL(elementKey);
-        StreamingWriter.this.fos.writeBERLength(clipSize);
-      }
+      StreamingWriter.this.fos.writeUL(elementKey);
+      StreamingWriter.this.fos.writeBERLength(clipSize);
 
       this.setBytesToWrite(clipSize);
 

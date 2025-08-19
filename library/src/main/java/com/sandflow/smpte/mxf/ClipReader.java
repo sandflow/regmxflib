@@ -56,19 +56,7 @@ public class ClipReader extends InputStream {
     MXFDataInput mis = new MXFDataInput(this.source);
     this.elementKey = mis.readAUID();
     this.elementLength = mis.readBERLength();
-
-    /*
-     * ECXEPTION: Some versions of ASDCPLib index from the start of the K of the
-     * clip instead of from the start of the V of the clip
-     */
-    GCEssenceTracks tracks = new GCEssenceTracks(this.info.getPreface());
-    TrackInfo ti = tracks.getTrackInfo(this.elementKey);
-    if (ti != null && Labels.IMF_IABEssenceClipWrappedContainer.equals(ti.descriptor().ContainerFormat)
-        && this.info.euToECPosition(0) != 0) {
-      this.essenceOffset = 0;
-    } else {
-      this.essenceOffset = this.source.position() - clipStartPosition;
-    }
+    this.essenceOffset = this.source.position() - clipStartPosition;
 
     this.seek(0);
   }
