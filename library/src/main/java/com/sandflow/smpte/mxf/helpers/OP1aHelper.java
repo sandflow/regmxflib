@@ -40,13 +40,18 @@ import org.apache.commons.numbers.fraction.Fraction;
 
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.Labels;
+import com.sandflow.smpte.mxf.LibraryInfo;
 import com.sandflow.smpte.mxf.MXFFiles;
+import com.sandflow.smpte.mxf.StreamingWriter;
+import com.sandflow.smpte.mxf.StreamingWriter.DefaultInstanceIDGenerator;
+import com.sandflow.smpte.mxf.StreamingWriter.InstanceIDGenerator;
 import com.sandflow.smpte.mxf.types.AUIDSet;
 import com.sandflow.smpte.mxf.types.ContentStorage;
 import com.sandflow.smpte.mxf.types.EssenceData;
 import com.sandflow.smpte.mxf.types.EssenceDataStrongReferenceSet;
 import com.sandflow.smpte.mxf.types.FileDescriptor;
 import com.sandflow.smpte.mxf.types.FileDescriptorStrongReferenceVector;
+import com.sandflow.smpte.mxf.types.Identification;
 import com.sandflow.smpte.mxf.types.IdentificationStrongReferenceVector;
 import com.sandflow.smpte.mxf.types.MaterialPackage;
 import com.sandflow.smpte.mxf.types.MultipleDescriptor;
@@ -75,12 +80,21 @@ public class OP1aHelper {
       Long duration) {
   }
 
+  final static AUID APPLICATION_PRODUCT_ID = AUID.fromURN("urn:uuid:5c1a9040-d234-41f1-86f3-5a78991f5b9e");
+
   private final EssenceContainerInfo ecInfo;
   private final Preface preface;
+  private final InstanceIDGenerator iidg;
 
   final Map<Byte, UL> trackIDToElementKeys = new HashMap<>();
 
-  public OP1aHelper(EssenceContainerInfo ecInfo) throws IOException, KLVException {
+  public OP1aHelper(EssenceContainerInfo ecInfo, InstanceIDGenerator iidg) throws IOException, KLVException {
+    if (iidg == null) {
+      this.iidg = new DefaultInstanceIDGenerator();
+    } else {
+      this.iidg = iidg;
+    }
+    
     if (ecInfo == null) {
       throw new IllegalArgumentException("Essence info must not be null");
     }
@@ -186,8 +200,17 @@ public class OP1aHelper {
     }
 
     /* Identification */
+    Identification identification = new Identification();
+    identification.InstanceID = this.iidg.generate(Identification.class);
+    /* TODO: read from properties file */
+    identification.ApplicationVersionString = LibraryInfo.getVersion();
+    identification.ApplicationSupplierName = LibraryInfo.getVendor();
+    identification.ApplicationName = "regmxflib";
+    identification.ApplicationProductID = APPLICATION_PRODUCT_ID;
+    identification.FileModificationDate = LocalDateTime.now();
+
     var idList = new IdentificationStrongReferenceVector();
-    idList.add(IdentificationHelper.makeIdentification());
+    idList.add(identification);
 
     /* preface */
     this.preface = new Preface();

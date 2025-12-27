@@ -28,28 +28,36 @@
 * @author Pierre-Anthony Lemieux
 */
 
-package com.sandflow.smpte.mxf.helpers;
+package com.sandflow.smpte.mxf;
 
-import java.time.LocalDateTime;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
-import com.sandflow.smpte.mxf.types.Identification;
-import com.sandflow.smpte.util.AUID;
-import com.sandflow.smpte.util.UUID;
+public class LibraryInfo {
 
-public class IdentificationHelper {
-  final static AUID APPLICATION_PRODUCT_ID = AUID.fromURN("urn:uuid:5c1a9040-d234-41f1-86f3-5a78991f5b9e");
+  private static final LibraryInfo INSTANCE = new LibraryInfo();
 
-  public static Identification makeIdentification() {
-    Identification identification = new Identification();
+  private final Properties properties;
 
-    identification.InstanceID = UUID.fromRandom();
-    identification.GenerationID = new AUID(UUID.fromRandom());
-    identification.ApplicationVersionString = "1.0.0";
-    identification.ApplicationSupplierName = "Sandflow Consulting, LLC";
-    identification.ApplicationName = "regmxflib";
-    identification.ApplicationProductID = APPLICATION_PRODUCT_ID;
-    identification.FileModificationDate = LocalDateTime.now();
+  private LibraryInfo() {
+    properties = new Properties();
+    try (InputStream input = getClass().getClassLoader().getResourceAsStream("library.properties")) {
+      if (input == null) {
+        System.out.println("Unable to find library.properties");
+        return;
+      }
+      properties.load(input);
+    } catch (IOException ex) {
+      ex.printStackTrace();
+    }
+  }
 
-    return identification;
+  public static String getVersion() {
+    return INSTANCE.properties.getProperty("library.version");
+  }
+
+  public static String getVendor() {
+    return INSTANCE.properties.getProperty("library.vendor");
   }
 }

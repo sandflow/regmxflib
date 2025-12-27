@@ -75,6 +75,17 @@ import com.sandflow.util.events.EventHandler;
 
 public class StreamingWriter {
 
+  public interface InstanceIDGenerator {
+    UUID generate(Class<?> clazz);
+  }
+
+  public static class DefaultInstanceIDGenerator implements InstanceIDGenerator {
+    @Override
+    public UUID generate(Class<?> clazz) {
+      return UUID.fromRandom();
+    }
+  }
+
   private abstract class ContainerWriter extends OutputStream {
 
     private final long bodySID;
@@ -513,8 +524,17 @@ public class StreamingWriter {
    */
   private PartitionPack curPartition;
 
+  /**
+   * IntanceID generator
+   */
+  private InstanceIDGenerator instanceIDGenerator = new DefaultInstanceIDGenerator();
 
   public StreamingWriter(OutputStream os, Preface preface, EventHandler evthandler)
+      throws IOException, KLVException, MXFException {
+    this(os, preface, evthandler, null);
+  }
+
+  public StreamingWriter(OutputStream os, Preface preface, EventHandler evthandler, InstanceIDGenerator iidg)
       throws IOException, KLVException, MXFException {
     if (os == null) {
       throw new IllegalArgumentException("Output stream must not be null");
@@ -528,6 +548,9 @@ public class StreamingWriter {
     if (!preface.OperationalPattern.isUL()) {
       throw new MXFException("The Operational Pattern label found in the Preface is not a UL");
     }
+
+    if (iidg != null)
+      this.instanceIDGenerator = iidg;
 
     /* TODO: make a copy */
     this.preface = preface;
