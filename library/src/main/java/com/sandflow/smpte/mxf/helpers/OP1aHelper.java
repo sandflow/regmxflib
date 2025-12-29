@@ -88,7 +88,8 @@ public class OP1aHelper {
 
   final Map<Byte, UL> trackIDToElementKeys = new HashMap<>();
 
-  public OP1aHelper(EssenceContainerInfo ecInfo, Identification identification, UIDGenerator uidg) throws IOException, KLVException {
+  public OP1aHelper(EssenceContainerInfo ecInfo, Identification fileInfo, UIDGenerator uidg)
+      throws IOException, KLVException {
 
     if (ecInfo == null) {
       throw new IllegalArgumentException("Essence info must not be null");
@@ -106,21 +107,23 @@ public class OP1aHelper {
       throw new IllegalArgumentException("UID generator must not be null");
     }
 
-    if (identification == null) {
+    if (fileInfo == null) {
       throw new IllegalArgumentException("Identification must not be null");
     }
 
-    if (identification.FileModificationDate == null) {
-      throw new IllegalArgumentException("Identification FileModificationDate must not be null");
+    if (fileInfo.FileModificationDate == null || fileInfo.ApplicationSupplierName == null
+        || fileInfo.ApplicationName == null || fileInfo.ApplicationProductID == null || fileInfo.InstanceID == null ||
+        fileInfo.GenerationID == null || fileInfo.ApplicationVersionString == null) {
+      throw new IllegalArgumentException("Identification is missing required properties must not be null");
     }
 
     /* File Package */
     SourcePackage sp = new SourcePackage();
-    initPackage(sp, uidg, identification.FileModificationDate, "Top-level File Package");
+    initPackage(sp, uidg, fileInfo.FileModificationDate, "Top-level File Package");
 
     /* Material Package */
     var mp = new MaterialPackage();
-    initPackage(mp, uidg, identification.FileModificationDate, "Material Package");
+    initPackage(mp, uidg, fileInfo.FileModificationDate, "Material Package");
 
     /* Create essence tracks */
 
@@ -207,7 +210,7 @@ public class OP1aHelper {
 
     /* Identification */
     var idList = new IdentificationStrongReferenceVector();
-    idList.add(identification.copyOf());
+    idList.add(fileInfo.copyOf());
 
     /* preface */
     this.preface = new Preface();
@@ -215,7 +218,7 @@ public class OP1aHelper {
     this.preface.FormatVersion = new Version(1, 3);
     this.preface.ObjectModelVersion = 1L;
     this.preface.PrimaryPackage = sp.PackageID;
-    this.preface.FileLastModified = identification.FileModificationDate;
+    this.preface.FileLastModified = fileInfo.FileModificationDate;
     this.preface.EssenceContainers = ecs;
     this.preface.IsRIPPresent = true;
     this.preface.OperationalPattern = trackCount > 1 ? Labels.MXFOP1aSingleItemSinglePackageMultiTrackStreamInternal
@@ -237,7 +240,8 @@ public class OP1aHelper {
   }
 
   static TimelineTrack makeTimelineTrack(UIDGenerator uidg, Fraction editRate, Long duration,
-      UMID sourcePackageID, Long essenceTrackNum, Long sourceTrackID, Long trackID, AUID dataDefinition, String trackName) {
+      UMID sourcePackageID, Long essenceTrackNum, Long sourceTrackID, Long trackID, AUID dataDefinition,
+      String trackName) {
     var sc = new SourceClip();
     sc.InstanceID = uidg.generate(sc);
     sc.ComponentLength = duration;
@@ -245,14 +249,14 @@ public class OP1aHelper {
     sc.StartPosition = 0L;
     sc.SourceTrackID = sourceTrackID == null ? 0 : sourceTrackID;
     sc.SourcePackageID = sourcePackageID == null ? UMID.NULL_UMID : sourcePackageID;
-  
+
     var seq = new Sequence();
     seq.InstanceID = uidg.generate(seq);
     seq.ComponentLength = sc.ComponentLength;
     seq.ComponentDataDefinition = sc.ComponentDataDefinition;
     seq.ComponentObjects = new ComponentStrongReferenceVector();
     seq.ComponentObjects.add(sc);
-  
+
     var track = new TimelineTrack();
     track.InstanceID = uidg.generate(track);
     if (trackID != null)
@@ -262,7 +266,7 @@ public class OP1aHelper {
     track.Origin = 0L;
     track.TrackSegment = seq;
     track.TrackName = trackName;
-  
+
     return track;
   }
 

@@ -332,7 +332,7 @@ public class StreamingWriter {
       if (StreamingWriter.this.preface.EssenceContainers != null
           && StreamingWriter.this.preface.EssenceContainers.contains(Labels.IMF_IABEssenceClipWrappedContainer)) {
         /**
-         * EXCPTION: ASDCPLib incorrectly includes the Clip KL in the essence container
+         * EXCEPTION: ASDCPLib incorrectly includes the Clip KL in the essence container
          * offset for IAB files
          */
         this.setBytesToWrite(50);

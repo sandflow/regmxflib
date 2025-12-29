@@ -65,14 +65,6 @@ import com.sandflow.smpte.util.UL;
 
 class StreamingWriterTest {
 
-  private static final String outputDirPath = "target/test-output/";
-
-  @org.junit.jupiter.api.BeforeAll
-  static void makeBuildDirectory() throws URISyntaxException {
-    File dir = new File(outputDirPath);
-    dir.mkdirs();
-  }
-
   @Test
   void testCBE(TestInfo testInfo) throws Exception {
 
@@ -159,9 +151,7 @@ class StreamingWriterTest {
     /* start writing file */
 
     final String outFN = testInfo.getTestMethod().get().getName() + ".mxf";
-
-    File of = new File(outputDirPath, outFN);
-
+    File of = TestUtils.getOutputFile(outFN);
     FileOutputStream os = new FileOutputStream(of);
 
     StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null, uidg);
@@ -284,7 +274,7 @@ class StreamingWriterTest {
 
     /* Initialize the streaming writer */
     final String outFN = testInfo.getTestMethod().get().getName() + ".mxf";
-    File of = new File(outputDirPath, outFN);
+    File of = TestUtils.getOutputFile(outFN);
     OutputStream os = new FileOutputStream(of);
     StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null, uidg);
 
@@ -543,7 +533,7 @@ class StreamingWriterTest {
     /* start writing file */
 
     final String outFN = testInfo.getTestMethod().get().getName() + ".mxf";
-    File of = new File(outputDirPath, outFN);
+    File of = TestUtils.getOutputFile(outFN);
     OutputStream os = new FileOutputStream(of);
 
     StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null, uidg);
@@ -661,7 +651,7 @@ class StreamingWriterTest {
     /* start writing file */
 
     final String outFN = testInfo.getTestMethod().get().getName() + ".mxf";
-    File of = new File(outputDirPath, outFN);
+    File of = TestUtils.getOutputFile(outFN);
     OutputStream os = new FileOutputStream(of);
 
     StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null, uidg);

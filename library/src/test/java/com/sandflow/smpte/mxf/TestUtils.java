@@ -86,11 +86,23 @@ public class TestUtils {
   }
 
   private static final String outputDirPath = "target/test-output/";
+
+  {
+    File outputDir = new File(outputDirPath);
+    if (!outputDir.exists()) {
+      outputDir.mkdirs();
+    }
+  }
+
+  public static File getOutputFile(String filename) {
+    return new File(outputDirPath, filename);
+  }
+
   private static final String referenceDirPath = "references/";
 
   public static void compareToReference(File mxfFile, final String refJsonFilename)
       throws FileNotFoundException, Exception, IOException, URISyntaxException {
-    File tempFile = new File(outputDirPath, refJsonFilename);
+    File tempFile = getOutputFile(refJsonFilename);
 
     FileOutputStream tos = new FileOutputStream(tempFile);
 
@@ -103,4 +115,5 @@ public class TestUtils {
 
     assertTextFilesEqual(rf, tempFile);
   }
+
 }

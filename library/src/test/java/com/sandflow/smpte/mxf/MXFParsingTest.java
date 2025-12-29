@@ -45,12 +45,6 @@ import com.sandflow.smpte.mxf.TestUtils;
 
 public class MXFParsingTest {
 
-  @org.junit.jupiter.api.BeforeAll
-  static void makeBuildDirectory() throws URISyntaxException {
-    File dir = new File("target/test-output");
-    dir.mkdirs();
-  }
-
   @Test
   void testVIDEO_f031aa43_88c8_4de9_856f_904a33a78505(TestInfo testInfo) throws Exception {
     File mxfFile = new File(
