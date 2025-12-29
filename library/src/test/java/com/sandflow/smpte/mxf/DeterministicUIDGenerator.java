@@ -4,8 +4,8 @@ import java.util.HashMap;
 
 import com.sandflow.smpte.util.UUID;
 
-class DUIDGenerator implements StreamingWriter.UIDGenerator {
-  private final static HashMap<String, Long> counter = new HashMap<>();
+class DeterministicUIDGenerator implements StreamingWriter.UIDGenerator {
+  private final HashMap<String, Long> counter = new HashMap<>();
 
   @Override
   public UUID generate(Object o) {

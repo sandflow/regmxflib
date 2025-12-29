@@ -48,6 +48,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.sandflow.smpte.mxf.StreamingWriter.UIDGenerator;
 import com.sandflow.smpte.mxf.helpers.OP1aHelper;
 import com.sandflow.smpte.mxf.types.AUIDSet;
 import com.sandflow.smpte.mxf.types.ComponentStrongReferenceVector;
@@ -130,7 +131,8 @@ public class ReadWriteTest {
         IMG_INDEX_SID,
         null);
 
-    OP1aHelper outHeader = new OP1aHelper(eci, IdentificationHelper.makeIdentification(), new DUIDGenerator());
+    UIDGenerator uidg = new DeterministicUIDGenerator();
+    OP1aHelper outHeader = new OP1aHelper(eci, TestUtils.makeIdentification(uidg), uidg);
 
     UL phdrImageElementKey = outHeader.getElementKey(IMG_TRACKID);
     UL phdrMetadataElementKey = outHeader.getElementKey(PHDR_TRACKID);
@@ -239,7 +241,8 @@ public class ReadWriteTest {
         INDEX_SID,
         ecDuration);
 
-    OP1aHelper outHeader = new OP1aHelper(eci, IdentificationHelper.makeIdentification(), new DUIDGenerator());
+    UIDGenerator uidg = new DeterministicUIDGenerator();
+    OP1aHelper outHeader = new OP1aHelper(eci, TestUtils.makeIdentification(uidg), uidg);
 
     UL elementKey = outHeader.getElementKey(SOUND_TRACKID);
 
@@ -325,7 +328,8 @@ public class ReadWriteTest {
         INDEX_SID,
         ecDuration);
 
-    OP1aHelper outHeader = new OP1aHelper(eci, IdentificationHelper.makeIdentification(), new DUIDGenerator());
+    UIDGenerator uidg = new DeterministicUIDGenerator();
+    OP1aHelper outHeader = new OP1aHelper(eci, TestUtils.makeIdentification(uidg), uidg);
 
     UL elementKey = outHeader.getElementKey(IAB_TRACKID);
 

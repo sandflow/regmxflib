@@ -66,7 +66,6 @@ import com.sandflow.smpte.mxf.types.Version;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UMID;
-import com.sandflow.smpte.util.UUID;
 
 public class OP1aHelper {
 
@@ -216,7 +215,7 @@ public class OP1aHelper {
     this.preface.FormatVersion = new Version(1, 3);
     this.preface.ObjectModelVersion = 1L;
     this.preface.PrimaryPackage = sp.PackageID;
-    this.preface.FileLastModified = LocalDateTime.now();
+    this.preface.FileLastModified = identification.FileModificationDate;
     this.preface.EssenceContainers = ecs;
     this.preface.IsRIPPresent = true;
     this.preface.OperationalPattern = trackCount > 1 ? Labels.MXFOP1aSingleItemSinglePackageMultiTrackStreamInternal
