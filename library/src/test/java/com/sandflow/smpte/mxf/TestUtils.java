@@ -24,44 +24,39 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
-* @author Pierre-Anthony Lemieux
-*/
-
 package com.sandflow.smpte.mxf;
 
-import static com.sandflow.smpte.mxf.TestUtils.assertTextFilesEqual;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URISyntaxException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.Iterator;
+import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Test;
+public class TestUtils {
 
-import com.sandflow.smpte.tools.RegMXFDump;
+  public static void assertTextFilesEqual(File expected, File actual) throws IOException {
+    try (Stream<String> refLines = Files.lines(expected.toPath());
+        Stream<String> actualLines = Files.lines(actual.toPath())) {
 
-public class MXFParsingTest {
+      Iterator<String> refLine = refLines.iterator();
+      Iterator<String> actualLine = actualLines.iterator();
 
-  @org.junit.jupiter.api.BeforeAll
-  static void makeBuildDirectory() throws URISyntaxException {
-    File dir = new File("target/test-output");
-    dir.mkdirs();
-  }
+      long cnt = 1;
 
-  @Test
-  void testVIDEO_f031aa43_88c8_4de9_856f_904a33a78505() throws Exception {
+      while (refLine.hasNext() && actualLine.hasNext()) {
+        assertEquals(refLine.next(), actualLine.next(), "Mismatch at line " + cnt++);
+      }
 
-    InputStream is = ClassLoader.getSystemResourceAsStream("imps/imp_1/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.mxf");
+      if (refLine.hasNext()) {
+        fail("Actual file is shorter than expected file. First missing line at " + cnt);
+      }
 
-    File of = new File("target/test-output/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.json");
-    OutputStream os = new FileOutputStream(of);
-
-    RegMXFDump.dump(is, os);
-
-    File rf = new File(
-        ClassLoader.getSystemResource("references/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.json").toURI());
-    assertTextFilesEqual(rf, of);
+      if (actualLine.hasNext()) {
+        fail("Actual file is longer than expected file. First extra line at " + cnt);
+      }
+    }
   }
 }
