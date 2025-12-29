@@ -30,34 +30,26 @@
 
 package com.sandflow.smpte.mxf;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
+import java.time.LocalDateTime;
 
-public class LibraryInfo {
+import com.sandflow.smpte.mxf.types.Identification;
+import com.sandflow.smpte.util.AUID;
+import com.sandflow.smpte.util.UUID;
 
-  private static final LibraryInfo INSTANCE = new LibraryInfo();
+public class IdentificationHelper {
+  final static AUID APPLICATION_PRODUCT_ID = AUID.fromURN("urn:uuid:5c1a9040-d234-41f1-86f3-5a78991f5b9e");
 
-  private final Properties properties;
+  public static Identification makeIdentification() {
+    Identification identification = new Identification();
 
-  private LibraryInfo() {
-    properties = new Properties();
-    try (InputStream input = getClass().getClassLoader().getResourceAsStream("library.properties")) {
-      if (input == null) {
-        System.out.println("Unable to find library.properties");
-        return;
-      }
-      properties.load(input);
-    } catch (IOException ex) {
-      ex.printStackTrace();
-    }
-  }
+    identification.InstanceID = UUID.fromRandom();
+    identification.GenerationID = new AUID(identification.InstanceID);
+    identification.ApplicationVersionString = "n/a";
+    identification.ApplicationSupplierName = "regmxflib";
+    identification.ApplicationName = "regmxflib unit tests";
+    identification.ApplicationProductID = APPLICATION_PRODUCT_ID;
+    identification.FileModificationDate = LocalDateTime.of(2025, 1, 1, 0, 0);
 
-  public static String getVersion() {
-    return INSTANCE.properties.getProperty("library.version");
-  }
-
-  public static String getVendor() {
-    return INSTANCE.properties.getProperty("library.vendor");
+    return identification;
   }
 }

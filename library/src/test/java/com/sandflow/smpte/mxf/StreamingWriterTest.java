@@ -61,7 +61,6 @@ import com.sandflow.smpte.mxf.types.SoundfieldGroupLabelSubDescriptor;
 import com.sandflow.smpte.mxf.types.SubDescriptorStrongReferenceVector;
 import com.sandflow.smpte.mxf.types.WAVEPCMDescriptor;
 import com.sandflow.smpte.util.UL;
-import com.sandflow.smpte.util.UUID;
 
 class StreamingWriterTest {
 
@@ -74,15 +73,17 @@ class StreamingWriterTest {
   @Test
   void testCBE() throws Exception {
 
+    final DUIDGenerator duig = new DUIDGenerator();
+
     final int sampleCount = 48000;
     final Fraction sampleRate = Fraction.of(48000);
     final Fraction editRate = Fraction.of(48000);
     final byte trackID = 1;
 
     SoundfieldGroupLabelSubDescriptor sg = new SoundfieldGroupLabelSubDescriptor();
-    sg.InstanceID = UUID.fromRandom();
+    sg.InstanceID = duig.generate(sg);
     sg.MCALabelDictionaryID = Labels.SMPTEST20678StandardStereo;
-    sg.MCALinkID = UUID.fromRandom();
+    sg.MCALinkID = sg.InstanceID;
     sg.MCATagSymbol = "sgST";
     sg.MCATagName = "Standard Stereo";
     sg.MCAChannelID = 1L;
@@ -92,9 +93,9 @@ class StreamingWriterTest {
     sg.MCAAudioElementKind = "FCMP";
 
     AudioChannelLabelSubDescriptor chL = new AudioChannelLabelSubDescriptor();
-    chL.InstanceID = UUID.fromRandom();
+    chL.InstanceID = duig.generate(chL);
     chL.MCALabelDictionaryID = Labels.LeftAudioChannel;
-    chL.MCALinkID = UUID.fromRandom();
+    chL.MCALinkID = chL.InstanceID;
     chL.MCATagSymbol = "chL";
     chL.MCATagName = "Left";
     chL.MCAChannelID = 1L;
@@ -102,9 +103,9 @@ class StreamingWriterTest {
     chL.SoundfieldGroupLinkID = sg.MCALinkID;
 
     AudioChannelLabelSubDescriptor chR = new AudioChannelLabelSubDescriptor();
-    chR.InstanceID = UUID.fromRandom();
+    chR.InstanceID = duig.generate(chR);
     chR.MCALabelDictionaryID = Labels.RightAudioChannel;
-    chR.MCALinkID = UUID.fromRandom();
+    chR.MCALinkID = chR.InstanceID;
     chR.MCATagSymbol = "chR";
     chR.MCATagName = "Right";
     chR.MCAChannelID = 2L;
@@ -112,7 +113,7 @@ class StreamingWriterTest {
     chR.SoundfieldGroupLinkID = sg.MCALinkID;
 
     WAVEPCMDescriptor d = new WAVEPCMDescriptor();
-    d.InstanceID = UUID.fromRandom();
+    d.InstanceID = duig.generate(d);
     d.ContainerFormat = Labels.MXFGCClipWrappedBroadcastWaveAudioData;
     d.SampleRate = sampleRate;
     d.AudioSampleRate = sampleRate;
@@ -151,7 +152,7 @@ class StreamingWriterTest {
         127,
         (long) sampleCount);
 
-    OP1aHelper header = new OP1aHelper(eci);
+    OP1aHelper header = new OP1aHelper(eci, IdentificationHelper.makeIdentification(), new DUIDGenerator());
 
     /* start writing file */
 
@@ -213,6 +214,7 @@ class StreamingWriterTest {
   @Test
   void testClipVBE() throws Exception {
 
+    final DUIDGenerator duig = new DUIDGenerator();
     final int frameCount = 480;
     final Fraction sampleRate = Fraction.of(48000);
     final Fraction editRate = Fraction.of(24000, 1001);
@@ -229,15 +231,15 @@ class StreamingWriterTest {
     /* create descriptors */
 
     IABSoundfieldLabelSubDescriptor sd = new IABSoundfieldLabelSubDescriptor();
-    sd.InstanceID = UUID.fromRandom();
+    sd.InstanceID = duig.generate(sd);
     sd.MCALabelDictionaryID = Labels.IABSoundfield;
-    sd.MCALinkID = UUID.fromRandom();
+    sd.MCALinkID = sd.InstanceID;
     sd.MCATagSymbol = "IAB";
     sd.MCATagName = "IAB";
     sd.RFC5646SpokenLanguage = "en-us";
 
     IABEssenceDescriptor d = new IABEssenceDescriptor();
-    d.InstanceID = UUID.fromRandom();
+    d.InstanceID = duig.generate(d);
     d.SampleRate = editRate;
     d.AudioSampleRate = sampleRate;
     d.Locked = false;
@@ -265,7 +267,7 @@ class StreamingWriterTest {
         INDEX_SID,
         (long) frameCount);
 
-    OP1aHelper header = new OP1aHelper(eci);
+    OP1aHelper header = new OP1aHelper(eci, IdentificationHelper.makeIdentification(), new DUIDGenerator());
 
     /* Initialize the streaming writer */
     OutputStream os = new FileOutputStream("target/test-output/clipvbe-test.iab.mxf");
@@ -430,6 +432,7 @@ class StreamingWriterTest {
   @Test
   void testPHDR() throws Exception {
 
+    final DUIDGenerator duig = new DUIDGenerator();
     final int frameCount = 24;
     final Fraction sampleRate = Fraction.of(24);
     final Fraction editRate = Fraction.of(24);
@@ -446,7 +449,7 @@ class StreamingWriterTest {
     /* create descriptors */
 
     RGBADescriptor d = new RGBADescriptor();
-    d.InstanceID = UUID.fromRandom();
+    d.InstanceID = duig.generate(d);
     d.SampleRate = sampleRate;
     d.FrameLayout = LayoutType.FullFrame;
     d.StoredWidth = 640L;
@@ -475,7 +478,7 @@ class StreamingWriterTest {
     d.ContainerFormat = Labels.MXFGCP1FrameWrappedPictureElement;
 
     JPEG2000SubDescriptor sd = new JPEG2000SubDescriptor();
-    sd.InstanceID = UUID.fromRandom();
+    sd.InstanceID = duig.generate(sd);
     sd.Rsiz = 1798;
     sd.Xsiz = 640L;
     sd.Ysiz = 360L;
@@ -513,7 +516,7 @@ class StreamingWriterTest {
         INDEX_SID,
         null);
 
-    OP1aHelper header = new OP1aHelper(eci);
+    OP1aHelper header = new OP1aHelper(eci, IdentificationHelper.makeIdentification(), new DUIDGenerator());
 
     UL j2kElementKey = header.getElementKey(trackID);
 
@@ -540,6 +543,7 @@ class StreamingWriterTest {
   @Test
   void testVBE() throws Exception {
 
+    final DUIDGenerator duig = new DUIDGenerator();
     final int frameCount = 24;
     final Fraction sampleRate = Fraction.of(24);
     final Fraction editRate = Fraction.of(24);
@@ -556,7 +560,7 @@ class StreamingWriterTest {
     /* create descriptors */
 
     RGBADescriptor d = new RGBADescriptor();
-    d.InstanceID = UUID.fromRandom();
+    d.InstanceID = duig.generate(d);
     d.SampleRate = sampleRate;
     d.FrameLayout = LayoutType.FullFrame;
     d.StoredWidth = 640L;
@@ -585,7 +589,7 @@ class StreamingWriterTest {
     d.ContainerFormat = Labels.MXFGCP1FrameWrappedPictureElement;
 
     JPEG2000SubDescriptor sd = new JPEG2000SubDescriptor();
-    sd.InstanceID = UUID.fromRandom();
+    sd.InstanceID = duig.generate(sd);
     sd.Rsiz = 1798;
     sd.Xsiz = 640L;
     sd.Ysiz = 360L;
@@ -623,7 +627,7 @@ class StreamingWriterTest {
         INDEX_SID,
         null);
 
-    OP1aHelper header = new OP1aHelper(eci);
+    OP1aHelper header = new OP1aHelper(eci, IdentificationHelper.makeIdentification(), new DUIDGenerator());
 
     UL j2kElementKey = header.getElementKey(trackID);
 
