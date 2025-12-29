@@ -359,6 +359,12 @@ public class StreamingWriter {
       return this.auOffsets.size();
     }
 
+    /**
+     * Ensure that each index segment does not contain more than MAX_INDEX_ENTRIES
+     * entries so that its size is less than 65kB
+     */
+    private final static int MAX_INDEX_ENTRIES = 5000;
+
     @Override
     byte[] drainIndexSegments(UIDGenerator uidg) throws IOException, MXFException {
       if (this.state != State.WRITTEN) {
@@ -366,28 +372,40 @@ public class StreamingWriter {
       }
       this.state = State.DRAINED;
 
-      var its = new IndexTableSegment();
-      its.InstanceID = uidg.generate(this);
-      its.IndexEditRate = StreamingWriter.this.getECEditRate(this.getBodySID());
-      its.IndexStartPosition = 0L;
-      its.IndexDuration = this.getDuration();
-      its.IndexStreamID = this.getIndexSID();
-      its.EssenceStreamID = this.getBodySID();
-      its.VBEByteCount = clipSize - this.auOffsets.get(this.auOffsets.size() - 1);
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
-      its.IndexEntryArray = new IndexEntryArray();
-      for (var auOffset : this.auOffsets) {
-        var e = new IndexEntry();
-        e.TemporalOffset = 0;
-        e.Flags = (byte) 0x80;
-        e.StreamOffset = auOffset;
-        e.KeyFrameOffset = 0;
-        e.TemporalOffset = 0;
+      for (int segIndex = 0; segIndex * MAX_INDEX_ENTRIES < this.auOffsets.size(); segIndex++) {
+        int startIndex = segIndex * MAX_INDEX_ENTRIES;
+        int endIndex = Math.min((segIndex + 1) * MAX_INDEX_ENTRIES, this.auOffsets.size());
 
-        its.IndexEntryArray.add(e);
+        var its = new IndexTableSegment();
+        its.InstanceID = uidg.generate(this);
+        its.IndexEditRate = StreamingWriter.this.getECEditRate(this.getBodySID());
+        its.IndexStartPosition = (long) startIndex;
+        its.IndexDuration = (long) (endIndex - startIndex);
+        its.IndexStreamID = this.getIndexSID();
+        its.EssenceStreamID = this.getBodySID();
+
+        its.IndexEntryArray = new IndexEntryArray();
+        for (int i = startIndex; i < endIndex; i++) {
+          var e = new IndexEntry();
+          e.TemporalOffset = 0;
+          e.Flags = (byte) 0x80;
+          e.StreamOffset = this.auOffsets.get(i);
+          e.KeyFrameOffset = 0;
+          e.TemporalOffset = 0;
+
+          its.IndexEntryArray.add(e);
+        }
+
+        its.VBEByteCount = this.getPosition() - this.auOffsets.get(endIndex - 1);
+
+        bos.write(IndexSegmentHelper.toBytes(its, StreamingWriter.this.evthandler));
       }
 
-      return IndexSegmentHelper.toBytes(its, StreamingWriter.this.evthandler);
+      this.auOffsets.clear();
+
+      return bos.toByteArray();
     }
 
     @Override
@@ -454,37 +472,53 @@ public class StreamingWriter {
       return duration;
     }
 
+    /**
+     * Ensure that each index segment does not contain more than MAX_INDEX_ENTRIES
+     * entries so that its size is less than 65kB
+     */
+    private final static int MAX_INDEX_ENTRIES = 5000;
+
     @Override
     byte[] drainIndexSegments(UIDGenerator uidg) throws IOException, MXFException {
       if (this.cpPositions.size() == 0) {
         return null;
       }
 
-      var its = new IndexTableSegment();
-      its.InstanceID = uidg.generate(this);
-      its.IndexEditRate = StreamingWriter.this.getECEditRate(this.getBodySID());
-      its.IndexStartPosition = cpFirstEditUnit;
-      its.IndexDuration = (long) this.cpPositions.size();
-      its.IndexStreamID = this.getIndexSID();
-      its.EssenceStreamID = this.getBodySID();
-      its.VBEByteCount = this.getPosition() - this.cpPositions.get(this.cpPositions.size() - 1);
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
-      its.IndexEntryArray = new IndexEntryArray();
-      for (var position : this.cpPositions) {
-        var e = new IndexEntry();
-        e.TemporalOffset = 0;
-        e.Flags = (byte) 0x80;
-        e.StreamOffset = position;
-        e.KeyFrameOffset = 0;
-        e.TemporalOffset = 0;
+      for (int segIndex = 0; segIndex * MAX_INDEX_ENTRIES < this.cpPositions.size(); segIndex++) {
+        int startIndex = segIndex * MAX_INDEX_ENTRIES;
+        int endIndex = Math.min((segIndex + 1) * MAX_INDEX_ENTRIES, this.cpPositions.size());
 
-        its.IndexEntryArray.add(e);
+        var its = new IndexTableSegment();
+        its.InstanceID = uidg.generate(this);
+        its.IndexEditRate = StreamingWriter.this.getECEditRate(this.getBodySID());
+        its.IndexStartPosition = cpFirstEditUnit + startIndex;
+        its.IndexDuration = (long) (endIndex - startIndex);
+        its.IndexStreamID = this.getIndexSID();
+        its.EssenceStreamID = this.getBodySID();
+
+        its.IndexEntryArray = new IndexEntryArray();
+        for (int i = startIndex; i < endIndex; i++) {
+          var e = new IndexEntry();
+          e.TemporalOffset = 0;
+          e.Flags = (byte) 0x80;
+          e.StreamOffset = this.cpPositions.get(i);
+          e.KeyFrameOffset = 0;
+          e.TemporalOffset = 0;
+
+          its.IndexEntryArray.add(e);
+        }
+
+        its.VBEByteCount = this.getPosition() - this.cpPositions.get(endIndex - 1);
+
+        bos.write(IndexSegmentHelper.toBytes(its, StreamingWriter.this.evthandler));
       }
 
       this.cpFirstEditUnit = this.duration;
       this.cpPositions.clear();
 
-      return IndexSegmentHelper.toBytes(its, StreamingWriter.this.evthandler);
+      return bos.toByteArray();
     }
 
     @Override
@@ -527,7 +561,7 @@ public class StreamingWriter {
   /**
    * IntanceID generator
    */
-  private final UIDGenerator uidGenerator ;
+  private final UIDGenerator uidGenerator;
 
   public StreamingWriter(OutputStream os, Preface preface, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
@@ -730,7 +764,8 @@ public class StreamingWriter {
     if (gcs.get(0).IndexStreamID != indexSID) {
       MXFException.handle(evthandler, new MXFEvent(
           MXFEvent.EventCodes.INCONSISTENT_HEADER,
-          String.format("Trying to add a generic container with BodySID=%d and IndexSID=%d but the header metadata specifies an IndexSID=%d",
+          String.format(
+              "Trying to add a generic container with BodySID=%d and IndexSID=%d but the header metadata specifies an IndexSID=%d",
               bodySID, indexSID, gcs.get(0).IndexStreamID)));
     }
 
@@ -742,7 +777,8 @@ public class StreamingWriter {
 
   /**
    * creates a clip-wrapped essence container with constant size units
-   * @throws MXFException 
+   * 
+   * @throws MXFException
    * 
    */
   public GCClipCBEWriter addCBEClipWrappedGC(long bodySID, long indexSID)
@@ -757,7 +793,8 @@ public class StreamingWriter {
 
   /**
    * creates a clip-wrapped essence container with variable size access units
-   * @throws MXFException 
+   * 
+   * @throws MXFException
    * 
    */
   public GCClipVBEWriter addVBEClipWrappedGC(long bodySID, long indexSID)
@@ -772,7 +809,8 @@ public class StreamingWriter {
 
   /**
    * creates a framed-wrapped essence container with variable size access units
-   * @throws MXFException 
+   * 
+   * @throws MXFException
    * 
    */
   public GCFrameVBEWriter addVBEFrameWrappedGC(long bodySID, long indexSID)
