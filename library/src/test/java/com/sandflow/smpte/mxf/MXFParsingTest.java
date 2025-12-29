@@ -35,33 +35,21 @@ import static com.sandflow.smpte.mxf.TestUtils.assertTextFilesEqual;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URISyntaxException;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import com.sandflow.smpte.tools.RegMXFDump;
+import com.sandflow.smpte.mxf.TestUtils;
 
 public class MXFParsingTest {
 
-  @org.junit.jupiter.api.BeforeAll
-  static void makeBuildDirectory() throws URISyntaxException {
-    File dir = new File("target/test-output");
-    dir.mkdirs();
-  }
-
   @Test
-  void testVIDEO_f031aa43_88c8_4de9_856f_904a33a78505() throws Exception {
+  void testVIDEO_f031aa43_88c8_4de9_856f_904a33a78505(TestInfo testInfo) throws Exception {
+    File mxfFile = new File(
+        ClassLoader.getSystemResource("imps/imp_1/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.mxf").toURI());
 
-    InputStream is = ClassLoader.getSystemResourceAsStream("imps/imp_1/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.mxf");
-
-    File of = new File("target/test-output/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.json");
-    OutputStream os = new FileOutputStream(of);
-
-    RegMXFDump.dump(is, os);
-
-    File rf = new File(
-        ClassLoader.getSystemResource("references/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.json").toURI());
-    assertTextFilesEqual(rf, of);
+    TestUtils.compareToReference(mxfFile, testInfo.getTestMethod().get().getName() + ".mxf.json");
   }
 }

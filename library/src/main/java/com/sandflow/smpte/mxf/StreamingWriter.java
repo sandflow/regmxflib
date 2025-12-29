@@ -75,6 +75,17 @@ import com.sandflow.util.events.EventHandler;
 
 public class StreamingWriter {
 
+  public interface UIDGenerator {
+    UUID generate(Object o);
+  }
+
+  public static class RNGUIDGenerator implements UIDGenerator {
+    @Override
+    public UUID generate(Object o) {
+      return UUID.fromRandom();
+    }
+  }
+
   private abstract class ContainerWriter extends OutputStream {
 
     private final long bodySID;
@@ -111,7 +122,7 @@ public class StreamingWriter {
       this.bytesToWrite = bytesToWrite;
     }
 
-    abstract byte[] drainIndexSegments() throws IOException, MXFException;
+    abstract byte[] drainIndexSegments(UIDGenerator uidg) throws IOException, MXFException;
 
     long getPosition() {
       return this.ecOffset;
@@ -215,14 +226,14 @@ public class StreamingWriter {
     }
 
     @Override
-    byte[] drainIndexSegments() throws IOException, MXFException {
+    byte[] drainIndexSegments(UIDGenerator uidg) throws IOException, MXFException {
       if (this.state != State.WRITTEN) {
         return null;
       }
       this.state = State.DRAINED;
 
       var its = new IndexTableSegment();
-      its.InstanceID = UUID.fromRandom();
+      its.InstanceID = uidg.generate(this);
       its.IndexEditRate = StreamingWriter.this.getECEditRate(this.getBodySID());
       its.IndexStartPosition = 0L;
       its.IndexDuration = this.accessUnitCount;
@@ -266,7 +277,7 @@ public class StreamingWriter {
     }
 
     @Override
-    byte[] drainIndexSegments() throws IOException {
+    byte[] drainIndexSegments(UIDGenerator uidg) throws IOException {
       return null;
     }
 
@@ -321,7 +332,7 @@ public class StreamingWriter {
       if (StreamingWriter.this.preface.EssenceContainers != null
           && StreamingWriter.this.preface.EssenceContainers.contains(Labels.IMF_IABEssenceClipWrappedContainer)) {
         /**
-         * EXCPTION: ASDCPLib incorrectly includes the Clip KL in the essence container
+         * EXCEPTION: ASDCPLib incorrectly includes the Clip KL in the essence container
          * offset for IAB files
          */
         this.setBytesToWrite(50);
@@ -349,14 +360,14 @@ public class StreamingWriter {
     }
 
     @Override
-    byte[] drainIndexSegments() throws IOException, MXFException {
+    byte[] drainIndexSegments(UIDGenerator uidg) throws IOException, MXFException {
       if (this.state != State.WRITTEN) {
         return null;
       }
       this.state = State.DRAINED;
 
       var its = new IndexTableSegment();
-      its.InstanceID = UUID.fromRandom();
+      its.InstanceID = uidg.generate(this);
       its.IndexEditRate = StreamingWriter.this.getECEditRate(this.getBodySID());
       its.IndexStartPosition = 0L;
       its.IndexDuration = this.getDuration();
@@ -444,13 +455,13 @@ public class StreamingWriter {
     }
 
     @Override
-    byte[] drainIndexSegments() throws IOException, MXFException {
+    byte[] drainIndexSegments(UIDGenerator uidg) throws IOException, MXFException {
       if (this.cpPositions.size() == 0) {
         return null;
       }
 
       var its = new IndexTableSegment();
-      its.InstanceID = UUID.fromRandom();
+      its.InstanceID = uidg.generate(this);
       its.IndexEditRate = StreamingWriter.this.getECEditRate(this.getBodySID());
       its.IndexStartPosition = cpFirstEditUnit;
       its.IndexDuration = (long) this.cpPositions.size();
@@ -513,8 +524,17 @@ public class StreamingWriter {
    */
   private PartitionPack curPartition;
 
+  /**
+   * IntanceID generator
+   */
+  private final UIDGenerator uidGenerator ;
 
   public StreamingWriter(OutputStream os, Preface preface, EventHandler evthandler)
+      throws IOException, KLVException, MXFException {
+    this(os, preface, evthandler, new RNGUIDGenerator());
+  }
+
+  public StreamingWriter(OutputStream os, Preface preface, EventHandler evthandler, UIDGenerator uidg)
       throws IOException, KLVException, MXFException {
     if (os == null) {
       throw new IllegalArgumentException("Output stream must not be null");
@@ -528,6 +548,11 @@ public class StreamingWriter {
     if (!preface.OperationalPattern.isUL()) {
       throw new MXFException("The Operational Pattern label found in the Preface is not a UL");
     }
+
+    if (uidg == null) {
+      throw new IllegalArgumentException("UID generator must not be null");
+    }
+    this.uidGenerator = uidg;
 
     /* TODO: make a copy */
     this.preface = preface;
@@ -995,7 +1020,7 @@ public class StreamingWriter {
   }
 
   private void writeIndexPartition() throws IOException, KLVException, MXFException {
-    byte[] itsBytes = this.currentContainer.drainIndexSegments();
+    byte[] itsBytes = this.currentContainer.drainIndexSegments(this.uidGenerator);
     if (itsBytes == null) {
       return;
     }

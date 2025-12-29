@@ -30,10 +30,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.stream.Stream;
+
+import com.sandflow.smpte.mxf.types.Identification;
+import com.sandflow.smpte.tools.RegMXFDump;
+import com.sandflow.smpte.util.AUID;
 
 public class TestUtils {
 
@@ -59,4 +68,52 @@ public class TestUtils {
       }
     }
   }
+
+  final static AUID APPLICATION_PRODUCT_ID = AUID.fromURN("urn:uuid:5c1a9040-d234-41f1-86f3-5a78991f5b9e");
+
+  public static Identification makeIdentification(StreamingWriter.UIDGenerator uidg) {
+    Identification identification = new Identification();
+
+    identification.InstanceID = uidg.generate(identification);
+    identification.GenerationID = new AUID(identification.InstanceID);
+    identification.ApplicationVersionString = "n/a";
+    identification.ApplicationSupplierName = "regmxflib";
+    identification.ApplicationName = "regmxflib unit tests";
+    identification.ApplicationProductID = APPLICATION_PRODUCT_ID;
+    identification.FileModificationDate = LocalDateTime.of(2025, 1, 1, 0, 0);
+
+    return identification;
+  }
+
+  private static final String outputDirPath = "target/test-output/";
+
+  {
+    File outputDir = new File(outputDirPath);
+    if (!outputDir.exists()) {
+      outputDir.mkdirs();
+    }
+  }
+
+  public static File getOutputFile(String filename) {
+    return new File(outputDirPath, filename);
+  }
+
+  private static final String referenceDirPath = "references/";
+
+  public static void compareToReference(File mxfFile, final String refJsonFilename)
+      throws FileNotFoundException, Exception, IOException, URISyntaxException {
+    File tempFile = getOutputFile(refJsonFilename);
+
+    FileOutputStream tos = new FileOutputStream(tempFile);
+
+    RegMXFDump.dump(new FileInputStream(mxfFile), tos);
+
+    tos.close();
+
+    File rf = new File(
+        ClassLoader.getSystemResource(referenceDirPath + refJsonFilename).toURI());
+
+    assertTextFilesEqual(rf, tempFile);
+  }
+
 }

@@ -103,10 +103,10 @@ public class UUID {
   /**
    * Generate a Class 5 UUID from a URI
    * 
-   * @param uri URI
+   * @param name URI
    * @return Class 5 UUID
    */
-  public static UUID fromURIName(URI uri) {
+  public static UUID fromURIName(String name) {
     MessageDigest digest;
 
     UUID nsid = UUID.fromURN("urn:uuid:6ba7b811-9dad-11d1-80b4-00c04fd430c8");
@@ -114,7 +114,7 @@ public class UUID {
     try {
       digest = MessageDigest.getInstance("SHA-1");
       digest.update(nsid.getValue());
-      digest.update(uri.toString().getBytes("ASCII"));
+      digest.update(name.getBytes("ASCII"));
     } catch (NoSuchAlgorithmException | UnsupportedEncodingException ex) {
       throw new RuntimeException(ex);
     }
@@ -125,6 +125,16 @@ public class UUID {
     result[8] = (byte) ((result[8] & 0x3f) | 0x7f);
 
     return new UUID(result);
+  }
+
+  /**
+   * Generate a Class 5 UUID from a URI
+   * 
+   * @param uri URI
+   * @return Class 5 UUID
+   */
+  public static UUID fromURIName(URI uri) {
+    return fromURIName(uri.toString());
   }
 
   /**

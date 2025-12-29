@@ -35,29 +35,37 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.commons.numbers.fraction.Fraction;
 
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.Labels;
 import com.sandflow.smpte.mxf.MXFFiles;
+import com.sandflow.smpte.mxf.StreamingWriter.UIDGenerator;
 import com.sandflow.smpte.mxf.types.AUIDSet;
+import com.sandflow.smpte.mxf.types.ComponentStrongReferenceVector;
 import com.sandflow.smpte.mxf.types.ContentStorage;
 import com.sandflow.smpte.mxf.types.EssenceData;
 import com.sandflow.smpte.mxf.types.EssenceDataStrongReferenceSet;
 import com.sandflow.smpte.mxf.types.FileDescriptor;
 import com.sandflow.smpte.mxf.types.FileDescriptorStrongReferenceVector;
+import com.sandflow.smpte.mxf.types.Identification;
 import com.sandflow.smpte.mxf.types.IdentificationStrongReferenceVector;
 import com.sandflow.smpte.mxf.types.MaterialPackage;
 import com.sandflow.smpte.mxf.types.MultipleDescriptor;
+import com.sandflow.smpte.mxf.types.Package;
 import com.sandflow.smpte.mxf.types.PackageStrongReferenceSet;
 import com.sandflow.smpte.mxf.types.Preface;
+import com.sandflow.smpte.mxf.types.Sequence;
+import com.sandflow.smpte.mxf.types.SourceClip;
 import com.sandflow.smpte.mxf.types.SourcePackage;
+import com.sandflow.smpte.mxf.types.TimelineTrack;
+import com.sandflow.smpte.mxf.types.TrackStrongReferenceVector;
 import com.sandflow.smpte.mxf.types.Version;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UMID;
-import com.sandflow.smpte.util.UUID;
 
 public class OP1aHelper {
 
@@ -80,27 +88,42 @@ public class OP1aHelper {
 
   final Map<Byte, UL> trackIDToElementKeys = new HashMap<>();
 
-  public OP1aHelper(EssenceContainerInfo ecInfo) throws IOException, KLVException {
+  public OP1aHelper(EssenceContainerInfo ecInfo, Identification fileInfo, UIDGenerator uidg)
+      throws IOException, KLVException {
+
     if (ecInfo == null) {
       throw new IllegalArgumentException("Essence info must not be null");
     }
     this.ecInfo = ecInfo;
 
     if (ecInfo.tracks().size() > 127 || ecInfo.tracks().size() == 0)
-      throw new RuntimeException();
+      throw new RuntimeException("Number of tracks must be between 1 and 127");
+    final byte trackCount = (byte) ecInfo.tracks().size();
 
     if (ecInfo.bodySID() == 0 || ecInfo.indexSID() == 0)
-      throw new RuntimeException();
+      throw new RuntimeException("BodySID and IndexSID must be non-zero");
 
-    final byte trackCount = (byte) ecInfo.tracks().size();
+    if (uidg == null) {
+      throw new IllegalArgumentException("UID generator must not be null");
+    }
+
+    if (fileInfo == null) {
+      throw new IllegalArgumentException("Identification must not be null");
+    }
+
+    if (fileInfo.FileModificationDate == null || fileInfo.ApplicationSupplierName == null
+        || fileInfo.ApplicationName == null || fileInfo.ApplicationProductID == null || fileInfo.InstanceID == null ||
+        fileInfo.GenerationID == null || fileInfo.ApplicationVersionString == null) {
+      throw new IllegalArgumentException("Identification is missing required properties must not be null");
+    }
 
     /* File Package */
     SourcePackage sp = new SourcePackage();
-    PackageHelper.initPackage(sp, "Top-level File Package");
+    initPackage(sp, uidg, fileInfo.FileModificationDate, "Top-level File Package");
 
     /* Material Package */
     var mp = new MaterialPackage();
-    PackageHelper.initPackage(mp, "Material Package");
+    initPackage(mp, uidg, fileInfo.FileModificationDate, "Material Package");
 
     /* Create essence tracks */
 
@@ -128,13 +151,13 @@ public class OP1aHelper {
 
       this.trackIDToElementKeys.put(trackId, elementKey);
 
-      sp.PackageTracks.add(PackageHelper.makeTimelineTrack(ecInfo.editRate(),
+      sp.PackageTracks.add(makeTimelineTrack(uidg, ecInfo.editRate(),
           this.ecInfo.duration() == null ? -1L : this.ecInfo.duration(), UMID.NULL_UMID,
           (long) MXFFiles.getTrackNumber(elementKey), null, (long) trackId,
           ecInfo.tracks().get(i).dataDefinition(), ecInfo.tracks().get(i).trackName));
 
       mp.PackageTracks
-          .add(PackageHelper.makeTimelineTrack(ecInfo.editRate(),
+          .add(makeTimelineTrack(uidg, ecInfo.editRate(),
               this.ecInfo.duration() == null ? -1L : this.ecInfo.duration(), sp.PackageID, null, (long) trackId,
               (long) trackId,
               ecInfo.tracks().get(i).dataDefinition(), ecInfo.tracks().get(i).trackName));
@@ -146,7 +169,7 @@ public class OP1aHelper {
       sp.EssenceDescription = fds.get(0);
     } else {
       MultipleDescriptor md = new MultipleDescriptor();
-      md.InstanceID = UUID.fromRandom();
+      md.InstanceID = uidg.generate(md);
       md.EssenceLength = null;
       md.SampleRate = ecInfo.editRate();
       md.ContainerFormat = Labels.MXFGCGenericEssenceMultipleMappings;
@@ -157,14 +180,14 @@ public class OP1aHelper {
 
     /* EssenceDataObject */
     var edo = new EssenceData();
-    edo.InstanceID = UUID.fromRandom();
+    edo.InstanceID = uidg.generate(edo);
     edo.EssenceStreamID = this.ecInfo.bodySID();
     edo.IndexStreamID = this.ecInfo.indexSID();
     edo.LinkedPackageID = sp.PackageID;
 
     /* Content Storage Object */
     var cs = new ContentStorage();
-    cs.InstanceID = UUID.fromRandom();
+    cs.InstanceID = uidg.generate(cs);
     cs.Packages = new PackageStrongReferenceSet();
     cs.Packages.add(mp);
     cs.Packages.add(sp);
@@ -187,15 +210,15 @@ public class OP1aHelper {
 
     /* Identification */
     var idList = new IdentificationStrongReferenceVector();
-    idList.add(IdentificationHelper.makeIdentification());
+    idList.add(fileInfo.copyOf());
 
     /* preface */
     this.preface = new Preface();
-    this.preface.InstanceID = UUID.fromRandom();
+    this.preface.InstanceID = uidg.generate(this.preface);
     this.preface.FormatVersion = new Version(1, 3);
     this.preface.ObjectModelVersion = 1L;
     this.preface.PrimaryPackage = sp.PackageID;
-    this.preface.FileLastModified = LocalDateTime.now();
+    this.preface.FileLastModified = fileInfo.FileModificationDate;
     this.preface.EssenceContainers = ecs;
     this.preface.IsRIPPresent = true;
     this.preface.OperationalPattern = trackCount > 1 ? Labels.MXFOP1aSingleItemSinglePackageMultiTrackStreamInternal
@@ -214,6 +237,46 @@ public class OP1aHelper {
 
   public UL getElementKey(byte trackId) {
     return this.trackIDToElementKeys.get(trackId);
+  }
+
+  static TimelineTrack makeTimelineTrack(UIDGenerator uidg, Fraction editRate, Long duration,
+      UMID sourcePackageID, Long essenceTrackNum, Long sourceTrackID, Long trackID, AUID dataDefinition,
+      String trackName) {
+    var sc = new SourceClip();
+    sc.InstanceID = uidg.generate(sc);
+    sc.ComponentLength = duration;
+    sc.ComponentDataDefinition = dataDefinition;
+    sc.StartPosition = 0L;
+    sc.SourceTrackID = sourceTrackID == null ? 0 : sourceTrackID;
+    sc.SourcePackageID = sourcePackageID == null ? UMID.NULL_UMID : sourcePackageID;
+
+    var seq = new Sequence();
+    seq.InstanceID = uidg.generate(seq);
+    seq.ComponentLength = sc.ComponentLength;
+    seq.ComponentDataDefinition = sc.ComponentDataDefinition;
+    seq.ComponentObjects = new ComponentStrongReferenceVector();
+    seq.ComponentObjects.add(sc);
+
+    var track = new TimelineTrack();
+    track.InstanceID = uidg.generate(track);
+    if (trackID != null)
+      track.TrackID = trackID;
+    track.EditRate = editRate;
+    track.EssenceTrackNumber = essenceTrackNum != null ? essenceTrackNum : 0L;
+    track.Origin = 0L;
+    track.TrackSegment = seq;
+    track.TrackName = trackName;
+
+    return track;
+  }
+
+  static void initPackage(Package p, UIDGenerator uidg, LocalDateTime creationTime, String packageName) {
+    p.InstanceID = uidg.generate(p);
+    p.CreationTime = creationTime;
+    p.PackageID = UMID.fromUUID(p.InstanceID);
+    p.PackageLastModified = p.CreationTime;
+    p.PackageName = packageName;
+    p.PackageTracks = new TrackStrongReferenceVector();
   }
 
 }

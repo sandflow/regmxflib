@@ -161,17 +161,6 @@
                 </executions>
             </plugin>
         </plugins>
-        <!-- <resources>
-            <resource>
-                <targetPath>config</targetPath>
-                <directory>${com.sandflow.config.dir}</directory>
-                <filtering>true</filtering>
-            </resource>
-            <resource>
-                <targetPath>resources</targetPath>
-                <directory>${com.sandflow.resources.dir}</directory>
-            </resource>
-        </resources> -->
     </build>
 
     <profiles>

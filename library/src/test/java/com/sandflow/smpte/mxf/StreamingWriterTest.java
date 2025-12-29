@@ -41,6 +41,7 @@ import java.util.HexFormat;
 
 import org.apache.commons.numbers.fraction.Fraction;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import com.sandflow.smpte.mxf.StreamingWriter.GCClipCBEWriter;
 import com.sandflow.smpte.mxf.helpers.OP1aHelper;
@@ -61,28 +62,22 @@ import com.sandflow.smpte.mxf.types.SoundfieldGroupLabelSubDescriptor;
 import com.sandflow.smpte.mxf.types.SubDescriptorStrongReferenceVector;
 import com.sandflow.smpte.mxf.types.WAVEPCMDescriptor;
 import com.sandflow.smpte.util.UL;
-import com.sandflow.smpte.util.UUID;
 
 class StreamingWriterTest {
 
-  @org.junit.jupiter.api.BeforeAll
-  static void makeBuildDirectory() throws URISyntaxException {
-    File dir = new File("target/test-output");
-    dir.mkdirs();
-  }
-
   @Test
-  void testCBE() throws Exception {
+  void testCBE(TestInfo testInfo) throws Exception {
 
+    final DeterministicUIDGenerator uidg = new DeterministicUIDGenerator();
     final int sampleCount = 48000;
     final Fraction sampleRate = Fraction.of(48000);
     final Fraction editRate = Fraction.of(48000);
     final byte trackID = 1;
 
     SoundfieldGroupLabelSubDescriptor sg = new SoundfieldGroupLabelSubDescriptor();
-    sg.InstanceID = UUID.fromRandom();
+    sg.InstanceID = uidg.generate(sg);
     sg.MCALabelDictionaryID = Labels.SMPTEST20678StandardStereo;
-    sg.MCALinkID = UUID.fromRandom();
+    sg.MCALinkID = sg.InstanceID;
     sg.MCATagSymbol = "sgST";
     sg.MCATagName = "Standard Stereo";
     sg.MCAChannelID = 1L;
@@ -92,9 +87,9 @@ class StreamingWriterTest {
     sg.MCAAudioElementKind = "FCMP";
 
     AudioChannelLabelSubDescriptor chL = new AudioChannelLabelSubDescriptor();
-    chL.InstanceID = UUID.fromRandom();
+    chL.InstanceID = uidg.generate(chL);
     chL.MCALabelDictionaryID = Labels.LeftAudioChannel;
-    chL.MCALinkID = UUID.fromRandom();
+    chL.MCALinkID = chL.InstanceID;
     chL.MCATagSymbol = "chL";
     chL.MCATagName = "Left";
     chL.MCAChannelID = 1L;
@@ -102,9 +97,9 @@ class StreamingWriterTest {
     chL.SoundfieldGroupLinkID = sg.MCALinkID;
 
     AudioChannelLabelSubDescriptor chR = new AudioChannelLabelSubDescriptor();
-    chR.InstanceID = UUID.fromRandom();
+    chR.InstanceID = uidg.generate(chR);
     chR.MCALabelDictionaryID = Labels.RightAudioChannel;
-    chR.MCALinkID = UUID.fromRandom();
+    chR.MCALinkID = chR.InstanceID;
     chR.MCATagSymbol = "chR";
     chR.MCATagName = "Right";
     chR.MCAChannelID = 2L;
@@ -112,7 +107,7 @@ class StreamingWriterTest {
     chR.SoundfieldGroupLinkID = sg.MCALinkID;
 
     WAVEPCMDescriptor d = new WAVEPCMDescriptor();
-    d.InstanceID = UUID.fromRandom();
+    d.InstanceID = uidg.generate(d);
     d.ContainerFormat = Labels.MXFGCClipWrappedBroadcastWaveAudioData;
     d.SampleRate = sampleRate;
     d.AudioSampleRate = sampleRate;
@@ -151,13 +146,15 @@ class StreamingWriterTest {
         127,
         (long) sampleCount);
 
-    OP1aHelper header = new OP1aHelper(eci);
+    OP1aHelper header = new OP1aHelper(eci, TestUtils.makeIdentification(uidg), uidg);
 
     /* start writing file */
 
-    OutputStream os = new FileOutputStream("target/test-output/test-cbeclip.mch.mxf");
+    final String outFN = testInfo.getTestMethod().get().getName() + ".mxf";
+    File of = TestUtils.getOutputFile(outFN);
+    FileOutputStream os = new FileOutputStream(of);
 
-    StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null);
+    StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null, uidg);
 
     GCClipCBEWriter ec = sw.addCBEClipWrappedGC(1, 2);
 
@@ -180,6 +177,13 @@ class StreamingWriterTest {
     }
 
     sw.finish();
+
+    os.close();
+
+    /* compare file to reference */
+
+    TestUtils.compareToReference(of, outFN + ".json");
+
   }
 
   /*
@@ -211,8 +215,9 @@ class StreamingWriterTest {
    */
 
   @Test
-  void testClipVBE() throws Exception {
+  void testClipVBE(TestInfo testInfo) throws Exception {
 
+    final DeterministicUIDGenerator uidg = new DeterministicUIDGenerator();
     final int frameCount = 480;
     final Fraction sampleRate = Fraction.of(48000);
     final Fraction editRate = Fraction.of(24000, 1001);
@@ -229,15 +234,15 @@ class StreamingWriterTest {
     /* create descriptors */
 
     IABSoundfieldLabelSubDescriptor sd = new IABSoundfieldLabelSubDescriptor();
-    sd.InstanceID = UUID.fromRandom();
+    sd.InstanceID = uidg.generate(sd);
     sd.MCALabelDictionaryID = Labels.IABSoundfield;
-    sd.MCALinkID = UUID.fromRandom();
+    sd.MCALinkID = sd.InstanceID;
     sd.MCATagSymbol = "IAB";
     sd.MCATagName = "IAB";
     sd.RFC5646SpokenLanguage = "en-us";
 
     IABEssenceDescriptor d = new IABEssenceDescriptor();
-    d.InstanceID = UUID.fromRandom();
+    d.InstanceID = uidg.generate(d);
     d.SampleRate = editRate;
     d.AudioSampleRate = sampleRate;
     d.Locked = false;
@@ -265,11 +270,13 @@ class StreamingWriterTest {
         INDEX_SID,
         (long) frameCount);
 
-    OP1aHelper header = new OP1aHelper(eci);
+    OP1aHelper header = new OP1aHelper(eci, TestUtils.makeIdentification(uidg), uidg);
 
     /* Initialize the streaming writer */
-    OutputStream os = new FileOutputStream("target/test-output/clipvbe-test.iab.mxf");
-    StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null);
+    final String outFN = testInfo.getTestMethod().get().getName() + ".mxf";
+    File of = TestUtils.getOutputFile(outFN);
+    OutputStream os = new FileOutputStream(of);
+    StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null, uidg);
 
     /* configure the clip-wrapped generic container */
 
@@ -290,7 +297,12 @@ class StreamingWriterTest {
 
     /* complete the file */
     sw.finish();
+    os.flush();
     os.close();
+
+    /* compare file to reference */
+
+    TestUtils.compareToReference(of, outFN + ".json");
   }
 
   /*
@@ -428,8 +440,9 @@ class StreamingWriterTest {
    */
 
   @Test
-  void testPHDR() throws Exception {
+  void testPHDR(TestInfo testInfo) throws Exception {
 
+    final DeterministicUIDGenerator uidg = new DeterministicUIDGenerator();
     final int frameCount = 24;
     final Fraction sampleRate = Fraction.of(24);
     final Fraction editRate = Fraction.of(24);
@@ -446,7 +459,7 @@ class StreamingWriterTest {
     /* create descriptors */
 
     RGBADescriptor d = new RGBADescriptor();
-    d.InstanceID = UUID.fromRandom();
+    d.InstanceID = uidg.generate(d);
     d.SampleRate = sampleRate;
     d.FrameLayout = LayoutType.FullFrame;
     d.StoredWidth = 640L;
@@ -475,7 +488,7 @@ class StreamingWriterTest {
     d.ContainerFormat = Labels.MXFGCP1FrameWrappedPictureElement;
 
     JPEG2000SubDescriptor sd = new JPEG2000SubDescriptor();
-    sd.InstanceID = UUID.fromRandom();
+    sd.InstanceID = uidg.generate(sd);
     sd.Rsiz = 1798;
     sd.Xsiz = 640L;
     sd.Ysiz = 360L;
@@ -513,15 +526,17 @@ class StreamingWriterTest {
         INDEX_SID,
         null);
 
-    OP1aHelper header = new OP1aHelper(eci);
+    OP1aHelper header = new OP1aHelper(eci, TestUtils.makeIdentification(uidg), uidg);
 
     UL j2kElementKey = header.getElementKey(trackID);
 
     /* start writing file */
 
-    OutputStream os = new FileOutputStream("target/test-output/test-vbeframe.j2k.mxf");
+    final String outFN = testInfo.getTestMethod().get().getName() + ".mxf";
+    File of = TestUtils.getOutputFile(outFN);
+    OutputStream os = new FileOutputStream(of);
 
-    StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null);
+    StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null, uidg);
 
     var cw = sw.addVBEFrameWrappedGC(BODY_SID, INDEX_SID);
     sw.start();
@@ -535,11 +550,17 @@ class StreamingWriterTest {
     }
     sw.finish();
 
+    os.close();
+
+    /* compare file to reference */
+
+    TestUtils.compareToReference(of, outFN + ".json");
   }
 
   @Test
-  void testVBE() throws Exception {
+  void testVBE(TestInfo testInfo) throws Exception {
 
+    final DeterministicUIDGenerator uidg = new DeterministicUIDGenerator();
     final int frameCount = 24;
     final Fraction sampleRate = Fraction.of(24);
     final Fraction editRate = Fraction.of(24);
@@ -556,7 +577,7 @@ class StreamingWriterTest {
     /* create descriptors */
 
     RGBADescriptor d = new RGBADescriptor();
-    d.InstanceID = UUID.fromRandom();
+    d.InstanceID = uidg.generate(d);
     d.SampleRate = sampleRate;
     d.FrameLayout = LayoutType.FullFrame;
     d.StoredWidth = 640L;
@@ -585,7 +606,7 @@ class StreamingWriterTest {
     d.ContainerFormat = Labels.MXFGCP1FrameWrappedPictureElement;
 
     JPEG2000SubDescriptor sd = new JPEG2000SubDescriptor();
-    sd.InstanceID = UUID.fromRandom();
+    sd.InstanceID = uidg.generate(sd);
     sd.Rsiz = 1798;
     sd.Xsiz = 640L;
     sd.Ysiz = 360L;
@@ -623,15 +644,17 @@ class StreamingWriterTest {
         INDEX_SID,
         null);
 
-    OP1aHelper header = new OP1aHelper(eci);
+    OP1aHelper header = new OP1aHelper(eci, TestUtils.makeIdentification(uidg), uidg);
 
     UL j2kElementKey = header.getElementKey(trackID);
 
     /* start writing file */
 
-    OutputStream os = new FileOutputStream("target/test-output/test-vbeframe.j2k.mxf");
+    final String outFN = testInfo.getTestMethod().get().getName() + ".mxf";
+    File of = TestUtils.getOutputFile(outFN);
+    OutputStream os = new FileOutputStream(of);
 
-    StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null);
+    StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null, uidg);
 
     var cw = sw.addVBEFrameWrappedGC(BODY_SID, INDEX_SID);
     sw.start();
@@ -644,7 +667,11 @@ class StreamingWriterTest {
       cw.write(j2cFrame);
     }
     sw.finish();
+    os.close();
 
+    /* compare file to reference */
+
+    TestUtils.compareToReference(of, outFN + ".json");
   }
 
 }

@@ -42,11 +42,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import com.sandflow.smpte.mxf.helpers.OP1aHelper;
 import com.sandflow.smpte.mxf.types.AUIDSet;
@@ -64,18 +64,13 @@ import com.sandflow.smpte.mxf.types.StaticTrack;
 import com.sandflow.smpte.mxf.types.TextBasedFramework;
 import com.sandflow.smpte.mxf.types.Track;
 import com.sandflow.smpte.util.UL;
-import com.sandflow.smpte.util.UUID;
 
 public class ReadWriteTest {
 
-  @org.junit.jupiter.api.BeforeAll
-  static void makeBuildDirectory() throws URISyntaxException {
-    File dir = new File("target/test-output");
-    dir.mkdirs();
-  }
-
   @Test
-  void testVIDEO_f031aa43_88c8_4de9_856f_904a33a78505() throws Exception {
+  void testVIDEO_f031aa43_88c8_4de9_856f_904a33a78505(TestInfo testInfo) throws Exception {
+    final DeterministicUIDGenerator uidg = new DeterministicUIDGenerator();
+
     /* load the source file */
     InputStream is = ClassLoader.getSystemResourceAsStream("imps/imp_1/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.mxf");
 
@@ -130,7 +125,7 @@ public class ReadWriteTest {
         IMG_INDEX_SID,
         null);
 
-    OP1aHelper outHeader = new OP1aHelper(eci);
+    OP1aHelper outHeader = new OP1aHelper(eci, TestUtils.makeIdentification(uidg), uidg);
 
     UL phdrImageElementKey = outHeader.getElementKey(IMG_TRACKID);
     UL phdrMetadataElementKey = outHeader.getElementKey(PHDR_TRACKID);
@@ -149,9 +144,11 @@ public class ReadWriteTest {
 
     /* create output file */
 
-    OutputStream os = new FileOutputStream("target/test-output/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.new.mxf");
+    final String outFN = testInfo.getTestMethod().get().getName() + ".mxf";
+    File of = TestUtils.getOutputFile(outFN);
+    OutputStream os = new FileOutputStream(of);
 
-    StreamingWriter outWriter = new StreamingWriter(os, outHeader.getPreface(), null);
+    StreamingWriter outWriter = new StreamingWriter(os, outHeader.getPreface(), null, uidg);
 
     var gc = outWriter.addVBEFrameWrappedGC(IMG_BODY_SID, IMG_INDEX_SID);
     var gs = outWriter.addGenericStream(PHDR_METADATA_SID);
@@ -191,12 +188,19 @@ public class ReadWriteTest {
     }
 
     outWriter.finish();
+    os.close();
 
     inReader.close();
+
+    /* compare file to reference */
+
+    TestUtils.compareToReference(of, outFN + ".json");
   }
 
   @Test
-  void testAUDIO_807d0b4c_69ec_44b0_be74_dfbf1a8c99d3() throws Exception {
+  void testAUDIO_807d0b4c_69ec_44b0_be74_dfbf1a8c99d3(TestInfo testInfo) throws Exception {
+
+    final DeterministicUIDGenerator uidg = new DeterministicUIDGenerator();
 
     /* load the source file */
     InputStream is = ClassLoader.getSystemResourceAsStream("imps/imp_1/AUDIO_807d0b4c-69ec-44b0-be74-dfbf1a8c99d3.mxf");
@@ -239,15 +243,17 @@ public class ReadWriteTest {
         INDEX_SID,
         ecDuration);
 
-    OP1aHelper outHeader = new OP1aHelper(eci);
+    OP1aHelper outHeader = new OP1aHelper(eci, TestUtils.makeIdentification(uidg), uidg);
 
     UL elementKey = outHeader.getElementKey(SOUND_TRACKID);
 
     /* create output file */
 
-    OutputStream os = new FileOutputStream("target/test-output/AUDIO_807d0b4c-69ec-44b0-be74-dfbf1a8c99d3.new.mxf");
+    final String outFN = testInfo.getTestMethod().get().getName() + ".mxf";
+    File of = TestUtils.getOutputFile(outFN);
+    FileOutputStream os = new FileOutputStream(of);
 
-    StreamingWriter out = new StreamingWriter(os, outHeader.getPreface(), null);
+    StreamingWriter out = new StreamingWriter(os, outHeader.getPreface(), null, uidg);
 
     /* create a single clip wrapped generic container */
 
@@ -278,10 +284,18 @@ public class ReadWriteTest {
     gc.write(clipPayload);
     out.finish();
 
+    os.close();
+
+    /* compare file to reference */
+
+    TestUtils.compareToReference(of, outFN + ".json");
+
   }
 
   @Test
-  void testIAB_dd3fabc6_4794_4bae_95ee_6bc2405716a6() throws Exception {
+  void testIAB_dd3fabc6_4794_4bae_95ee_6bc2405716a6(TestInfo testInfo) throws Exception {
+
+    final DeterministicUIDGenerator uidg = new DeterministicUIDGenerator();
 
     final long BODY_SID = 1;
     final long INDEX_SID = BODY_SID + 1;
@@ -325,7 +339,7 @@ public class ReadWriteTest {
         INDEX_SID,
         ecDuration);
 
-    OP1aHelper outHeader = new OP1aHelper(eci);
+    OP1aHelper outHeader = new OP1aHelper(eci, TestUtils.makeIdentification(uidg), uidg);
 
     UL elementKey = outHeader.getElementKey(IAB_TRACKID);
 
@@ -358,7 +372,7 @@ public class ReadWriteTest {
         GenericStreamTextBasedSet gstb = (GenericStreamTextBasedSet) ((TextBasedFramework) dm.DescriptiveFrameworkObject).TextBasedObject;
 
         GenericStreamTextBasedSet dmT = new GenericStreamTextBasedSet();
-        dmT.InstanceID = UUID.fromRandom();
+        dmT.InstanceID = uidg.generate(dmT);
         dmT.RFC5646TextLanguageCode = gstb.RFC5646TextLanguageCode;
         dmT.TextBasedMetadataPayloadSchemeID = gstb.TextBasedMetadataPayloadSchemeID;
         dmT.TextDataDescription = gstb.TextDataDescription;
@@ -376,22 +390,22 @@ public class ReadWriteTest {
         }
 
         TextBasedFramework dmTBF = new TextBasedFramework();
-        dmTBF.InstanceID = UUID.fromRandom();
+        dmTBF.InstanceID = uidg.generate(dmTBF);
         dmTBF.TextBasedObject = dmT;
 
         DescriptiveMarker dmMarker = new DescriptiveMarker();
-        dmMarker.InstanceID = UUID.fromRandom();
+        dmMarker.InstanceID = uidg.generate(dmMarker);
         dmMarker.DescriptiveFrameworkObject = dmTBF;
         dmMarker.EventComment = "SMPTE RP 2057 Generic Stream Text-Based Set";
 
         Sequence dmSequence = new Sequence();
-        dmSequence.InstanceID = UUID.fromRandom();
+        dmSequence.InstanceID = uidg.generate(dmSequence);
         dmSequence.ComponentDataDefinition = Labels.DescriptiveMetadataTrack;
         dmSequence.ComponentObjects = new ComponentStrongReferenceVector();
         dmSequence.ComponentObjects.add(dmMarker);
 
         StaticTrack dmTrack = new StaticTrack();
-        dmTrack.InstanceID = UUID.fromRandom();
+        dmTrack.InstanceID = uidg.generate(dmTrack);
         if (gstb.TextDataDescription.equals("urn:ebu:metadata-schema:ebuCore_2016")) {
           dmTrack.TrackID = (long) ADM_TRACKID;
           dmTrack.TrackName = "Audio Definition Model Metadata Track";
@@ -413,9 +427,11 @@ public class ReadWriteTest {
 
     /* create output file */
 
-    OutputStream os = new FileOutputStream("target/test-output/IAB_dd3fabc6-4794-4bae-95ee-6bc2405716a6.new.mxf");
+    final String outFN = testInfo.getTestMethod().get().getName() + ".mxf";
+    File of = TestUtils.getOutputFile(outFN);
+    FileOutputStream os = new FileOutputStream(of);
 
-    StreamingWriter out = new StreamingWriter(os, outHeader.getPreface(), null);
+    StreamingWriter out = new StreamingWriter(os, outHeader.getPreface(), null, uidg);
 
     /* start reading the clip from the source file */
 
@@ -507,9 +523,12 @@ public class ReadWriteTest {
     /* clean-up */
 
     out.finish();
-
     in.close();
+    os.close();
 
+    /* compare file to reference */
+
+    TestUtils.compareToReference(of, outFN + ".json");
   }
 
 }
