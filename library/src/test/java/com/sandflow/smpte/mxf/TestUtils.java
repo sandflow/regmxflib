@@ -71,7 +71,7 @@ public class TestUtils {
 
   final static AUID APPLICATION_PRODUCT_ID = AUID.fromURN("urn:uuid:5c1a9040-d234-41f1-86f3-5a78991f5b9e");
 
-  public static Identification makeIdentification(StreamingWriter.UIDGenerator uidg) {
+  public static Identification makeIdentification(UIDGenerator uidg) {
     Identification identification = new Identification();
 
     identification.InstanceID = uidg.generate(identification);

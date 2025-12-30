@@ -42,7 +42,7 @@ import org.apache.commons.numbers.fraction.Fraction;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.Labels;
 import com.sandflow.smpte.mxf.MXFFiles;
-import com.sandflow.smpte.mxf.StreamingWriter.UIDGenerator;
+import com.sandflow.smpte.mxf.UIDGenerator;
 import com.sandflow.smpte.mxf.types.AUIDSet;
 import com.sandflow.smpte.mxf.types.ComponentStrongReferenceVector;
 import com.sandflow.smpte.mxf.types.ContentStorage;

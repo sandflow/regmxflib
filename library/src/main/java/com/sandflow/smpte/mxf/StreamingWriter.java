@@ -73,18 +73,10 @@ import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.Event;
 import com.sandflow.util.events.EventHandler;
 
+/**
+ * Writes an MXF file sequentially (streaming).
+ */
 public class StreamingWriter {
-
-  public interface UIDGenerator {
-    UUID generate(Object o);
-  }
-
-  public static class RNGUIDGenerator implements UIDGenerator {
-    @Override
-    public UUID generate(Object o) {
-      return UUID.fromRandom();
-    }
-  }
 
   private abstract class ContainerWriter extends OutputStream {
 
@@ -122,7 +114,7 @@ public class StreamingWriter {
       this.bytesToWrite = bytesToWrite;
     }
 
-    abstract byte[] drainIndexSegments(UIDGenerator uidg) throws IOException, MXFException;
+    abstract byte[] drainIndexSegments() throws IOException, MXFException;
 
     long getPosition() {
       return this.ecOffset;
@@ -173,6 +165,9 @@ public class StreamingWriter {
     }
   }
 
+  /**
+   * Writer for CBE clip-wrapped essence.
+   */
   class GCClipCBEWriter extends ContainerWriter {
 
     enum State {
@@ -189,6 +184,14 @@ public class StreamingWriter {
       super(bodySID, indexSID);
     }
 
+    /**
+     * Writes the next clip.
+     * 
+     * @param elementKey      Key of the element.
+     * @param accessUnitSize  Size of each access unit.
+     * @param accessUnitCount Number of access units.
+     * @throws IOException If an I/O error occurs.
+     */
     public void nextClip(UL elementKey, long accessUnitSize, long accessUnitCount) throws IOException {
       Objects.requireNonNull(elementKey, "Element Key cannot be null");
 
@@ -226,14 +229,14 @@ public class StreamingWriter {
     }
 
     @Override
-    byte[] drainIndexSegments(UIDGenerator uidg) throws IOException, MXFException {
+    byte[] drainIndexSegments() throws IOException, MXFException {
       if (this.state != State.WRITTEN) {
         return null;
       }
       this.state = State.DRAINED;
 
       var its = new IndexTableSegment();
-      its.InstanceID = uidg.generate(this);
+      its.InstanceID = StreamingWriter.this.uidGenerator.generate(this);
       its.IndexEditRate = StreamingWriter.this.getECEditRate(this.getBodySID());
       its.IndexStartPosition = 0L;
       its.IndexDuration = this.accessUnitCount;
@@ -256,12 +259,22 @@ public class StreamingWriter {
 
   }
 
+  /**
+   * Writer for Generic Stream.
+   */
   class GSWriter extends ContainerWriter {
 
     public GSWriter(long bodySID) {
       super(bodySID, 0);
     }
 
+    /**
+     * Writes the next element.
+     * 
+     * @param elementKey    Key of the element.
+     * @param elementLength Length of the element.
+     * @throws IOException If an I/O error occurs.
+     */
     public void nextElement(UL elementKey, long elementLength) throws IOException {
       if (!this.isActive()) {
         throw new RuntimeException();
@@ -277,7 +290,7 @@ public class StreamingWriter {
     }
 
     @Override
-    byte[] drainIndexSegments(UIDGenerator uidg) throws IOException {
+    byte[] drainIndexSegments() throws IOException {
       return null;
     }
 
@@ -293,6 +306,9 @@ public class StreamingWriter {
 
   }
 
+  /**
+   * Writer for VBE clip-wrapped essence.
+   */
   public class GCClipVBEWriter extends ContainerWriter {
 
     enum State {
@@ -303,8 +319,6 @@ public class StreamingWriter {
 
     private State state = State.READY;
 
-    private long clipSize;
-
     /**
      * offset in bytes of the VBE units within the essence container
      */
@@ -314,6 +328,13 @@ public class StreamingWriter {
       super(bodySID, indexSID);
     }
 
+    /**
+     * Writes the next clip.
+     * 
+     * @param elementKey Key of the element.
+     * @param clipSize   Size of the clip.
+     * @throws IOException If an I/O error occurs.
+     */
     public void nextClip(UL elementKey, long clipSize) throws IOException {
       Objects.requireNonNull(elementKey, "Element Key cannot be null");
 
@@ -350,6 +371,9 @@ public class StreamingWriter {
       this.state = State.WRITTEN;
     }
 
+    /**
+     * Marks the start of the next access unit.
+     */
     public void nextAccessUnit() {
       auOffsets.add(this.getPosition());
     }
@@ -366,7 +390,7 @@ public class StreamingWriter {
     private final static int MAX_INDEX_ENTRIES = 5000;
 
     @Override
-    byte[] drainIndexSegments(UIDGenerator uidg) throws IOException, MXFException {
+    byte[] drainIndexSegments() throws IOException, MXFException {
       if (this.state != State.WRITTEN) {
         return null;
       }
@@ -374,17 +398,23 @@ public class StreamingWriter {
 
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
-      for (int segIndex = 0; segIndex * MAX_INDEX_ENTRIES < this.auOffsets.size(); segIndex++) {
+      /* each index table segment contains at most MAX_INDEX_ENTRIES entries */
+      int numSegments = (this.auOffsets.size() + MAX_INDEX_ENTRIES - 1) / MAX_INDEX_ENTRIES;
+
+      for (int segIndex = 0; segIndex < numSegments; segIndex++) {
         int startIndex = segIndex * MAX_INDEX_ENTRIES;
         int endIndex = Math.min((segIndex + 1) * MAX_INDEX_ENTRIES, this.auOffsets.size());
 
         var its = new IndexTableSegment();
-        its.InstanceID = uidg.generate(this);
+        its.InstanceID = StreamingWriter.this.uidGenerator.generate(this);
         its.IndexEditRate = StreamingWriter.this.getECEditRate(this.getBodySID());
         its.IndexStartPosition = (long) startIndex;
         its.IndexDuration = (long) (endIndex - startIndex);
         its.IndexStreamID = this.getIndexSID();
         its.EssenceStreamID = this.getBodySID();
+        its.VBEByteCount = segIndex + 1 == numSegments
+            ? this.getPosition() - this.auOffsets.get(this.auOffsets.size() - 1)
+            : this.auOffsets.get(endIndex) - this.auOffsets.get(endIndex - 1);
 
         its.IndexEntryArray = new IndexEntryArray();
         for (int i = startIndex; i < endIndex; i++) {
@@ -398,12 +428,8 @@ public class StreamingWriter {
           its.IndexEntryArray.add(e);
         }
 
-        its.VBEByteCount = this.getPosition() - this.auOffsets.get(endIndex - 1);
-
         bos.write(IndexSegmentHelper.toBytes(its, StreamingWriter.this.evthandler));
       }
-
-      this.auOffsets.clear();
 
       return bos.toByteArray();
     }
@@ -420,6 +446,9 @@ public class StreamingWriter {
 
   }
 
+  /**
+   * Writer for VBE frame-wrapped essence.
+   */
   public class GCFrameVBEWriter extends ContainerWriter {
 
     /*
@@ -443,11 +472,21 @@ public class StreamingWriter {
       super(bodySID, indexSID);
     }
 
+    /**
+     * Marks the start of the next content package.
+     */
     public void nextContentPackage() {
       cpPositions.add(this.getPosition());
       duration++;
     }
 
+    /**
+     * Writes the next element.
+     * 
+     * @param elementKey  Key of the element.
+     * @param elementSize Size of the element.
+     * @throws IOException If an I/O error occurs.
+     */
     public void nextElement(UL elementKey, long elementSize) throws IOException {
       Objects.requireNonNull(elementKey, "Element Key cannot be null");
 
@@ -479,24 +518,29 @@ public class StreamingWriter {
     private final static int MAX_INDEX_ENTRIES = 5000;
 
     @Override
-    byte[] drainIndexSegments(UIDGenerator uidg) throws IOException, MXFException {
+    byte[] drainIndexSegments() throws IOException, MXFException {
       if (this.cpPositions.size() == 0) {
         return null;
       }
 
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
-      for (int segIndex = 0; segIndex * MAX_INDEX_ENTRIES < this.cpPositions.size(); segIndex++) {
+      /* each index table segment contains at most MAX_INDEX_ENTRIES entries */
+      int numSegments = (this.cpPositions.size() + MAX_INDEX_ENTRIES - 1) / MAX_INDEX_ENTRIES;
+
+      for (int segIndex = 0; segIndex < numSegments; segIndex++) {
         int startIndex = segIndex * MAX_INDEX_ENTRIES;
         int endIndex = Math.min((segIndex + 1) * MAX_INDEX_ENTRIES, this.cpPositions.size());
 
         var its = new IndexTableSegment();
-        its.InstanceID = uidg.generate(this);
+        its.InstanceID = StreamingWriter.this.uidGenerator.generate(this);
         its.IndexEditRate = StreamingWriter.this.getECEditRate(this.getBodySID());
         its.IndexStartPosition = cpFirstEditUnit + startIndex;
         its.IndexDuration = (long) (endIndex - startIndex);
         its.IndexStreamID = this.getIndexSID();
         its.EssenceStreamID = this.getBodySID();
+        its.VBEByteCount = segIndex + 1 == numSegments ? this.getPosition() - this.cpPositions.get(endIndex - 1)
+            : this.cpPositions.get(endIndex) - this.cpPositions.get(endIndex - 1);
 
         its.IndexEntryArray = new IndexEntryArray();
         for (int i = startIndex; i < endIndex; i++) {
@@ -509,8 +553,6 @@ public class StreamingWriter {
 
           its.IndexEntryArray.add(e);
         }
-
-        its.VBEByteCount = this.getPosition() - this.cpPositions.get(endIndex - 1);
 
         bos.write(IndexSegmentHelper.toBytes(its, StreamingWriter.this.evthandler));
       }
@@ -563,11 +605,32 @@ public class StreamingWriter {
    */
   private final UIDGenerator uidGenerator;
 
+  /**
+   * Instantiates a StreamingWriter.
+   * 
+   * @param os         Output stream to write the MXF file to.
+   * @param preface    Preface set of the MXF file.
+   * @param evthandler Handler for events generated during writing.
+   * @throws IOException  If an I/O error occurs.
+   * @throws KLVException If a KLV error occurs.
+   * @throws MXFException If an MXF error occurs.
+   */
   public StreamingWriter(OutputStream os, Preface preface, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
-    this(os, preface, evthandler, new RNGUIDGenerator());
+    this(os, preface, evthandler, new Class4UIDGenerator());
   }
 
+  /**
+   * Instantiates a StreamingWriter with a custom UID generator.
+   * 
+   * @param os         Output stream to write the MXF file to.
+   * @param preface    Preface set of the MXF file.
+   * @param evthandler Handler for events generated during writing.
+   * @param uidg       Generator for InstanceIDs.
+   * @throws IOException  If an I/O error occurs.
+   * @throws KLVException If a KLV error occurs.
+   * @throws MXFException If an MXF error occurs.
+   */
   public StreamingWriter(OutputStream os, Preface preface, EventHandler evthandler, UIDGenerator uidg)
       throws IOException, KLVException, MXFException {
     if (os == null) {
@@ -691,6 +754,13 @@ public class StreamingWriter {
    * @throws IOException
    * @throws KLVException
    */
+  /**
+   * Writes the header partition.
+   *
+   * @throws IOException  If an I/O error occurs.
+   * @throws KLVException If a KLV error occurs.
+   * @throws MXFException If an MXF error occurs.
+   */
   public void start() throws IOException, KLVException, MXFException {
     if (this.state != State.INIT) {
       throw new RuntimeException();
@@ -776,10 +846,15 @@ public class StreamingWriter {
   }
 
   /**
-   * creates a clip-wrapped essence container with constant size units
+   * Adds a clip-wrapped essence container with Constant Byte per Element (CBE)
+   * indexing.
    * 
-   * @throws MXFException
-   * 
+   * @param bodySID  Body SID of the essence container.
+   * @param indexSID Index SID of the essence container.
+   * @return A writer for the essence container.
+   * @throws IOException  If an I/O error occurs.
+   * @throws KLVException If a KLV error occurs.
+   * @throws MXFException If an MXF error occurs.
    */
   public GCClipCBEWriter addCBEClipWrappedGC(long bodySID, long indexSID)
       throws IOException, KLVException, MXFException {
@@ -792,10 +867,15 @@ public class StreamingWriter {
   }
 
   /**
-   * creates a clip-wrapped essence container with variable size access units
+   * Adds a clip-wrapped essence container with Variable Byte per Element (VBE)
+   * indexing.
    * 
-   * @throws MXFException
-   * 
+   * @param bodySID  Body SID of the essence container.
+   * @param indexSID Index SID of the essence container.
+   * @return A writer for the essence container.
+   * @throws IOException  If an I/O error occurs.
+   * @throws KLVException If a KLV error occurs.
+   * @throws MXFException If an MXF error occurs.
    */
   public GCClipVBEWriter addVBEClipWrappedGC(long bodySID, long indexSID)
       throws IOException, KLVException, MXFException {
@@ -808,10 +888,15 @@ public class StreamingWriter {
   }
 
   /**
-   * creates a framed-wrapped essence container with variable size access units
+   * Adds a frame-wrapped essence container with Variable Byte per Element (VBE)
+   * indexing.
    * 
-   * @throws MXFException
-   * 
+   * @param bodySID  Body SID of the essence container.
+   * @param indexSID Index SID of the essence container.
+   * @return A writer for the essence container.
+   * @throws IOException  If an I/O error occurs.
+   * @throws KLVException If a KLV error occurs.
+   * @throws MXFException If an MXF error occurs.
    */
   public GCFrameVBEWriter addVBEFrameWrappedGC(long bodySID, long indexSID)
       throws IOException, KLVException, MXFException {
@@ -824,8 +909,12 @@ public class StreamingWriter {
   }
 
   /**
-   * creates a generic stream container
+   * Adds a Generic Stream.
    * 
+   * @param bodySID Body SID of the generic stream.
+   * @return A writer for the generic stream.
+   * @throws IOException  If an I/O error occurs.
+   * @throws KLVException If a KLV error occurs.
    */
   public GSWriter addGenericStream(long bodySID)
       throws IOException, KLVException {
@@ -846,10 +935,11 @@ public class StreamingWriter {
   }
 
   /**
-   * Finish the file. No further writing is possible afterwards.
+   * Completes the file writing (Footer partition, RIP).
    * 
-   * @throws IOException
-   * @throws KLVException
+   * @throws IOException  If an I/O error occurs.
+   * @throws KLVException If a KLV error occurs.
+   * @throws MXFException If an MXF error occurs.
    */
   public void finish() throws IOException, KLVException, MXFException {
     this.closeCurrentPartition();
@@ -1058,7 +1148,7 @@ public class StreamingWriter {
   }
 
   private void writeIndexPartition() throws IOException, KLVException, MXFException {
-    byte[] itsBytes = this.currentContainer.drainIndexSegments(this.uidGenerator);
+    byte[] itsBytes = this.currentContainer.drainIndexSegments();
     if (itsBytes == null) {
       return;
     }
@@ -1078,6 +1168,11 @@ public class StreamingWriter {
    * GETTERS/SETTERS
    */
 
+  /**
+   * Checks if writing is finished.
+   * 
+   * @return True if writing is finished.
+   */
   public boolean isDone() {
     return this.state == State.DONE;
   }

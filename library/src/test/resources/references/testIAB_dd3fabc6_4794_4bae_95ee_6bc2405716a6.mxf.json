@@ -211,7 +211,7 @@
 "status": "CLOSED_COMPLETE"},
 {
 "+class": "com.sandflow.smpte.mxf.types.IndexTableSegment",
-"VBEByteCount": -1,
+"VBEByteCount": 62739,
 "IndexEditRate": "24000 / 1001",
 "IndexStreamID": 2,
 "IndexDuration": 24,
