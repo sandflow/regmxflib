@@ -10,7 +10,7 @@ import com.sandflow.smpte.util.UUID;
  * sequence of object creations, the same UUIDs are generated every time, which
  * enables reproducible tests.
  */
-class DeterministicUIDGenerator implements StreamingWriter.UIDGenerator {
+class DeterministicUIDGenerator implements UIDGenerator {
   private final HashMap<String, Long> counter = new HashMap<>();
 
   /**

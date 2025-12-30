@@ -87,7 +87,10 @@ public class GCEssenceTracks {
         fds = Collections.singletonList((FileDescriptor) fp.EssenceDescription);
       }
 
-      /* TODO: error if no descriptors are present */
+      if (fds.isEmpty()) {
+        throw new IllegalArgumentException(
+            String.format("No File Descriptors found for Package ID %s", fp.PackageID));
+      }
 
       for (FileDescriptor fd : fds) {
         Optional<Track> foundTrack = fp.PackageTracks.stream().filter(t -> t.TrackID == fd.LinkedTrackID).findFirst();

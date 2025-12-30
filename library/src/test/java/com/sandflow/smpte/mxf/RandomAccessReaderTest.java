@@ -35,11 +35,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.RandomAccessFile;
 
 import org.junit.jupiter.api.Test;
 
+import com.sandflow.smpte.klv.KLVDataInput;
 import com.sandflow.smpte.mxf.types.IABEssenceDescriptor;
 import com.sandflow.smpte.mxf.types.RGBADescriptor;
 import com.sandflow.smpte.util.FileRandomAccessInputSource;
@@ -122,14 +124,36 @@ class RandomAccessReaderTest {
     assertEquals(1, tracks.getTrackCount());
     assertEquals(2, fi.getEUCount());
 
-    final byte[] iaFrameMagic = { 01, 00, 00, 00, 00, 02, 00, 00 };
-    byte[] buffer = new byte[iaFrameMagic.length];
-
     ClipReader fr = new ClipReader(fi, rais);
+
     for (int i = 0; i < fr.getEUCount(); i++) {
       fr.seek(i);
-      fr.read(buffer);
-      assertArrayEquals(buffer, iaFrameMagic);
+      long rbytes = fr.getRemainingElementBytes();
+      KLVDataInput kis = new KLVDataInput(fr);
+
+      /* PreambleTag */
+      byte preambleTag = kis.readByte();
+      assertEquals(0x01, preambleTag);
+
+      /* PreambleLength */
+      long preambleLength = Integer.toUnsignedLong(kis.readInt());
+      assertEquals(preambleLength, 0);
+
+      /* PreambleValue */
+      long skippedBytes = kis.skipFully(preambleLength);
+      assertEquals(preambleLength, skippedBytes);
+
+      /* IAFrameTag */
+      byte frameTag = kis.readByte();
+      assertEquals(0x02, frameTag);
+
+      /* IAFrameLength */
+      long frameLength = Integer.toUnsignedLong(kis.readInt());
+      assertTrue(frameLength > 0);
+      skippedBytes = kis.skipFully(frameLength);
+      assertEquals(frameLength, skippedBytes);
+
+      assertEquals(rbytes - kis.getReadCount(), fr.getRemainingElementBytes());
     }
     fr.close();
   }
