@@ -63,13 +63,35 @@ import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UMID;
 
+/**
+ * Helper class for creating header metadata ({@link Preface}) for OP1a MXF files.
+ */
 public class OP1aHelper {
 
+  /**
+   * Information about a track.
+   * 
+   * @param trackId Track ID of the track.
+   * @param essenceKey Essence Element Key of the track.
+   * @param descriptor File descriptor associated with the track.
+   * @param dataDefinition Data definition of the track.
+   * @param trackName Track Name for the track.
+   */
   public record TrackInfo(byte trackId, UL essenceKey,
       FileDescriptor descriptor,
       AUID dataDefinition, String trackName) {
   }
 
+  /**
+   * Information about the essence container.
+   * 
+   * @param tracks List of tracks in the essence container.
+   * @param conformsToSpecifications Set of specifications the file conforms to.
+   * @param editRate Edit rate of the essence container.
+   * @param bodySID Body SID of the essence container.
+   * @param indexSID Index SID of the essence container.
+   * @param duration Duration of the essence container.
+   */
   public record EssenceContainerInfo(
       java.util.List<TrackInfo> tracks,
       java.util.Set<AUID> conformsToSpecifications,
@@ -84,6 +106,15 @@ public class OP1aHelper {
 
   final Map<Byte, UL> trackIDToElementKeys = new HashMap<>();
 
+  /**
+   * Creates an OP1aHelper.
+   * 
+   * @param ecInfo Information about the essence container.
+   * @param fileInfo Identification information for the file.
+   * @param uidg Generator for InstanceIDs.
+   * @throws IOException If an I/O error occurs.
+   * @throws KLVException If a KLV error occurs.
+   */
   public OP1aHelper(EssenceContainerInfo ecInfo, Identification fileInfo, UIDGenerator uidg)
       throws IOException, KLVException {
 
@@ -227,10 +258,21 @@ public class OP1aHelper {
     }
   }
 
+  /**
+   * Gets the Preface set.
+   * 
+   * @return The Preface set.
+   */
   public Preface getPreface() {
     return this.preface;
   }
 
+  /**
+   * Gets the Element Key for a specific track.
+   * 
+   * @param trackId The ID of the track.
+   * @return The Element Key.
+   */
   public UL getElementKey(byte trackId) {
     return this.trackIDToElementKeys.get(trackId);
   }

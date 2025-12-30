@@ -44,6 +44,10 @@ import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.Event;
 import com.sandflow.util.events.EventHandler;
 
+/**
+ * Parses the header metadata of an MXF file from a stream.
+ * This class is designed for sequential access where the header metadata is at the beginning of the stream.
+ */
 public class StreamingFileInfo {
 
   private static Preface readHeaderMetadataFrom(InputStream is, long headerByteCount, EventHandler evthandler)
@@ -136,6 +140,15 @@ public class StreamingFileInfo {
 
   private final Preface preface;
 
+  /**
+   * Creates a StreamingFileInfo by reading the header partition and metadata from the input stream.
+   * 
+   * @param is Input stream positioned at the start of the MXF file.
+   * @param evthandler Handler for events generated during parsing.
+   * @throws IOException If an I/O error occurs.
+   * @throws KLVException If a KLV error occurs.
+   * @throws MXFException If an MXF error occurs.
+   */
   public StreamingFileInfo(InputStream is, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
     MXFDataInput mis = new MXFDataInput(is);
@@ -177,6 +190,11 @@ public class StreamingFileInfo {
     }
   }
 
+  /**
+   * Gets the Preface set parsed from the header metadata.
+   * 
+   * @return The Preface set.
+   */
   public Preface getPreface() {
     return this.preface;
   }

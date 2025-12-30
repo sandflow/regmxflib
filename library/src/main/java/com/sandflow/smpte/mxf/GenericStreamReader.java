@@ -38,6 +38,9 @@ import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.RandomAccessInputSource;
 
+/**
+ * Provides random access to an MXF Generic Stream.
+ */
 public class GenericStreamReader extends InputStream {
 
   final RandomAccessFileInfo info;
@@ -47,28 +50,59 @@ public class GenericStreamReader extends InputStream {
   Long elementLength;
   Long remainingElementBytes;
 
+  /**
+   * Creates a GenericStreamReader for a Generic Stream.
+   * 
+   * @param info   Information about the MXF file.
+   * @param source Random access source for the MXF file.
+   * @throws IOException  If an I/O error occurs.
+   * @throws KLVException If a KLV error occurs.
+   */
   GenericStreamReader(RandomAccessFileInfo info, RandomAccessInputSource source) throws IOException, KLVException {
     Objects.requireNonNull(info);
     Objects.requireNonNull(source);
-    
+
     this.info = info;
     this.source = source;
   }
 
+  /**
+   * Gets the key of the Generic Stream element.
+   * 
+   * @return The element key.
+   */
   public AUID getElementKey() {
     return this.elementKey;
   }
 
+  /**
+   * Gets the total length of the Generic Stream element's value.
+   * 
+   * @return The element length in bytes.
+   */
   public long getElementLength() {
     return this.elementLength;
   }
 
+  /**
+   * Gets the number of bytes remaining in the Generic Stream element from
+   * the current position.
+   * 
+   * @return The number of remaining bytes.
+   */
   public long getRemainingElementBytes() {
     return this.remainingElementBytes;
   }
 
+  /**
+   * Seeks to the specified Generic Stream.
+   * 
+   * @param gsSID The BodySID of the Generic Stream to seek to.
+   * @throws IOException  If an I/O error occurs.
+   * @throws KLVException If a KLV error occurs.
+   */
   public void seek(long gsSID) throws IOException, KLVException {
-    if (! this.info.getGenericStreams().contains(gsSID)) {
+    if (!this.info.getGenericStreams().contains(gsSID)) {
       throw new RuntimeException(String.format("The Generic Stream %d does not exist", gsSID));
     }
 
@@ -80,6 +114,12 @@ public class GenericStreamReader extends InputStream {
     this.remainingElementBytes = this.elementLength;
   }
 
+  /**
+   * Reads the next byte of data from the input stream.
+   * 
+   * @return The next byte of data, or -1 if the end of the stream is reached.
+   * @throws IOException If an I/O error occurs.
+   */
   @Override
   public int read() throws IOException {
     if (this.remainingElementBytes == 0)
@@ -89,6 +129,18 @@ public class GenericStreamReader extends InputStream {
     return r;
   }
 
+  /**
+   * Reads some number of bytes from the input stream and stores them into the
+   * buffer array {@code b}.
+   * 
+   * @param b   The buffer into which the data is read.
+   * @param off The start offset in array {@code b} at which the data is
+   *            written.
+   * @param len The maximum number of bytes to read.
+   * @return The total number of bytes read into the buffer, or -1 if there is
+   *         no more data because the end of the stream has been reached.
+   * @throws IOException If an I/O error occurs.
+   */
   @Override
   public int read(byte[] b, int off, int len) throws IOException {
     if (this.remainingElementBytes == 0)
@@ -98,6 +150,13 @@ public class GenericStreamReader extends InputStream {
     return r;
   }
 
+  /**
+   * Skips over and discards {@code n} bytes of data from this input stream.
+   * 
+   * @param n The number of bytes to be skipped.
+   * @return The actual number of bytes skipped.
+   * @throws IOException If an I/O error occurs.
+   */
   @Override
   public long skip(long n) throws IOException {
     if (this.remainingElementBytes == 0)
@@ -107,6 +166,11 @@ public class GenericStreamReader extends InputStream {
     return s;
   }
 
+  /**
+   * Closes this input stream and releases any system resources associated with
+   * the stream. This implementation does nothing, as the underlying
+   * {@link RandomAccessInputSource} is managed externally.
+   */
   @Override
   public void close() throws IOException {
     /*

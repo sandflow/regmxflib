@@ -44,6 +44,10 @@ import com.sandflow.smpte.mxf.types.SourcePackage;
 import com.sandflow.smpte.mxf.types.Track;
 import com.sandflow.smpte.util.AUID;
 
+/**
+ * This class inspects the header metadata of an MXF file to build a list of
+ * available essence tracks and their associated properties.
+ */
 public class GCEssenceTracks {
 
   /**
@@ -61,6 +65,11 @@ public class GCEssenceTracks {
 
   private final List<TrackInfo> tracks = new ArrayList<>();
 
+  /**
+   * Creates a GCEssenceTracks instance by parsing the header metadata.
+   * 
+   * @param preface The Preface set of the MXF file.
+   */
   public GCEssenceTracks(Preface preface) {
     /* collect tracks that are stored in essence containers */
     for (EssenceData ed : preface.ContentStorageObject.EssenceDataObjects) {
@@ -105,14 +114,31 @@ public class GCEssenceTracks {
     }
   }
 
+  /**
+   * Gets information for a track at a specific index.
+   * 
+   * @param i The index of the track.
+   * @return Information about the track.
+   */
   public TrackInfo getTrackInfo(int i) {
     return this.tracks.get(i);
   }
 
+  /**
+   * Gets the total number of essence tracks found.
+   * 
+   * @return The number of tracks.
+   */
   public int getTrackCount() {
     return this.tracks.size();
   }
 
+  /**
+   * Gets information for a track based on its Essence Element Key.
+   * 
+   * @param elementKey The Essence Element Key of the track.
+   * @return Information about the track, or null if not found.
+   */
   public TrackInfo getTrackInfo(AUID elementKey) {
     if (! elementKey.isUL())
       return null;

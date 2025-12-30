@@ -35,11 +35,23 @@ import java.io.IOException;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.util.RandomAccessInputSource;
 
+/**
+ * Provides random access to an MXF frame-wrapped essence container.
+ */
 public class FrameReader extends StreamingReader {
 
   final RandomAccessFileInfo info;
   final RandomAccessInputSource source;
 
+  /**
+   * Creates a FrameReader for a frame-wrapped essence container.
+   * 
+   * @param info   Information about the MXF file.
+   * @param source Random access source for the MXF file.
+   * @throws IOException  If an I/O error occurs.
+   * @throws KLVException If a KLV error occurs.
+   * @throws MXFException If an MXF error occurs.
+   */
   FrameReader(RandomAccessFileInfo info, RandomAccessInputSource source)
       throws IOException, KLVException, MXFException {
     super(source, null);
@@ -50,10 +62,22 @@ public class FrameReader extends StreamingReader {
     this.seek(0);
   }
 
+  /**
+   * Gets the total number of Edit Units in the essence container.
+   * 
+   * @return The count of Edit Units.
+   */
   public long getSize() {
     return this.info.getEUCount();
   }
 
+  /**
+   * Seeks to the specified Edit Unit within the essence container.
+   * 
+   * @param euPosition The zero-based index of the Edit Unit to seek to.
+   * @throws IOException  If an I/O error occurs.
+   * @throws KLVException If a KLV error occurs.
+   */
   public void seek(long euPosition) throws IOException, KLVException {
     long filePosition = this.info.ecToFilePositions(this.info.euToECPosition(euPosition));
     this.source.position(filePosition);
