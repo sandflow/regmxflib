@@ -23,6 +23,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/**
+* @author Pierre-Anthony Lemieux
+*/
+
 package com.sandflow.smpte.mxf;
 
 import java.io.EOFException;

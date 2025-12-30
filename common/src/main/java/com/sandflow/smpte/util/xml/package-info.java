@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Pierre-Anthony Lemieux (pal@sandflow.com)
+ * Copyright (c) Sandflow Consulting LLC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,6 +23,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/**
+* @author Pierre-Anthony Lemieux
+*/
 
 /**
  * Defines {@link jakarta.xml.bind.annotation.adapters.XmlAdapter} implementations for SMPTE-related structures
