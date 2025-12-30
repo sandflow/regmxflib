@@ -59,6 +59,9 @@ import com.sandflow.util.JSONSerializer;
 import com.sandflow.util.events.Event;
 import com.sandflow.util.events.EventHandler;
 
+/**
+ * Dumps the structure of an MXF file as a JSON structure.
+ */
 public class RegMXFDump {
   private final static Logger LOG = Logger.getLogger(RegMXFDump.class.getName());
 
@@ -68,10 +71,23 @@ public class RegMXFDump {
   }
 
 
+  /**
+   * Main entry point for the command line tool.
+   * 
+   * @param args Command line arguments. The first argument is the path to the MXF file.
+   * @throws Exception If an error occurs during processing.
+   */
   public static void main(String[] args) throws Exception {
     dump(new FileInputStream(args[0]), System.out);
   }
 
+  /**
+   * Dumps the structure of an MXF file as a JSON structure.
+   * 
+   * @param is Input stream containing the MXF file.
+   * @param os Output stream where the JSON dump will be written.
+   * @throws Exception If an error occurs during processing.
+   */
   public static void dump(InputStream is, OutputStream os) throws Exception {
     EventHandler evthandler = new EventHandler() {
 
