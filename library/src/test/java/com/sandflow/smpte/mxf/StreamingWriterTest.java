@@ -305,6 +305,95 @@ class StreamingWriterTest {
     TestUtils.compareToReference(of, outFN + ".json");
   }
 
+  @Test
+  void testMultiIndexSegments(TestInfo testInfo) throws Exception {
+
+    final DeterministicUIDGenerator uidg = new DeterministicUIDGenerator();
+    final int frameCount = 12000;
+    final Fraction sampleRate = Fraction.of(48000);
+    final Fraction editRate = Fraction.of(24);
+    final byte trackID = 1;
+    final long BODY_SID = 1;
+    final long INDEX_SID = 127;
+
+    /* create a 1 byte frame*/
+
+    byte[] iaFrame = new byte[]{(byte) 0xff};
+
+    /* create descriptors */
+
+    IABSoundfieldLabelSubDescriptor sd = new IABSoundfieldLabelSubDescriptor();
+    sd.InstanceID = uidg.generate(sd);
+    sd.MCALabelDictionaryID = Labels.IABSoundfield;
+    sd.MCALinkID = sd.InstanceID;
+    sd.MCATagSymbol = "IAB";
+    sd.MCATagName = "IAB";
+    sd.RFC5646SpokenLanguage = "en-us";
+
+    IABEssenceDescriptor d = new IABEssenceDescriptor();
+    d.InstanceID = uidg.generate(d);
+    d.SampleRate = editRate;
+    d.AudioSampleRate = sampleRate;
+    d.Locked = false;
+    d.ChannelCount = 0L;
+    d.QuantizationBits = 24L;
+    d.SoundCompression = Labels.ImmersiveAudioCoding;
+    d.SubDescriptors = new SubDescriptorStrongReferenceVector();
+    d.SubDescriptors.add(sd);
+    d.ContainerFormat = Labels.IMF_IABEssenceClipWrappedContainer;
+
+    /* create header metadata */
+
+    OP1aHelper.TrackInfo ti = new OP1aHelper.TrackInfo(
+        trackID,
+        EssenceKeys.IMF_IABEssenceClipWrappedElement.asUL(),
+        d,
+        Labels.SoundEssenceTrack,
+        null);
+
+    OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
+        Collections.singletonList(ti),
+        java.util.Set.of(Labels.IMF_IABTrackFileLevel0),
+        editRate,
+        BODY_SID,
+        INDEX_SID,
+        (long) frameCount);
+
+    OP1aHelper header = new OP1aHelper(eci, TestUtils.makeIdentification(uidg), uidg);
+
+    /* Initialize the streaming writer */
+    final String outFN = testInfo.getTestMethod().get().getName() + ".mxf";
+    File of = TestUtils.getOutputFile(outFN);
+    OutputStream os = new FileOutputStream(of);
+    StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null, uidg);
+
+    /* configure the clip-wrapped generic container */
+
+    var gc = sw.addVBEClipWrappedGC(BODY_SID, INDEX_SID);
+
+    /* start writing file */
+
+    sw.start();
+
+    /* write @frameCount copies of the same IA Frame */
+
+    sw.startPartition(gc);
+    gc.nextClip(header.getElementKey(trackID), iaFrame.length * frameCount);
+    for (int i = 0; i < frameCount; i++) {
+      gc.nextAccessUnit();
+      gc.write(iaFrame);
+    }
+
+    /* complete the file */
+    sw.finish();
+    os.flush();
+    os.close();
+
+    /* compare file to reference */
+
+    TestUtils.compareToReference(of, outFN + ".json");
+  }
+
   /*
    * <r0:RGBADescriptor>
    * <r1:InstanceID>urn:uuid:888c7510-06d5-4ccf-976c-627199e435d6</r1:InstanceID>
