@@ -32,12 +32,8 @@ package com.sandflow.smpte.mxf;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.SeekableByteChannel;
 
 import com.sandflow.smpte.klv.MemoryTriplet;
-import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.PartitionPack.Kind;
 import com.sandflow.smpte.util.AUID;
@@ -45,95 +41,19 @@ import com.sandflow.smpte.util.UL;
 
 /**
  * Utilities for processing MXF files
- * 
- * @author pal
+ *
  */
 public class MXFFiles {
 
-  /**
-   * Seeks to the footer partition, assuming the current position of the
-   * channel is within the run-in (SMPTE ST 377-1 Section 6.5), the footer
-   * partition
-   * offset is listed in the Header Partition Pack or a Random Index Pack is
-   * present.
-   *
-   * @param mxffile Channel containing an MXF file
-   * @return Offset of the Footer Partition, or -1 if a Footer Partition was not
-   *         found
-   * @throws IOException
-   * @throws com.sandflow.smpte.klv.exceptions.KLVException
-   */
-  public static long seekFooterPartition(SeekableByteChannel mxffile) throws IOException, KLVException {
-    long headeroffset = seekHeaderPartition(mxffile);
-    MXFDataInput kis = new MXFDataInput(Channels.newInputStream(mxffile));
-    Triplet t = kis.readTriplet();
-    if (t == null) {
-      return -1;
-    }
-    PartitionPack pp = PartitionPack.fromTriplet(t);
-    if (pp == null) {
-      return -1;
-    }
-    if (pp.getFooterPartition() != 0) {
-      mxffile.position(headeroffset + pp.getFooterPartition());
-      return mxffile.position();
-    }
-
-    /* look for the RIP start */
-
-    mxffile.position(mxffile.size() - 4);
-
-    ByteBuffer bytes = ByteBuffer.allocate(4);
-
-    if (mxffile.read(bytes) != bytes.limit()) {
-      return -1;
-    }
-
-    /* move to start of RIP */
-
-    mxffile.position(mxffile.size() - bytes.getInt(0));
-
-    /* read RIP */
-
-    kis = new MXFDataInput(Channels.newInputStream(mxffile));
-
-    t = kis.readTriplet();
-
-    if (t == null) {
-      return -1;
-    }
-    RandomIndexPack rip = RandomIndexPack.fromTriplet(t);
-    if (rip == null) {
-      return -1;
-    }
-    mxffile.position(rip.getOffsets().get(rip.getOffsets().size() - 1).getOffset());
-    return mxffile.position();
-  }
 
   /**
-   * Seeks to the first byte of the Header partition, assuming the current
-   * position of the
-   * channel is within the run-in (SMPTE ST 377-1 Section 6.5)
-   *
-   * @param mxffile Channel containing an MXF file
-   * @return Offset of the first byte of the Header Partition, or -1 if
-   *         the Header Partition was not found
-   * @throws IOException
+   * Creates an Essence Element Key according to SMPTE ST 379-1/ST 379-2
+   * 
+   * @param essenceKey Base Essence Element Key
+   * @param elementCountInItem Count of elements in the item
+   * @param elementIDInItem ID of the element in the item
+   * @return Essence Element Key
    */
-  public static long seekHeaderPartition(SeekableByteChannel mxffile) throws IOException {
-    ByteBuffer ulbytes = ByteBuffer.allocate(16);
-    long offset = mxffile.position();
-    while (mxffile.read(ulbytes) == ulbytes.limit() && offset <= 65536) {
-      UL ul = new UL(ulbytes.array());
-      if (ul.equalsWithMask(PartitionPack.getKey(), 65248 /* first eleven bytes minus the version byte */ )) {
-        mxffile.position(offset);
-        return offset;
-      }
-      mxffile.position(++offset);
-    }
-    return -1;
-  }
-
   public static UL makeEssenceElementKey(UL essenceKey, byte elementCountInItem, byte elementIDInItem) {
     byte[] key = essenceKey.getValue().clone();
     key[15] = elementIDInItem;
@@ -141,6 +61,12 @@ public class MXFFiles {
     return new UL(key);
   }
 
+  /**
+   * Extracts the Track Number from an Essence Element Key according to SMPTE ST 379-1/ST 379-2
+   * 
+   * @param essenceKey Essence Element Key
+   * @return Track Number
+   */
   public static int getTrackNumber(UL essenceKey) {
     return ((essenceKey.getValueOctet(12) & 0xFF) << 24) +
         ((essenceKey.getValueOctet(13) & 0xFF) << 16) +
@@ -148,10 +74,25 @@ public class MXFFiles {
         (essenceKey.getValueOctet(15) & 0xFF);
   }
 
-  static public record ElementInfo(AUID key, long length, long sid) {
+  /**
+   * Information about an essence element
+   * 
+   * @param key Key of the element
+   * @param length Length of the element
+   * @param sid BodySID of the element (if applicable, otherwise 0)
+   */
+  static public record EssenceElementInfo(AUID key, long length, long sid) {
   }
 
-  public static ElementInfo nextElement(InputStream is) throws IOException, KLVException {
+  /**
+   * Reads the next essence element from the input stream, skipping over non-essence elements
+   * 
+   * @param is Input stream
+   * @return Information about the next essence element, or null if the end of the stream is reached
+   * @throws IOException
+   * @throws KLVException
+   */
+  public static EssenceElementInfo nextElement(InputStream is) throws IOException, KLVException {
     MXFDataInput mis = new MXFDataInput(is);
 
     long sid = 0;
@@ -209,7 +150,7 @@ public class MXFFiles {
       elementLength = mis.readBERLength();
     }
 
-    return new ElementInfo(elementKey, elementLength, sid);
+    return new EssenceElementInfo(elementKey, elementLength, sid);
   }
 
 }

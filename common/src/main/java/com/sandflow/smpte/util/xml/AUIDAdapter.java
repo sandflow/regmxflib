@@ -35,7 +35,7 @@ import com.sandflow.smpte.util.UL;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
- * Unmarshals/marshals an xsd:string to/from a AIUD
+ * Unmarshals/marshals an xsd:string to/from a AUID
  */
 public class AUIDAdapter extends XmlAdapter<String, AUID> {
 

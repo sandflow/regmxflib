@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.sandflow.smpte.klv.exceptions.KLVException;
-import com.sandflow.smpte.mxf.MXFFiles.ElementInfo;
+import com.sandflow.smpte.mxf.MXFFiles.EssenceElementInfo;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.util.events.EventHandler;
 
@@ -52,7 +52,7 @@ public class StreamingReader extends InputStream {
 
   private MXFDataInput mis;
   protected State state;
-  private ElementInfo elementInfo;
+  private EssenceElementInfo elementInfo;
   private long remainingElementBytes = 0;
   private AUID elementKey;
   /**

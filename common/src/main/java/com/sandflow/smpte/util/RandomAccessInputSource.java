@@ -33,6 +33,13 @@ package com.sandflow.smpte.util;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * An InputStream that additionally supports random-access operations.
+ *
+ * This abstract base represents a byte source that can be read sequentially
+ * like an InputStream while also allowing the caller to query and change the
+ * current read position.
+ */
 public abstract class RandomAccessInputSource extends InputStream {
   /**
    * Set the position (in bytes) from the beginning of the source.

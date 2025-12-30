@@ -33,6 +33,10 @@ package com.sandflow.smpte.mxf;
 import com.sandflow.util.events.Event;
 import com.sandflow.util.events.EventHandler;
 
+/**
+ * Exception type representing errors encountered while processing MXF (Material Exchange Format) files..
+ *
+ */
 public class MXFException extends Exception {
 
   public MXFException(String msg) {
