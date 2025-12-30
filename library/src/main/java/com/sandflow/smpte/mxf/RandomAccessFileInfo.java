@@ -32,7 +32,6 @@ package com.sandflow.smpte.mxf;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,6 +48,10 @@ import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.Event;
 import com.sandflow.util.events.EventHandler;
 
+/**
+ * Parses an MXF file to gather the necessary information for random access to an MXF file.
+ * This is intended to be used with {@link ClipReader}, {@link FrameReader}, and similar classes.
+ */
 public class RandomAccessFileInfo {
 
   interface ECIndex {
@@ -147,6 +150,15 @@ public class RandomAccessFileInfo {
 
   private Map<Long, FilePositionMapper> gsToFilePositions = new HashMap<>();
 
+  /**
+   * Creates a RandomAccessFileInfo by parsing the MXF file structure.
+   * 
+   * @param raip       A random-access source for the MXF file.
+   * @param evthandler An optional event handler for reporting issues.
+   * @throws IOException  If an I/O error occurs during reading.
+   * @throws KLVException If a KLV parsing error occurs.
+   * @throws MXFException If an MXF-specific error occurs.
+   */
   RandomAccessFileInfo(RandomAccessInputSource raip, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
     if (raip == null) {
@@ -371,29 +383,65 @@ public class RandomAccessFileInfo {
 
   }
 
+  /**
+   * Gets the parsed Preface set from the file's header metadata.
+   * 
+   * @return The Preface set.
+   */
   public Preface getPreface() {
     return this.basicInfo.getPreface();
   }
 
+  /**
+   * Gets the set of BodySIDs for all identified Generic Streams in the file.
+   * 
+   * @return An unmodifiable set of Generic Stream BodySIDs.
+   */
   public java.util.Set<Long> getGenericStreams() {
     return Collections.unmodifiableSet(this.gsToFilePositions.keySet());
   }
 
+  /**
+   * Maps a byte offset within a Generic Stream to an absolute byte offset in the
+   * file.
+   * 
+   * @param gsSID    The BodySID of the Generic Stream.
+   * @param position The byte offset within the Generic Stream.
+   * @return The absolute byte offset in the file.
+   */
   public long gsToFilePosition(long gsSID, long position) {
     /* TODO: check for no generic stream */
     return this.gsToFilePositions.get(gsSID).getFilePosition(position);
   }
 
+  /**
+   * Maps an Edit Unit index to a byte offset within the main Essence Container.
+   * 
+   * @param position The zero-based index of the Edit Unit.
+   * @return The byte offset within the Essence Container.
+   */
   public long euToECPosition(long position) {
     /* TODO: check for no index */
     return this.euToECPosition.getECPosition(position);
   }
 
+  /**
+   * Maps a byte offset within the main Essence Container to an absolute byte
+   * offset in the file.
+   * 
+   * @param position The byte offset within the Essence Container.
+   * @return The absolute byte offset in the file.
+   */
   public long ecToFilePositions(long position) {
     /* TODO: check for no ec */
     return this.ecToFilePositions.getFilePosition(position);
   }
 
+  /**
+   * Gets the total number of Edit Units in the main Essence Container.
+   * 
+   * @return The count of Edit Units.
+   */
   public long getEUCount() {
     /* TODO: check for no index */
     return this.euToECPosition.length();

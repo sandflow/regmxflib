@@ -33,10 +33,17 @@ package com.sandflow.smpte.util;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+/**
+ * A {@link RandomAccessInputSource} implementation that wraps a
+ * {@link RandomAccessFile}.
+ */
 public class FileRandomAccessInputSource extends RandomAccessInputSource {
 
   final RandomAccessFile rap;
 
+  /**
+   * @param rap The RandomAccessFile to wrap.
+   */
   public FileRandomAccessInputSource(RandomAccessFile rap) {
     this.rap = rap;
   }
@@ -71,6 +78,9 @@ public class FileRandomAccessInputSource extends RandomAccessInputSource {
     return (int) Long.min(this.size() - this.position(), Integer.MAX_VALUE);
   }
 
+  /**
+   * Closes the underlying {@link RandomAccessFile}.
+   */
   @Override
   public void close() throws IOException {
     this.rap.close();

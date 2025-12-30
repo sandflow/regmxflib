@@ -28,21 +28,17 @@
 * @author Pierre-Anthony Lemieux
 */
 
-package com.sandflow.smpte.mxf.helpers;
+package com.sandflow.smpte.mxf;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import org.apache.commons.numbers.fraction.Fraction;
 
 import com.sandflow.smpte.klv.exceptions.KLVException;
-import com.sandflow.smpte.mxf.Labels;
-import com.sandflow.smpte.mxf.MXFFiles;
-import com.sandflow.smpte.mxf.UIDGenerator;
 import com.sandflow.smpte.mxf.types.AUIDSet;
 import com.sandflow.smpte.mxf.types.ComponentStrongReferenceVector;
 import com.sandflow.smpte.mxf.types.ContentStorage;

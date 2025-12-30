@@ -40,6 +40,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.NotImplementedException;
@@ -51,7 +52,6 @@ import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.RandomIndexPack.PartitionOffset;
-import com.sandflow.smpte.mxf.helpers.IndexSegmentHelper;
 import com.sandflow.smpte.mxf.types.EssenceData;
 import com.sandflow.smpte.mxf.types.FileDescriptor;
 import com.sandflow.smpte.mxf.types.IndexEntry;
@@ -163,6 +163,69 @@ public class StreamingWriter {
        * underlying RandomAccessInputSource
        */
     }
+
+    static byte[] serializeIndexTableSegment(IndexTableSegment its, EventHandler evthandler) throws IOException, MXFException {
+      /* serialize the index table segment */
+
+      /*
+      * The AtomicReference is necessary since the variable is initialized in the
+      * inline MXFOutputContext
+      */
+      AtomicReference<Set> ars = new AtomicReference<>();
+      MXFOutputContext ctx = new MXFOutputContext() {
+
+        @Override
+        public UUID getPackageInstanceID(UMID packageID) {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void putSet(Set set) {
+          if (ars.get() != null) {
+            throw new RuntimeException("Serializing an Index Table Segment should not require more than one Set");
+          }
+          ars.set(set);
+        }
+
+        @Override
+        public void handleEvent(Event evt) throws MXFException {
+          MXFException.handle(evthandler, evt);
+        }
+
+      };
+
+      its.toSet(ctx);
+
+      if (ars.get() == null) {
+        throw new RuntimeException("Index Table Segment not serialized");
+      }
+
+      /* serialize the header */
+      LocalTagResolver tags = new LocalTagResolver() {
+        @Override
+        public Long getLocalTag(AUID auid) {
+          Long localTag = StaticLocalTags.register().getLocalTag(auid);
+          if (localTag == null) {
+            throw new RuntimeException();
+          }
+          return localTag;
+        }
+
+        @Override
+        public AUID getAUID(long localtag) {
+          throw new UnsupportedOperationException(
+              "Serializing an Index Table Segment should not require resolving a local tag to an AUID");
+        }
+
+      };
+
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      MXFDataOutput mos = new MXFDataOutput(bos);
+      Set.toStreamAsLocalSet(ars.get(), tags, mos);
+      mos.flush();
+
+      return bos.toByteArray();
+    }
   }
 
   /**
@@ -244,7 +307,7 @@ public class StreamingWriter {
       its.EssenceStreamID = this.getBodySID();
       its.EditUnitByteCount = this.accessUnitSize;
 
-      return IndexSegmentHelper.toBytes(its, StreamingWriter.this.evthandler);
+      return serializeIndexTableSegment(its, StreamingWriter.this.evthandler);
     }
 
     @Override
@@ -428,7 +491,7 @@ public class StreamingWriter {
           its.IndexEntryArray.add(e);
         }
 
-        bos.write(IndexSegmentHelper.toBytes(its, StreamingWriter.this.evthandler));
+        bos.write(serializeIndexTableSegment(its, StreamingWriter.this.evthandler));
       }
 
       return bos.toByteArray();
@@ -554,7 +617,7 @@ public class StreamingWriter {
           its.IndexEntryArray.add(e);
         }
 
-        bos.write(IndexSegmentHelper.toBytes(its, StreamingWriter.this.evthandler));
+        bos.write(serializeIndexTableSegment(its, StreamingWriter.this.evthandler));
       }
 
       this.cpFirstEditUnit = this.duration;
