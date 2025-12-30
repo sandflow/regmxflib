@@ -68,7 +68,7 @@ import com.sandflow.smpte.util.UL;
 public class ReadWriteTest {
 
   @Test
-  void testVIDEO_f031aa43_88c8_4de9_856f_904a33a78505(TestInfo testInfo) throws Exception {
+  void testPHDR(TestInfo testInfo) throws Exception {
     final DeterministicUIDGenerator uidg = new DeterministicUIDGenerator();
 
     /* load the source file */
@@ -144,7 +144,7 @@ public class ReadWriteTest {
 
     /* create output file */
 
-    final String outFN = testInfo.getTestMethod().get().getName() + ".mxf";
+    final String outFN = this.getClass().getSimpleName() + "_" + testInfo.getTestMethod().get().getName() + ".mxf";
     File of = TestUtils.getOutputFile(outFN);
     OutputStream os = new FileOutputStream(of);
 
@@ -198,7 +198,7 @@ public class ReadWriteTest {
   }
 
   @Test
-  void testAUDIO_807d0b4c_69ec_44b0_be74_dfbf1a8c99d3(TestInfo testInfo) throws Exception {
+  void textSound(TestInfo testInfo) throws Exception {
 
     final DeterministicUIDGenerator uidg = new DeterministicUIDGenerator();
 
@@ -249,7 +249,7 @@ public class ReadWriteTest {
 
     /* create output file */
 
-    final String outFN = testInfo.getTestMethod().get().getName() + ".mxf";
+    final String outFN = this.getClass().getSimpleName() + "_" + testInfo.getTestMethod().get().getName() + ".mxf";
     File of = TestUtils.getOutputFile(outFN);
     FileOutputStream os = new FileOutputStream(of);
 
@@ -293,7 +293,7 @@ public class ReadWriteTest {
   }
 
   @Test
-  void testIAB_dd3fabc6_4794_4bae_95ee_6bc2405716a6(TestInfo testInfo) throws Exception {
+  void testIAB(TestInfo testInfo) throws Exception {
 
     final DeterministicUIDGenerator uidg = new DeterministicUIDGenerator();
 
@@ -427,7 +427,7 @@ public class ReadWriteTest {
 
     /* create output file */
 
-    final String outFN = testInfo.getTestMethod().get().getName() + ".mxf";
+    final String outFN = this.getClass().getSimpleName() + "_" + testInfo.getTestMethod().get().getName() + ".mxf";
     File of = TestUtils.getOutputFile(outFN);
     FileOutputStream os = new FileOutputStream(of);
 

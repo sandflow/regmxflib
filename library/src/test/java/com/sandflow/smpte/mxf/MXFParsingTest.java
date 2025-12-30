@@ -46,10 +46,10 @@ import com.sandflow.smpte.mxf.TestUtils;
 public class MXFParsingTest {
 
   @Test
-  void testVIDEO_f031aa43_88c8_4de9_856f_904a33a78505(TestInfo testInfo) throws Exception {
+  void testVIDEO(TestInfo testInfo) throws Exception {
     File mxfFile = new File(
         ClassLoader.getSystemResource("imps/imp_1/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.mxf").toURI());
 
-    TestUtils.compareToReference(mxfFile, testInfo.getTestMethod().get().getName() + ".mxf.json");
+    TestUtils.compareToReference(mxfFile, this.getClass().getSimpleName() + "_" + testInfo.getTestMethod().get().getName() + ".mxf.json");
   }
 }
