@@ -55,7 +55,7 @@ public class MXFFiles {
    * @return Essence Element Key
    */
   public static UL makeEssenceElementKey(UL essenceKey, byte elementCountInItem, byte elementIDInItem) {
-    byte[] key = essenceKey.getValue().clone();
+    byte[] key = essenceKey.getBytes();
     key[15] = elementIDInItem;
     key[13] = elementCountInItem;
     return new UL(key);
@@ -68,10 +68,10 @@ public class MXFFiles {
    * @return Track Number
    */
   public static int getTrackNumber(UL essenceKey) {
-    return ((essenceKey.getValueOctet(12) & 0xFF) << 24) +
-        ((essenceKey.getValueOctet(13) & 0xFF) << 16) +
-        ((essenceKey.getValueOctet(14) & 0xFF) << 8) +
-        (essenceKey.getValueOctet(15) & 0xFF);
+    return ((essenceKey.getOctet(12) & 0xFF) << 24) +
+        ((essenceKey.getOctet(13) & 0xFF) << 16) +
+        ((essenceKey.getOctet(14) & 0xFF) << 8) +
+        (essenceKey.getOctet(15) & 0xFF);
   }
 
   /**

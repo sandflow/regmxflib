@@ -54,7 +54,7 @@ public class ULValueAdapter {
    * @return KLV Triplet Value
    */
   public static byte[] toValue(UL obj) {
-    return obj.getValue();
+    return obj.getBytes();
   }
 
 }

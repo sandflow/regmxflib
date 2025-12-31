@@ -87,11 +87,11 @@ public class MXFDataOutput extends KLVDataOutput {
    */
   public void writeUUID(UUID uuid) throws IOException, EOFException {
     if (getByteOrder() == ByteOrder.LITTLE_ENDIAN) {
-      byte b[] = uuid.getValue().clone();
+      byte b[] = uuid.getBytes();
       uuidSwap(b);
       write(b);
     } else {
-      write(uuid.getValue());
+      write(uuid.getBytes());
     }
   }
 
@@ -104,11 +104,11 @@ public class MXFDataOutput extends KLVDataOutput {
    */
   public void writeIDAU(IDAU idau) throws IOException, EOFException {
     if (getByteOrder() == ByteOrder.LITTLE_ENDIAN) {
-      byte[] b = idau.getValue().clone();
+      byte[] b = idau.getBytes();
       uuidSwap(b);
       write(b);
     } else {
-      write(idau.getValue());
+      write(idau.getBytes());
     }
   }
 
@@ -120,7 +120,7 @@ public class MXFDataOutput extends KLVDataOutput {
    * @throws EOFException
    */
   public void writeUMID(UMID umid) throws IOException, EOFException {
-    write(umid.getValue());
+    write(umid.getBytes());
   }
 
   /**

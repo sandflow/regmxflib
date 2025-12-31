@@ -70,7 +70,7 @@ public class UMID {
 
   }
 
-  private byte[] value;
+  protected byte[] value;
 
   private UMID() {
     this.value = new byte[32];
@@ -91,8 +91,8 @@ public class UMID {
    * 
    * @return sequence of 32 bytes
    */
-  public byte[] getValue() {
-    return value;
+  public byte[] getBytes() {
+    return value.clone();
   }
 
   @Override
@@ -154,7 +154,7 @@ public class UMID {
     System.arraycopy(prefix, 0, umid, 0, 16);
 
     /* UUID part */
-    System.arraycopy(uuid.getValue(), 0, umid, 16, 16);
+    System.arraycopy(uuid.value, 0, umid, 16, 16);
 
     return new UMID(umid);
   }

@@ -83,13 +83,13 @@ import org.w3c.dom.Document;
 public class MetaDictionary implements DefinitionResolver {
 
     /**
-     * XML Schema Namespace for the XML representation of a RegXML Metadictionary 
+     * XML Schema Namespace for the XML representation of a RegXML Metadictionary
      */
     public final static String XML_NS = "http://www.smpte-ra.org/schemas/2001-1b/2013/metadict";
 
     static AUID createNormalizedAUID(AUID auid) {
         if (auid.isUL()) {
-            
+
             return new AUID(createNormalizedUL(auid.asUL()));
         } else {
             return auid;
@@ -97,18 +97,18 @@ public class MetaDictionary implements DefinitionResolver {
     }
 
     static UL createNormalizedUL(UL ul) {
-        byte[] value = ul.getValue().clone();
+        byte[] value = ul.getBytes();
         /* set version to 0 */
-        
+
         value[7] = 0;
-        
+
         if (ul.isGroup()) {
-            
+
             /* set byte 6 to 0x7f */
             value[5] = 0x7f;
-            
+
         }
-        
+
         return new UL(value);
     }
 
@@ -119,33 +119,32 @@ public class MetaDictionary implements DefinitionResolver {
             return namespace + " " + symbol;
         }
     }
-    
+
     /**
      * Reads a MetaDictionary from an XML document.
      * 
-     * @param reader Reader from which a single MetaDictionary in XML form will be read
+     * @param reader Reader from which a single MetaDictionary in XML form will be
+     *               read
      * @return a MetaDictionary
      * @throws JAXBException
      * @throws IOException
-     * @throws IllegalDefinitionException 
+     * @throws IllegalDefinitionException
      */
     public static MetaDictionary fromXML(Reader reader) throws JAXBException, IOException, IllegalDefinitionException {
         JAXBContext ctx = JAXBContext.newInstance(MetaDictionary.class);
-        
+
         Unmarshaller m = ctx.createUnmarshaller();
         MetaDictionary md = (MetaDictionary) m.unmarshal(reader);
-        
+
         for (Definition def : md.definitions) {
-            
+
             def.setNamespace(md.getSchemeURI());
-            
+
             md.indexDefinition(def);
         }
 
         return md;
     }
-
-    
 
     @XmlJavaTypeAdapter(value = UUIDAdapter.class)
     @XmlElement(name = "SchemeID", required = true)
@@ -169,6 +168,7 @@ public class MetaDictionary implements DefinitionResolver {
 
     /**
      * Instantiates a MetaDictionary.
+     * 
      * @param schemeURI Scheme URI of the MetaDictionary
      */
     public MetaDictionary(URI schemeURI) {
@@ -177,53 +177,53 @@ public class MetaDictionary implements DefinitionResolver {
         this.schemeID = UUID.fromURIName(schemeURI);
         this.schemeURI = schemeURI;
     }
-    
+
     void indexDefinition(Definition def) throws IllegalDefinitionException {
         AUID defid = createNormalizedAUID(def.getIdentification());
-        
+
         if (def.getClass() != PropertyAliasDefinition.class) {
-            
+
             if (this.definitionsByAUID.containsKey(defid)) {
                 throw new IllegalDefinitionException("Duplicate AUID: " + def.getIdentification());
             }
-            
+
             if (this.definitionsBySymbol.containsKey(def.getSymbol())) {
                 throw new DuplicateSymbolException("Duplicate Symbol: " + def.getSymbol());
             }
-            
+
             this.definitionsByAUID.put(defid, def);
             this.definitionsBySymbol.put(def.getSymbol(), def);
-            
+
         }
-        
+
         if (def instanceof PropertyDefinition) {
-            
+
             AUID parentauid = createNormalizedAUID(((PropertyDefinition) def).getMemberOf());
-            
+
             Set<AUID> hs = this.membersOf.get(parentauid);
-            
+
             if (hs == null) {
                 hs = new HashSet<>();
                 this.membersOf.put(parentauid, hs);
             }
-            
+
             hs.add(defid);
-            
+
         }
-        
+
         if (def instanceof ClassDefinition && ((ClassDefinition) def).getParentClass() != null) {
-            
+
             AUID parentauid = createNormalizedAUID(((ClassDefinition) def).getParentClass());
-            
+
             Set<AUID> hs = this.subclassesOf.get(parentauid);
-            
+
             if (hs == null) {
                 hs = new HashSet<>();
                 this.subclassesOf.put(parentauid, hs);
             }
-            
+
             hs.add(defid);
-            
+
         }
     }
 
@@ -231,12 +231,13 @@ public class MetaDictionary implements DefinitionResolver {
      * Adds a definition to the MetaDictionary
      * 
      * @param def Definition to be added
-     * @throws IllegalDefinitionException 
+     * @throws IllegalDefinitionException
      */
     public void add(Definition def) throws IllegalDefinitionException {
 
         if (!def.getNamespace().equals(this.getSchemeURI())) {
-            throw new IllegalDefinitionException("Namespace does not match Metadictionary Scheme URI: " + def.getSymbol());
+            throw new IllegalDefinitionException(
+                    "Namespace does not match Metadictionary Scheme URI: " + def.getSymbol());
         }
 
         indexDefinition(def);
@@ -267,46 +268,26 @@ public class MetaDictionary implements DefinitionResolver {
 
     @XmlElementWrapper(name = "MetaDefinitions")
     @XmlElements(value = {
-        @XmlElement(name = "ClassDefinition",
-                type = ClassDefinition.class),
-        @XmlElement(name = "PropertyDefinition",
-                type = PropertyDefinition.class),
-        @XmlElement(name = "PropertyAliasDefinition",
-                type = PropertyAliasDefinition.class),
-        @XmlElement(name = "TypeDefinitionCharacter",
-                type = CharacterTypeDefinition.class),
-        @XmlElement(name = "TypeDefinitionEnumeration",
-                type = EnumerationTypeDefinition.class),
-        @XmlElement(name = "TypeDefinitionExtendibleEnumeration",
-                type = ExtendibleEnumerationTypeDefinition.class),
-        @XmlElement(name = "TypeDefinitionFixedArray",
-                type = FixedArrayTypeDefinition.class),
-        @XmlElement(name = "TypeDefinitionIndirect",
-                type = IndirectTypeDefinition.class),
-        @XmlElement(name = "TypeDefinitionInteger",
-                type = IntegerTypeDefinition.class),
-        @XmlElement(name = "TypeDefinitionOpaque",
-                type = OpaqueTypeDefinition.class),
-        @XmlElement(name = "TypeDefinitionRecord",
-                type = RecordTypeDefinition.class),
-        @XmlElement(name = "TypeDefinitionRename",
-                type = RenameTypeDefinition.class),
-        @XmlElement(name = "TypeDefinitionSet",
-                type = SetTypeDefinition.class),
-        @XmlElement(name = "TypeDefinitionStream",
-                type = StreamTypeDefinition.class),
-        @XmlElement(name = "TypeDefinitionString",
-                type = StringTypeDefinition.class),
-        @XmlElement(name = "TypeDefinitionStrongObjectReference",
-                type = StrongReferenceTypeDefinition.class),
-        @XmlElement(name = "TypeDefinitionVariableArray",
-                type = VariableArrayTypeDefinition.class),
-        @XmlElement(name = "TypeDefinitionWeakObjectReference",
-                type = WeakReferenceTypeDefinition.class),
-        @XmlElement(name = "TypeDefinitionFloat",
-                type = FloatTypeDefinition.class),
-        @XmlElement(name = "TypeDefinitionLenseSerialFloat",
-                type = LensSerialFloatTypeDefinition.class)
+            @XmlElement(name = "ClassDefinition", type = ClassDefinition.class),
+            @XmlElement(name = "PropertyDefinition", type = PropertyDefinition.class),
+            @XmlElement(name = "PropertyAliasDefinition", type = PropertyAliasDefinition.class),
+            @XmlElement(name = "TypeDefinitionCharacter", type = CharacterTypeDefinition.class),
+            @XmlElement(name = "TypeDefinitionEnumeration", type = EnumerationTypeDefinition.class),
+            @XmlElement(name = "TypeDefinitionExtendibleEnumeration", type = ExtendibleEnumerationTypeDefinition.class),
+            @XmlElement(name = "TypeDefinitionFixedArray", type = FixedArrayTypeDefinition.class),
+            @XmlElement(name = "TypeDefinitionIndirect", type = IndirectTypeDefinition.class),
+            @XmlElement(name = "TypeDefinitionInteger", type = IntegerTypeDefinition.class),
+            @XmlElement(name = "TypeDefinitionOpaque", type = OpaqueTypeDefinition.class),
+            @XmlElement(name = "TypeDefinitionRecord", type = RecordTypeDefinition.class),
+            @XmlElement(name = "TypeDefinitionRename", type = RenameTypeDefinition.class),
+            @XmlElement(name = "TypeDefinitionSet", type = SetTypeDefinition.class),
+            @XmlElement(name = "TypeDefinitionStream", type = StreamTypeDefinition.class),
+            @XmlElement(name = "TypeDefinitionString", type = StringTypeDefinition.class),
+            @XmlElement(name = "TypeDefinitionStrongObjectReference", type = StrongReferenceTypeDefinition.class),
+            @XmlElement(name = "TypeDefinitionVariableArray", type = VariableArrayTypeDefinition.class),
+            @XmlElement(name = "TypeDefinitionWeakObjectReference", type = WeakReferenceTypeDefinition.class),
+            @XmlElement(name = "TypeDefinitionFloat", type = FloatTypeDefinition.class),
+            @XmlElement(name = "TypeDefinitionLenseSerialFloat", type = LensSerialFloatTypeDefinition.class)
     })
     public ArrayList<Definition> getDefinitions() {
         return definitions;
@@ -318,7 +299,8 @@ public class MetaDictionary implements DefinitionResolver {
     }
 
     /**
-     * Retrieves a Definition based on its symbol 
+     * Retrieves a Definition based on its symbol
+     * 
      * @param symbol Symbol of the definition to be retrieved
      * @return Definition, or null if no definition exists with the specified symbol
      */
@@ -327,7 +309,9 @@ public class MetaDictionary implements DefinitionResolver {
     }
 
     /**
-     * Generates an XML representation of the MetaDictionary according to SMPTE ST 2001-1
+     * Generates an XML representation of the MetaDictionary according to SMPTE ST
+     * 2001-1
+     * 
      * @return The XML DOM
      */
     public Document toXML() {
@@ -359,6 +343,5 @@ public class MetaDictionary implements DefinitionResolver {
     public Collection<AUID> getMembersOf(ClassDefinition parent) {
         return membersOf.get(createNormalizedAUID(parent.getIdentification()));
     }
-
 
 }

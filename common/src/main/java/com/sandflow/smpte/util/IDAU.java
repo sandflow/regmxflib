@@ -62,15 +62,15 @@ public class IDAU {
 
   }
 
-  private byte[] value;
+  protected byte[] value;
 
   /**
    * Returns the underlying bytes of the IDAU
    * 
    * @return Bytes of the IDAU
    */
-  public byte[] getValue() {
-    return this.value;
+  public byte[] getBytes() {
+    return this.value.clone();
   }
 
   /**
@@ -90,8 +90,8 @@ public class IDAU {
   public IDAU(UL ul) {
     this.value = new byte[16];
 
-    System.arraycopy(ul.getValue(), 8, this.value, 0, 8);
-    System.arraycopy(ul.getValue(), 0, this.value, 8, 8);
+    System.arraycopy(ul.value, 8, this.value, 0, 8);
+    System.arraycopy(ul.value, 0, this.value, 8, 8);
   }
 
   /**
@@ -101,7 +101,7 @@ public class IDAU {
    */
   public IDAU(UUID uuid) {
 
-    this.value = java.util.Arrays.copyOf(uuid.getValue(), 16);
+    this.value = java.util.Arrays.copyOf(uuid.value, 16);
 
   }
 

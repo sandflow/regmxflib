@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
  */
 public class UUID {
 
-  private byte[] value;
+  protected byte[] value;
 
   /**
    * Instantiates a UUID from a sequence of 16 bytes
@@ -60,8 +60,8 @@ public class UUID {
    * 
    * @return Sequence of 16 bytes
    */
-  public byte[] getValue() {
-    return this.value;
+  public byte[] getBytes() {
+    return this.value.clone();
   }
 
   @Override
@@ -99,8 +99,11 @@ public class UUID {
     byte bytes[] = new byte[16];
     random.nextBytes(bytes);
 
-    bytes[6] = (byte) ((bytes[6] & 0x0f) | 0x4f);
-    bytes[8] = (byte) ((bytes[8] & 0x3f) | 0x7f);
+    /* Set version to 4 */
+    bytes[6] = (byte) ((bytes[6] & 0x0f) | 0x40);
+
+    /* Set variant to 2 (IETF) */
+    bytes[8] = (byte) ((bytes[8] & 0x3f) | 0x80);
 
     return new UUID(bytes);
   }
@@ -118,7 +121,7 @@ public class UUID {
 
     try {
       digest = MessageDigest.getInstance("SHA-1");
-      digest.update(nsid.getValue());
+      digest.update(nsid.value);
       digest.update(name.getBytes("ASCII"));
     } catch (NoSuchAlgorithmException | UnsupportedEncodingException ex) {
       throw new RuntimeException(ex);

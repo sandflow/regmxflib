@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
 /**
  * Represent a SMPTE Universal Label (SMPTE ST 298)
  */
-public class UL implements Cloneable {
+public class UL {
 
   public final static int SIZE = 16;
   private final static Pattern URN_PATTERN = Pattern
@@ -100,13 +100,13 @@ public class UL implements Cloneable {
 
   }
 
-  private final byte[] value;
+  protected final byte[] value;
 
   /**
    * @return true if the UL is a Key for a KLV Group (see SMPTE ST 336)
    */
   public boolean isGroup() {
-    return getValueOctet(CATEGORY_DESIGNATOR_BYTE) == 2;
+    return getOctet(CATEGORY_DESIGNATOR_BYTE) == 2;
   }
 
   /**
@@ -120,7 +120,7 @@ public class UL implements Cloneable {
    * @return The value of the Registry Designator byte of the UL
    */
   public int getRegistryDesignator() {
-    return getValueOctet(REGISTRY_DESIGNATOR_BYTE);
+    return getOctet(REGISTRY_DESIGNATOR_BYTE);
   }
 
   /**
@@ -129,11 +129,11 @@ public class UL implements Cloneable {
    * @return A new UL with the version byte set to 0
    */
   public UL makeVersionNormalized() {
-    if (this.getValueOctet(VERSION_BYTE) == 0) {
+    if (this.getOctet(VERSION_BYTE) == 0) {
       return this;
     }
 
-    byte[] nv = this.getValue().clone();
+    byte[] nv = this.getBytes();
     nv[7] = 0;
     return new UL(nv);
   }
@@ -193,7 +193,7 @@ public class UL implements Cloneable {
    * @return The value of the Version byte of the UL
    */
   public byte getVersion() {
-    return getValueOctet(7);
+    return getOctet(7);
   }
 
   /**
@@ -256,8 +256,8 @@ public class UL implements Cloneable {
    *
    * @return Sequence of 16 bytes
    */
-  public byte[] getValue() {
-    return value;
+  public byte[] getBytes() {
+    return value.clone();
   }
 
   /**
@@ -266,7 +266,7 @@ public class UL implements Cloneable {
    * @param i Index of the octet, starting at 0 for the first byte
    * @return Value of the byte
    */
-  public byte getValueOctet(int i) {
+  public byte getOctet(int i) {
     return value[i];
   }
 
@@ -316,25 +316,21 @@ public class UL implements Cloneable {
    * @return true if the UL is a class 14 UL
    */
   public boolean isClass14() {
-    return getValueOctet(8) == 14;
+    return getOctet(8) == 14;
   }
 
   /**
    * @return true if the UL is a class 15 UL
    */
   public boolean isClass15() {
-    return getValueOctet(8) == 15;
+    return getOctet(8) == 15;
   }
 
   /**
    * @return true if the UL is a class 13 UL
    */
   public boolean isClass13() {
-    return getValueOctet(8) == 13;
-  }
-
-  public UL clone() {
-    return new UL(this.getValue());
+    return getOctet(8) == 13;
   }
 
 }

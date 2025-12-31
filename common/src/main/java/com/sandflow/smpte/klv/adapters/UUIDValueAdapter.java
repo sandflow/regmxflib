@@ -54,7 +54,7 @@ public class UUIDValueAdapter {
    * @return KLV Triplet Value
    */
   public static byte[] toValue(UUID obj) {
-    return obj.getValue();
+    return obj.getBytes();
   }
 
 }

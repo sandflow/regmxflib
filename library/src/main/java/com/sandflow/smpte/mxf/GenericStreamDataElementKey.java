@@ -105,7 +105,7 @@ public class GenericStreamDataElementKey {
    */
   public static UL make(KLVType type, ByteOrder bo, AccessUnitWrapping au, MultiKLVWrapping multi,
       EssenceSync es) {
-    byte[] octets = DEFAULT_KEY.getValue().clone();
+    byte[] octets = DEFAULT_KEY.getBytes();
 
     byte dataOctet = 0x01;
 

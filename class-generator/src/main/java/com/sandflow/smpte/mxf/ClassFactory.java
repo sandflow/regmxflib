@@ -60,7 +60,7 @@ public class ClassFactory {
   }
 
   private static UL makeNormalizedUL(UL ul) {
-    byte[] value = ul.getValue().clone();
+    byte[] value = ul.getBytes();
     /* set version to 0 */
     value[7] = 0;
     if (ul.isGroup()) {
