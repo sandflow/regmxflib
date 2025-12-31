@@ -62,7 +62,7 @@ public class AUID {
 
   }
 
-  private byte[] value;
+  protected byte[] value;
 
 
   /**
@@ -80,7 +80,7 @@ public class AUID {
    * @param ul UL from which to create the AUID
    */
   public AUID(UL ul) {
-    this.value = ul.getValue();
+    this.value = ul.getBytes();
   }
 
   /**
@@ -92,8 +92,8 @@ public class AUID {
 
     value = new byte[16];
 
-    System.arraycopy(uuid.getValue(), 8, value, 0, 8);
-    System.arraycopy(uuid.getValue(), 0, value, 8, 8);
+    System.arraycopy(uuid.value, 8, value, 0, 8);
+    System.arraycopy(uuid.value, 0, value, 8, 8);
   }
 
   @Override
@@ -105,7 +105,7 @@ public class AUID {
   }
 
   public boolean equals(UL ul) {
-    return Arrays.equals(ul.getValue(), this.value);
+    return Arrays.equals(ul.value, this.value);
   }
 
   @Override
@@ -175,8 +175,8 @@ public class AUID {
    *
    * @return Sequence of 16 bytes
    */
-  public byte[] getValue() {
-    return value;
+  public byte[] getBytes() {
+    return value.clone();
   }
 
   /**

@@ -30,18 +30,10 @@
 
 package com.sandflow.smpte.mxf;
 
-import static com.sandflow.smpte.mxf.TestUtils.assertTextFilesEqual;
-
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.net.URISyntaxException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
-
-import com.sandflow.smpte.tools.RegMXFDump;
-import com.sandflow.smpte.mxf.TestUtils;
 
 public class MXFParsingTest {
 

@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
  */
 public class UUID {
 
-  private byte[] value;
+  protected byte[] value;
 
   /**
    * Instantiates a UUID from a sequence of 16 bytes
@@ -60,8 +60,8 @@ public class UUID {
    * 
    * @return Sequence of 16 bytes
    */
-  public byte[] getValue() {
-    return this.value;
+  public byte[] getBytes() {
+    return this.value.clone();
   }
 
   @Override
@@ -99,8 +99,11 @@ public class UUID {
     byte bytes[] = new byte[16];
     random.nextBytes(bytes);
 
-    bytes[6] = (byte) ((bytes[6] & 0x0f) | 0x4f);
-    bytes[8] = (byte) ((bytes[8] & 0x3f) | 0x7f);
+    /* Set version to 4 */
+    bytes[6] = (byte) ((bytes[6] & 0x0f) | 0x40);
+
+    /* Set variant to 2 (IETF) */
+    bytes[8] = (byte) ((bytes[8] & 0x3f) | 0x80);
 
     return new UUID(bytes);
   }
@@ -114,11 +117,11 @@ public class UUID {
   public static UUID fromURIName(String name) {
     MessageDigest digest;
 
-    UUID nsid = UUID.fromURN("urn:uuid:6ba7b811-9dad-11d1-80b4-00c04fd430c8");
+    final UUID nsid = UUID.fromURN("urn:uuid:6ba7b810-9dad-11d1-80b4-00c04fd430c8");
 
     try {
       digest = MessageDigest.getInstance("SHA-1");
-      digest.update(nsid.getValue());
+      digest.update(nsid.value);
       digest.update(name.getBytes("ASCII"));
     } catch (NoSuchAlgorithmException | UnsupportedEncodingException ex) {
       throw new RuntimeException(ex);
@@ -126,8 +129,8 @@ public class UUID {
 
     byte[] result = digest.digest();
 
-    result[6] = (byte) ((result[6] & 0x0f) | 0x5f);
-    result[8] = (byte) ((result[8] & 0x3f) | 0x7f);
+    result[6] = (byte) ((result[6] & 0x0f) | 0x50);
+    result[8] = (byte) ((result[8] & 0x3f) | 0x80);
 
     return new UUID(result);
   }

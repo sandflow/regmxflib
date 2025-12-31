@@ -101,7 +101,7 @@ public class Set implements Group {
     }
 
     /* write the local set */
-    byte[] lsKey = g.getKey().getValue().clone();
+    byte[] lsKey = g.getKey().getBytes();
     lsKey[UL.REGISTRY_DESIGNATOR_BYTE] = (byte) ((isBERLocalLength ? ItemLengthEncoding.BER.bitmask
         : ItemLengthEncoding.TWO_BYTE.bitmask)
         | ItemLocalTagEncoding.TWO_BYTE.bitmask);

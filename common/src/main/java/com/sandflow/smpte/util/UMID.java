@@ -53,7 +53,7 @@ public class UMID {
 
     byte[] umid = new byte[32];
 
-    if (URN_PATTERN.matcher(urn).matches()) {
+    if (urn != null && URN_PATTERN.matcher(urn).matches()) {
       for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 4; j++) {
           umid[4 * i + j] = (byte) Integer.parseInt(urn.substring(15 + i * 9 + 2 * j, 15 + i * 9 + 2 * j + 2), 16);
@@ -70,7 +70,7 @@ public class UMID {
 
   }
 
-  private byte[] value;
+  protected byte[] value;
 
   private UMID() {
     this.value = new byte[32];
@@ -91,8 +91,8 @@ public class UMID {
    * 
    * @return sequence of 32 bytes
    */
-  public byte[] getValue() {
-    return value;
+  public byte[] getBytes() {
+    return value.clone();
   }
 
   @Override
@@ -154,7 +154,7 @@ public class UMID {
     System.arraycopy(prefix, 0, umid, 0, 16);
 
     /* UUID part */
-    System.arraycopy(uuid.getValue(), 0, umid, 16, 16);
+    System.arraycopy(uuid.value, 0, umid, 16, 16);
 
     return new UMID(umid);
   }

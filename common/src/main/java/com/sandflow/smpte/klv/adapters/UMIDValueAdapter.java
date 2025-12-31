@@ -54,7 +54,7 @@ public class UMIDValueAdapter {
    * @return KLV Triplet Value
    */
   public static byte[] toValue(UMID obj) {
-    return obj.getValue();
+    return obj.getBytes();
   }
 
 }

@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
 /**
  * Represent a SMPTE Universal Label (SMPTE ST 298)
  */
-public class UL implements Cloneable {
+public class UL {
 
   public final static int SIZE = 16;
   private final static Pattern URN_PATTERN = Pattern
@@ -57,7 +57,7 @@ public class UL implements Cloneable {
 
     byte[] ul = new byte[16];
 
-    if (URN_PATTERN.matcher(urn).matches()) {
+    if (urn != null && URN_PATTERN.matcher(urn).matches()) {
       for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
           ul[4 * i + j] = (byte) Integer.parseInt(urn.substring(13 + i * 9 + 2 * j, 13 + i * 9 + 2 * j + 2), 16);
@@ -85,7 +85,7 @@ public class UL implements Cloneable {
 
     byte[] ul = new byte[16];
 
-    if (DOTVALUE_PATTERN.matcher(val).matches()) {
+    if (val != null && DOTVALUE_PATTERN.matcher(val).matches()) {
       for (int i = 0; i < 16; i++) {
         ul[i] = (byte) Integer.parseInt(val.substring(3 * i, 3 * i + 2), 16);
       }
@@ -100,13 +100,13 @@ public class UL implements Cloneable {
 
   }
 
-  private final byte[] value;
+  protected final byte[] value;
 
   /**
    * @return true if the UL is a Key for a KLV Group (see SMPTE ST 336)
    */
   public boolean isGroup() {
-    return getValueOctet(CATEGORY_DESIGNATOR_BYTE) == 2;
+    return getOctet(CATEGORY_DESIGNATOR_BYTE) == 2;
   }
 
   /**
@@ -120,7 +120,7 @@ public class UL implements Cloneable {
    * @return The value of the Registry Designator byte of the UL
    */
   public int getRegistryDesignator() {
-    return getValueOctet(REGISTRY_DESIGNATOR_BYTE);
+    return getOctet(REGISTRY_DESIGNATOR_BYTE) & 0xFF;
   }
 
   /**
@@ -129,12 +129,12 @@ public class UL implements Cloneable {
    * @return A new UL with the version byte set to 0
    */
   public UL makeVersionNormalized() {
-    if (this.getValueOctet(VERSION_BYTE) == 0) {
+    if (this.getOctet(VERSION_BYTE) == 0) {
       return this;
     }
 
-    byte[] nv = this.getValue().clone();
-    nv[7] = 0;
+    byte[] nv = this.getBytes();
+    nv[VERSION_BYTE] = 0;
     return new UL(nv);
   }
 
@@ -144,7 +144,10 @@ public class UL implements Cloneable {
    * @param ul Sequence of 16 bytes
    */
   public UL(byte[] ul) {
-    this.value = java.util.Arrays.copyOf(ul, 16);
+    if (ul == null || ul.length != SIZE) {
+        throw new IllegalArgumentException("UL must be 16 bytes long.");
+    }
+    this.value = java.util.Arrays.copyOf(ul, SIZE);
   }
 
   /**
@@ -154,13 +157,11 @@ public class UL implements Cloneable {
    * @return true if the ULs are equal
    */
   public boolean equalsIgnoreVersion(UL ul) {
-    for (int i = 0; i < 7; i++) {
-      if (this.value[i] != ul.value[i]) {
+    if (ul == null) {
         return false;
-      }
     }
-
-    for (int i = 8; i < 16; i++) {
+    for (int i = 0; i < SIZE; i++) {
+      if (i == VERSION_BYTE) continue;
       if (this.value[i] != ul.value[i]) {
         return false;
       }
@@ -186,14 +187,14 @@ public class UL implements Cloneable {
    * @return true if the UL is equal to the AUID, ignoring the version byte
    */
   public boolean equalsIgnoreVersion(AUID auid) {
-    return (auid.isUL() && this.equalsIgnoreVersion(auid.asUL()));
+    return (auid != null && auid.isUL() && this.equalsIgnoreVersion(auid.asUL()));
   }
 
   /**
    * @return The value of the Version byte of the UL
    */
   public byte getVersion() {
-    return getValueOctet(7);
+    return getOctet(7);
   }
 
   /**
@@ -205,13 +206,11 @@ public class UL implements Cloneable {
    * @return true if the ULs are equal
    */
   public boolean equalsWithMask(UL ul, int bytemask) {
-
-    for (int i = 0; i < 15; i++) {
-      if ((bytemask & 0x8000) != 0 && this.value[i] != ul.value[i]) {
+    if (ul == null) return false;
+    for (int i = 0; i < SIZE; i++) {
+      if (((bytemask >> (SIZE - 1 - i)) & 1) == 1 && this.value[i] != ul.value[i]) {
         return false;
       }
-
-      bytemask = bytemask << 1;
     }
 
     return true;
@@ -227,7 +226,7 @@ public class UL implements Cloneable {
    *         on bytemask
    */
   public boolean equalsWithMask(AUID auid, int bytemask) {
-    return auid.isUL() && this.equalsWithMask(auid.asUL(), bytemask);
+    return auid != null && auid.isUL() && this.equalsWithMask(auid.asUL(), bytemask);
   }
 
   /**
@@ -237,7 +236,7 @@ public class UL implements Cloneable {
    * @return true if the ULs are equal
    */
   public boolean equals(UL ul) {
-    return Arrays.equals(ul.value, this.value);
+    return ul != null && Arrays.equals(ul.value, this.value);
   }
 
   /**
@@ -247,7 +246,7 @@ public class UL implements Cloneable {
    * @return true if the UL and AUID are equal
    */
   public boolean equals(AUID auid) {
-    return auid.equals(this);
+    return auid != null && auid.equals(this);
   }
 
   /**
@@ -256,8 +255,8 @@ public class UL implements Cloneable {
    *
    * @return Sequence of 16 bytes
    */
-  public byte[] getValue() {
-    return value;
+  public byte[] getBytes() {
+    return value.clone();
   }
 
   /**
@@ -266,7 +265,7 @@ public class UL implements Cloneable {
    * @param i Index of the octet, starting at 0 for the first byte
    * @return Value of the byte
    */
-  public byte getValueOctet(int i) {
+  public byte getOctet(int i) {
     return value[i];
   }
 
@@ -277,6 +276,7 @@ public class UL implements Cloneable {
 
   @Override
   public boolean equals(Object obj) {
+    if (this == obj) return true;
     if (obj == null) {
       return false;
     }
@@ -284,10 +284,7 @@ public class UL implements Cloneable {
       return false;
     }
     final UL other = (UL) obj;
-    if (!Arrays.equals(this.value, other.value)) {
-      return false;
-    }
-    return true;
+    return Arrays.equals(this.value, other.value);
   }
 
   @Override
@@ -316,25 +313,21 @@ public class UL implements Cloneable {
    * @return true if the UL is a class 14 UL
    */
   public boolean isClass14() {
-    return getValueOctet(8) == 14;
+    return getOctet(8) == 14;
   }
 
   /**
    * @return true if the UL is a class 15 UL
    */
   public boolean isClass15() {
-    return getValueOctet(8) == 15;
+    return getOctet(8) == 15;
   }
 
   /**
    * @return true if the UL is a class 13 UL
    */
   public boolean isClass13() {
-    return getValueOctet(8) == 13;
-  }
-
-  public UL clone() {
-    return new UL(this.getValue());
+    return getOctet(8) == 13;
   }
 
 }

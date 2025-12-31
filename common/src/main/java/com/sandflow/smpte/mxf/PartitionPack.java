@@ -88,9 +88,9 @@ public class PartitionPack {
     if (!KEY.equalsWithMask(key, 0xfef9 /* 11111110 11111001 */))
       return false;
     UL ul = key.asUL();
-    return ul.getValueOctet(PARTITION_KIND_OCTET) == PARTITION_KIND_BODY ||
-      ul.getValueOctet(PARTITION_KIND_OCTET) == PARTITION_KIND_HEADER ||
-      ul.getValueOctet(PARTITION_KIND_OCTET) == PARTITION_KIND_FOOTER;
+    return ul.getOctet(PARTITION_KIND_OCTET) == PARTITION_KIND_BODY ||
+      ul.getOctet(PARTITION_KIND_OCTET) == PARTITION_KIND_HEADER ||
+      ul.getOctet(PARTITION_KIND_OCTET) == PARTITION_KIND_FOOTER;
   }
 
   /**
@@ -101,7 +101,7 @@ public class PartitionPack {
    * @throws KLVException
    */
   public static Triplet toTriplet(PartitionPack pp, Kind kind, Status status) throws KLVException {
-    byte[] ppKey = KEY.getValue().clone();
+    byte[] ppKey = KEY.getBytes();
 
     ppKey[PARTITION_STATUS_OCTET] = status.getByte14();
     ppKey[PARTITION_KIND_OCTET] = kind.getByte13();
@@ -145,7 +145,7 @@ public class PartitionPack {
       return null;
     }
 
-    switch (triplet.getKey().asUL().getValueOctet(14)) {
+    switch (triplet.getKey().asUL().getOctet(14)) {
       case 0x01:
         pp.setStatus(Status.OPEN_INCOMPLETE);
         break;
@@ -165,7 +165,7 @@ public class PartitionPack {
         return null;
     }
 
-    switch (triplet.getKey().asUL().getValueOctet(PARTITION_KIND_OCTET)) {
+    switch (triplet.getKey().asUL().getOctet(PARTITION_KIND_OCTET)) {
       case PARTITION_KIND_HEADER:
         pp.setKind(Kind.HEADER);
 

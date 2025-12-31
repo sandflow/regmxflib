@@ -98,7 +98,7 @@ public class KLVDataOutput {
    * @throws EOFException
    */
   public void writeUL(UL ul) throws IOException, EOFException {
-    this.write(ul.getValue());
+    this.write(ul.getBytes());
   }
 
   /**
@@ -109,7 +109,7 @@ public class KLVDataOutput {
    * @throws EOFException
    */
   public void writeAUID(AUID auid) throws IOException, EOFException {
-    this.write(auid.getValue());
+    this.write(auid.getBytes());
   }
 
   /**
