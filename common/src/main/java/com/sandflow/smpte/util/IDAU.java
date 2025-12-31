@@ -133,7 +133,7 @@ public class IDAU {
    * @return true if the IDAU is a UL
    */
   public boolean isUL() {
-    return (value[9] & 0x80) == 0;
+    return (value[8] & 0x80) == 0;
   }
 
   /**

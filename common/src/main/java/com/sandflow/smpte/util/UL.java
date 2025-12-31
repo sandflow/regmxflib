@@ -57,7 +57,7 @@ public class UL {
 
     byte[] ul = new byte[16];
 
-    if (URN_PATTERN.matcher(urn).matches()) {
+    if (urn != null && URN_PATTERN.matcher(urn).matches()) {
       for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
           ul[4 * i + j] = (byte) Integer.parseInt(urn.substring(13 + i * 9 + 2 * j, 13 + i * 9 + 2 * j + 2), 16);
@@ -85,7 +85,7 @@ public class UL {
 
     byte[] ul = new byte[16];
 
-    if (DOTVALUE_PATTERN.matcher(val).matches()) {
+    if (val != null && DOTVALUE_PATTERN.matcher(val).matches()) {
       for (int i = 0; i < 16; i++) {
         ul[i] = (byte) Integer.parseInt(val.substring(3 * i, 3 * i + 2), 16);
       }
@@ -120,7 +120,7 @@ public class UL {
    * @return The value of the Registry Designator byte of the UL
    */
   public int getRegistryDesignator() {
-    return getOctet(REGISTRY_DESIGNATOR_BYTE);
+    return getOctet(REGISTRY_DESIGNATOR_BYTE) & 0xFF;
   }
 
   /**
@@ -134,7 +134,7 @@ public class UL {
     }
 
     byte[] nv = this.getBytes();
-    nv[7] = 0;
+    nv[VERSION_BYTE] = 0;
     return new UL(nv);
   }
 
@@ -144,7 +144,10 @@ public class UL {
    * @param ul Sequence of 16 bytes
    */
   public UL(byte[] ul) {
-    this.value = java.util.Arrays.copyOf(ul, 16);
+    if (ul == null || ul.length != SIZE) {
+        throw new IllegalArgumentException("UL must be 16 bytes long.");
+    }
+    this.value = java.util.Arrays.copyOf(ul, SIZE);
   }
 
   /**
@@ -154,13 +157,11 @@ public class UL {
    * @return true if the ULs are equal
    */
   public boolean equalsIgnoreVersion(UL ul) {
-    for (int i = 0; i < 7; i++) {
-      if (this.value[i] != ul.value[i]) {
+    if (ul == null) {
         return false;
-      }
     }
-
-    for (int i = 8; i < 16; i++) {
+    for (int i = 0; i < SIZE; i++) {
+      if (i == VERSION_BYTE) continue;
       if (this.value[i] != ul.value[i]) {
         return false;
       }
@@ -186,7 +187,7 @@ public class UL {
    * @return true if the UL is equal to the AUID, ignoring the version byte
    */
   public boolean equalsIgnoreVersion(AUID auid) {
-    return (auid.isUL() && this.equalsIgnoreVersion(auid.asUL()));
+    return (auid != null && auid.isUL() && this.equalsIgnoreVersion(auid.asUL()));
   }
 
   /**
@@ -205,13 +206,11 @@ public class UL {
    * @return true if the ULs are equal
    */
   public boolean equalsWithMask(UL ul, int bytemask) {
-
-    for (int i = 0; i < 15; i++) {
-      if ((bytemask & 0x8000) != 0 && this.value[i] != ul.value[i]) {
+    if (ul == null) return false;
+    for (int i = 0; i < SIZE; i++) {
+      if (((bytemask >> (SIZE - 1 - i)) & 1) == 1 && this.value[i] != ul.value[i]) {
         return false;
       }
-
-      bytemask = bytemask << 1;
     }
 
     return true;
@@ -227,7 +226,7 @@ public class UL {
    *         on bytemask
    */
   public boolean equalsWithMask(AUID auid, int bytemask) {
-    return auid.isUL() && this.equalsWithMask(auid.asUL(), bytemask);
+    return auid != null && auid.isUL() && this.equalsWithMask(auid.asUL(), bytemask);
   }
 
   /**
@@ -237,7 +236,7 @@ public class UL {
    * @return true if the ULs are equal
    */
   public boolean equals(UL ul) {
-    return Arrays.equals(ul.value, this.value);
+    return ul != null && Arrays.equals(ul.value, this.value);
   }
 
   /**
@@ -247,7 +246,7 @@ public class UL {
    * @return true if the UL and AUID are equal
    */
   public boolean equals(AUID auid) {
-    return auid.equals(this);
+    return auid != null && auid.equals(this);
   }
 
   /**
@@ -277,6 +276,7 @@ public class UL {
 
   @Override
   public boolean equals(Object obj) {
+    if (this == obj) return true;
     if (obj == null) {
       return false;
     }
@@ -284,10 +284,7 @@ public class UL {
       return false;
     }
     final UL other = (UL) obj;
-    if (!Arrays.equals(this.value, other.value)) {
-      return false;
-    }
-    return true;
+    return Arrays.equals(this.value, other.value);
   }
 
   @Override
