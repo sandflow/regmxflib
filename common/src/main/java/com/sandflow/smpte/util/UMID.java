@@ -53,7 +53,7 @@ public class UMID {
 
     byte[] umid = new byte[32];
 
-    if (URN_PATTERN.matcher(urn).matches()) {
+    if (urn != null && URN_PATTERN.matcher(urn).matches()) {
       for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 4; j++) {
           umid[4 * i + j] = (byte) Integer.parseInt(urn.substring(15 + i * 9 + 2 * j, 15 + i * 9 + 2 * j + 2), 16);

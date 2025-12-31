@@ -82,7 +82,7 @@ public class IDAUTest {
   public void testConstructorWithBytes() {
     IDAU idau = new IDAU(TEST_IDAU_FROM_UL_BYTES);
     assertArrayEquals(TEST_IDAU_FROM_UL_BYTES, idau.getBytes());
-    // ensure it's a copy
+    /* immutability check */
     byte[] original = new byte[16];
     IDAU idau2 = new IDAU(original);
     original[0] = 1;

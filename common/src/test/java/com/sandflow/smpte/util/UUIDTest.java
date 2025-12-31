@@ -64,18 +64,15 @@ public class UUIDTest {
     assertNotEquals(uuid1, uuid2);
 
     byte[] bytes = uuid1.getBytes();
-    // Version 4: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+    /* Version 4: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx */
     assertEquals(4, (bytes[6] & 0xf0) >> 4);
-    // Variant 2 (IETF): 10xxxxxx -> 0x80 mask
+    /* Variant 2 (IETF): 10xxxxxx -> 0x80 mask */
     assertEquals(0x80, bytes[8] & 0xc0);
   }
 
   @Test
   public void testFromURIName() {
-    // Test with a known value
-    // Name: "www.example.com"
-    // Namespace: DNS (6ba7b811-9dad-11d1-80b4-00c04fd430c8)
-    // Expected V5 UUID: 2ed6657d-e927-568b-95e1-2665a8aea6a2
+    /* https://datatracker.ietf.org/doc/html/rfc9562#name-example-of-a-uuidv5-value */
 
     String name = "www.example.com";
     UUID uuid = UUID.fromURIName(name);
@@ -83,12 +80,12 @@ public class UUIDTest {
 
     assertEquals("urn:uuid:2ed6657d-e927-568b-95e1-2665a8aea6a2", uuid.toString());
 
-    // Check version and variant
+    /* Check version and variant */
     byte[] bytes = uuid.getBytes();
     assertEquals(5, (bytes[6] & 0xf0) >> 4);
     assertEquals(0x80, bytes[8] & 0xc0);
 
-    // Deterministic check
+    /* Deterministic check */
     UUID uuid2 = UUID.fromURIName(name);
     assertEquals(uuid, uuid2);
   }
@@ -112,7 +109,7 @@ public class UUIDTest {
     UUID uuid = new UUID(bytes);
     assertArrayEquals(bytes, uuid.getBytes());
 
-    // Immutability check
+    /* Immutability check */
     bytes[0] = (byte) 0xFF;
     assertNotEquals(bytes[0], uuid.getBytes()[0]);
 

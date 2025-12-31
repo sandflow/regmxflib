@@ -44,7 +44,7 @@ public class ULTest {
       (byte) 0x02, (byte) 0x7f, (byte) 0x01, (byte) 0x01,
       (byte) 0x0d, (byte) 0x01, (byte) 0x01, (byte) 0x01,
       (byte) 0x01, (byte) 0x01, (byte) 0x2f, (byte) 0x00
-  }; // Preface Set
+  };
 
   static final byte[] TEST_UL_LOCAL_SET = {
       (byte) 0x06, (byte) 0x0e, (byte) 0x2b, (byte) 0x34,
@@ -140,7 +140,6 @@ public class ULTest {
     expectedNormalized[UL.VERSION_BYTE] = 0x00;
     assertArrayEquals(expectedNormalized, normalizedUL.getBytes());
 
-    // test on already normalized
     assertSame(normalizedUL, normalizedUL.makeVersionNormalized());
   }
 
@@ -172,17 +171,17 @@ public class ULTest {
     bytes2[8] = (byte) 0xFF;
     UL ul2 = new UL(bytes2);
 
-    // ignore nothing
+    /* ignore nothing */
     assertFalse(ul1.equalsWithMask(ul2, 0xFFFF));
     assertTrue(ul1.equalsWithMask(ul1, 0xFFFF));
 
-    // ignore byte 8
+    /* ignore byte 8 */
     assertFalse(ul1.equalsWithMask(ul2, 0b11111111_01111111));
 
-    // ignore byte 10
+    /* ignore byte 10 */
     assertFalse(ul1.equalsWithMask(ul2, 0b11111111_11011111));
 
-    // ignore bytes 10 and 8
+    /* ignore bytes 10 and 8 */
     assertTrue(ul1.equalsWithMask(ul2, 0b11111111_01011111));
   }
 
