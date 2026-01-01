@@ -106,18 +106,18 @@ class MXFDataOutputTest {
   @Test
   void testWriteBatch() throws Exception {
     List<Integer> items = Arrays.asList(1, 2, 3);
-    
+
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     MXFDataOutput mos = new MXFDataOutput(bos);
-    
+
     mos.writeBatch(items, 4, (i) -> {
-        byte[] b = new byte[4];
-        b[3] = i.byteValue();
-        return b;
+      byte[] b = new byte[4];
+      b[3] = i.byteValue();
+      return b;
     });
-    
+
     byte[] result = bos.toByteArray();
-    
+
     byte[] expected = {
         0, 0, 0, 3, /* Count */
         0, 0, 0, 4, /* Length */
@@ -125,7 +125,7 @@ class MXFDataOutputTest {
         0, 0, 0, 2,
         0, 0, 0, 3
     };
-    
+
     assertArrayEquals(expected, result);
   }
 }

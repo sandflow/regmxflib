@@ -48,7 +48,7 @@ class MXFDataInputTest {
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
         0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
     };
-    
+
     /* Big Endian */
     MXFDataInput mis = new MXFDataInput(new ByteArrayInputStream(uuidBytes));
     UUID uuid = mis.readUUID();
@@ -59,7 +59,7 @@ class MXFDataInputTest {
         0x03, 0x02, 0x01, 0x00, 0x05, 0x04, 0x07, 0x06,
         0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
     };
-    
+
     mis = new MXFDataInput(new ByteArrayInputStream(leBytes), ByteOrder.LITTLE_ENDIAN);
     uuid = mis.readUUID();
     assertArrayEquals(uuidBytes, uuid.getBytes());
@@ -71,7 +71,7 @@ class MXFDataInputTest {
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
         0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
     };
-    
+
     /* Big Endian */
     MXFDataInput mis = new MXFDataInput(new ByteArrayInputStream(idauBytes));
     IDAU idau = mis.readIDAU();
@@ -82,7 +82,7 @@ class MXFDataInputTest {
         0x03, 0x02, 0x01, 0x00, 0x05, 0x04, 0x07, 0x06,
         0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
     };
-    
+
     mis = new MXFDataInput(new ByteArrayInputStream(leBytes), ByteOrder.LITTLE_ENDIAN);
     idau = mis.readIDAU();
     assertArrayEquals(idauBytes, idau.getBytes());
@@ -91,8 +91,9 @@ class MXFDataInputTest {
   @Test
   void testReadUMID() throws Exception {
     byte[] umidBytes = new byte[32];
-    for(int i=0; i<32; i++) umidBytes[i] = (byte)i;
-    
+    for (int i = 0; i < 32; i++)
+      umidBytes[i] = (byte) i;
+
     MXFDataInput mis = new MXFDataInput(new ByteArrayInputStream(umidBytes));
     UMID umid = mis.readUMID();
     assertArrayEquals(umidBytes, umid.getBytes());
@@ -100,19 +101,19 @@ class MXFDataInputTest {
 
   @Test
   void testReadBatch() throws Exception {
-    
+
     byte[] data = {
         0, 0, 0, 2,
         0, 0, 0, 4,
         0, 0, 0, 1,
         0, 0, 0, 2
     };
-    
+
     MXFDataInput mis = new MXFDataInput(new ByteArrayInputStream(data));
     Collection<Integer> items = mis.readBatch(b -> {
-        return ((b[0] & 0xFF) << 24) | ((b[1] & 0xFF) << 16) | ((b[2] & 0xFF) << 8) | (b[3] & 0xFF);
+      return ((b[0] & 0xFF) << 24) | ((b[1] & 0xFF) << 16) | ((b[2] & 0xFF) << 8) | (b[3] & 0xFF);
     });
-    
+
     assertEquals(2, items.size());
     Iterator<Integer> it = items.iterator();
     assertEquals(1, it.next());
