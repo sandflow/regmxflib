@@ -18,5 +18,26 @@ jobs:
         java-version: '17'
         distribution: 'corretto'
         cache: maven
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker Image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        load: true
+        tags: regmxflib-ci-env:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
     - name: Test Java
       run: mvn test
+
+    - name: Run Build and Test
+      run: |
+        docker run --rm \
+          -v ${{ github.workspace }}:/workspace \
+          -w /tmp \
+          regmxflib-ci-env:latest \
+          bash /workspace/library/src/test/sh/compat.sh
