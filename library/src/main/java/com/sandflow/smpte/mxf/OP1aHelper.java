@@ -239,6 +239,9 @@ public class OP1aHelper {
     var idList = new IdentificationStrongReferenceVector();
     idList.add(fileInfo.copyOf());
 
+    /* DM Schemes */
+    var dms = new AUIDSet();
+
     /* preface */
     this.preface = new Preface();
     this.preface.InstanceID = uidg.generate(this.preface);
@@ -256,6 +259,7 @@ public class OP1aHelper {
       this.preface.ConformsToSpecifications = new AUIDSet();
       this.preface.ConformsToSpecifications.addAll(this.ecInfo.conformsToSpecifications);
     }
+    this.preface.DescriptiveSchemes = dms;
   }
 
   /**
