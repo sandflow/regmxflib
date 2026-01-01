@@ -285,7 +285,7 @@ public class RandomAccessFileInfo {
         /* TODO: confirm that indexSID and bodySID are consistent */
         if (this.ecIndexSID == null) {
           this.ecIndexSID = pp.getIndexSID();
-        } else if (this.ecIndexSID != pp.getIndexSID()) {
+        } else if (!this.ecIndexSID.equals(pp.getIndexSID())) {
           MXFException.handle(evthandler, new MXFEvent(
               MXFEvent.EventCodes.TOO_MANY_ECS,
               "Index tables for more than one essence container are present"));
@@ -367,7 +367,7 @@ public class RandomAccessFileInfo {
       if (pp.getBodySID() != 0) {
         if (this.ecSID == null) {
           this.ecSID = pp.getBodySID();
-        } else if (this.ecSID != pp.getBodySID()) {
+        } else if (!this.ecSID.equals(pp.getBodySID())) {
           throw new RuntimeException();
         }
 
