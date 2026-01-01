@@ -303,7 +303,8 @@ public class KLVDataInput {
       b7 = readUnsignedByte();
     }
 
-    return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24) | (b4 << 32) | (b5 << 40) | (b6 << 48) | (b7 << 56);
+    return (b0 & 0xFFL) | ((b1 & 0xFFL) << 8) | ((b2 & 0xFFL) << 16) | ((b3 & 0xFFL) << 24) | ((b4 & 0xFFL) << 32)
+        | ((b5 & 0xFFL) << 40) | ((b6 & 0xFFL) << 48) | ((b7 & 0xFFL) << 56);
   }
 
   public long skipFully(long n) throws IOException {

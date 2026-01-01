@@ -31,11 +31,16 @@
 package com.sandflow.smpte.klv;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 
 import java.io.ByteArrayOutputStream;
 
 import org.junit.jupiter.api.Test;
+
+import com.sandflow.smpte.klv.KLVDataInput.ByteOrder;
+import com.sandflow.smpte.util.AUID;
+import com.sandflow.smpte.util.UL;
 
 class KLVDataOutputTest {
 
@@ -69,6 +74,145 @@ class KLVDataOutputTest {
     KLVDataOutput kos = new KLVDataOutput(bos);
     kos.writeUnsignedByte((short) 255);
     assertArrayEquals(bos.toByteArray(), new byte[] { (byte) 0xFF });
+  }
+
+  @Test
+  void testWriteUL() throws Exception {
+    byte[] ulBytes = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    UL ul = new UL(ulBytes);
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    KLVDataOutput kos = new KLVDataOutput(bos);
+    kos.writeUL(ul);
+    assertArrayEquals(ulBytes, bos.toByteArray());
+    assertEquals(16, kos.getWrittenCount());
+  }
+
+  @Test
+  void testWriteAUID() throws Exception {
+    byte[] bytes = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    AUID auid = new AUID(new UL(bytes));
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    KLVDataOutput kos = new KLVDataOutput(bos);
+    kos.writeAUID(auid);
+    assertArrayEquals(bytes, bos.toByteArray());
+  }
+
+  @Test
+  void testWriteBERLength() throws Exception {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    KLVDataOutput kos = new KLVDataOutput(bos);
+
+    kos.writeBERLength(127);
+    assertArrayEquals(new byte[] { (byte) 0x83, 0x00, 0x00, 0x7F }, bos.toByteArray());
+
+    bos.reset();
+    kos.writeBERLength(0x1000000);
+    assertArrayEquals(new byte[] { (byte) 0x84, 0x01, 0x00, 0x00, 0x00 }, bos.toByteArray());
+
+    assertThrowsExactly(IllegalArgumentException.class, () -> kos.writeBERLength(-1));
+  }
+
+  @Test
+  void testWriteTriplet() throws Exception {
+    byte[] keyBytes = new byte[16];
+    keyBytes[15] = 1;
+    byte[] valBytes = { 0x11, 0x22 };
+    Triplet t = new MemoryTriplet(new AUID(new UL(keyBytes)), valBytes);
+
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    KLVDataOutput kos = new KLVDataOutput(bos);
+    kos.writeTriplet(t);
+
+    byte[] result = bos.toByteArray();
+    assertEquals(22, result.length);
+
+    byte[] actualKey = new byte[16];
+    System.arraycopy(result, 0, actualKey, 0, 16);
+    assertArrayEquals(keyBytes, actualKey);
+
+    assertEquals((byte) 0x83, result[16]);
+    assertEquals((byte) 0x00, result[17]);
+    assertEquals((byte) 0x00, result[18]);
+    assertEquals((byte) 0x02, result[19]);
+
+    assertEquals((byte) 0x11, result[20]);
+    assertEquals((byte) 0x22, result[21]);
+  }
+
+  @Test
+  void testWriteBER4Triplet() throws Exception {
+    byte[] keyBytes = new byte[16];
+    keyBytes[15] = 2;
+    byte[] valBytes = { 0x33 };
+    Triplet t = new MemoryTriplet(new AUID(new UL(keyBytes)), valBytes);
+
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    KLVDataOutput kos = new KLVDataOutput(bos);
+    kos.writeBER4Triplet(t);
+
+    byte[] result = bos.toByteArray();
+    assertEquals(21, result.length);
+
+    assertEquals((byte) 0x83, result[16]);
+    assertEquals((byte) 0x00, result[17]);
+    assertEquals((byte) 0x00, result[18]);
+    assertEquals((byte) 0x01, result[19]);
+  }
+
+  @Test
+  void testEndianness() throws Exception {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    KLVDataOutput kos = new KLVDataOutput(bos, ByteOrder.LITTLE_ENDIAN);
+
+    kos.writeShort(0x1234);
+    assertArrayEquals(new byte[] { 0x34, 0x12 }, bos.toByteArray());
+
+    bos.reset();
+    kos.writeInt(0x12345678);
+    assertArrayEquals(new byte[] { 0x78, 0x56, 0x34, 0x12 }, bos.toByteArray());
+
+    bos.reset();
+    kos.writeLong(0x1122334455667788L);
+    assertArrayEquals(new byte[] { (byte) 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11 }, bos.toByteArray());
+  }
+
+  @Test
+  void testWriteUnsignedInt() throws Exception {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    KLVDataOutput kos = new KLVDataOutput(bos);
+    kos.writeUnsignedInt(0x12345678L);
+    assertArrayEquals(new byte[] { (byte) 0x12, (byte) 0x34, (byte) 0x56, (byte) 0x78 }, bos.toByteArray());
+  }
+
+  @Test
+  void testWriteByte() throws Exception {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    KLVDataOutput kos = new KLVDataOutput(bos);
+    kos.writeByte((byte) 0x80);
+    assertArrayEquals(new byte[] { (byte) 0x80 }, bos.toByteArray());
+  }
+
+  @Test
+  void testWriteBytes() throws Exception {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    KLVDataOutput kos = new KLVDataOutput(bos);
+    byte[] data = { 1, 2, 3, 4 };
+    kos.write(data);
+    assertArrayEquals(data, bos.toByteArray());
+    assertEquals(4, kos.getWrittenCount());
+
+    bos.reset();
+    kos.write(data, 1, 2);
+    assertArrayEquals(new byte[] { 2, 3 }, bos.toByteArray());
+    assertEquals(6, kos.getWrittenCount());
+  }
+
+  @Test
+  void testWriteUnsignedShort() throws Exception {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    KLVDataOutput kos = new KLVDataOutput(bos);
+    kos.writeUnsignedShort(0xAAFF);
+    assertArrayEquals(new byte[] { (byte) 0xAA, (byte) 0xFF }, bos.toByteArray());
   }
 
 }

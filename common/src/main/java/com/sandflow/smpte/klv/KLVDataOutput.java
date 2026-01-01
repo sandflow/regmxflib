@@ -127,10 +127,10 @@ public class KLVDataOutput {
       throw new IllegalArgumentException("Length cannot be negative");
     }
 
-    // if (l < 0x80) {
-    // this.write((int) l);
-    // return;
-    // }
+    /* if (l < 0x80) {
+    this.write((int) l);
+    return;
+    } */
 
     int n = 3;
     long tmp = l >> (n * 8);

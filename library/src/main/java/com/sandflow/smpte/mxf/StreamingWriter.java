@@ -561,10 +561,10 @@ public class StreamingWriter {
         throw new RuntimeException();
       }
 
-      MXFDataOutput mos = new MXFDataOutput(StreamingWriter.this.fos);
-      mos.writeUL(elementKey);
-      mos.writeBERLength(elementSize);
-      this.setPosition(this.getPosition() + mos.getWrittenCount());
+      long curPos = StreamingWriter.this.fos.getWrittenCount();
+      StreamingWriter.this.fos.writeUL(elementKey);
+      StreamingWriter.this.fos.writeBERLength(elementSize);
+      this.setPosition(this.getPosition() + StreamingWriter.this.fos.getWrittenCount() - curPos);
 
       this.setBytesToWrite(elementSize);
     }
