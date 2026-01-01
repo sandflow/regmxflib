@@ -273,7 +273,6 @@ public class ClassGenerator {
         /* skip non-header-classes */
         if (c.getParentClass() == null) {
           if (!INTERCHANGE_OBJECT_AUID.equals(c.getIdentification())) {
-            /* TODO: do not throw an exception here */
             throw new VisitorException("Skipping non Header Metadata classes");
           }
           break;
