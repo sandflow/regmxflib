@@ -667,7 +667,7 @@ public class StreamingWriter {
   private final UIDGenerator uidGenerator;
 
   /**
-   * Instantiates a StreamingWriter.
+   * Instantiates a StreamingWriter. The StreamingWriter makes a copy of the provided preface.
    * 
    * @param os         Output stream to write the MXF file to.
    * @param preface    Preface set of the MXF file.
@@ -682,7 +682,7 @@ public class StreamingWriter {
   }
 
   /**
-   * Instantiates a StreamingWriter with a custom UID generator.
+   * Instantiates a StreamingWriter with a custom UID generator. The StreamingWriter makes a copy of the provided preface.
    * 
    * @param os         Output stream to write the MXF file to.
    * @param preface    Preface set of the MXF file.
@@ -712,8 +712,7 @@ public class StreamingWriter {
     }
     this.uidGenerator = uidg;
 
-    /* TODO: make a copy */
-    this.preface = preface;
+    this.preface = preface.copyOf();
 
     this.evthandler = evthandler;
   }
