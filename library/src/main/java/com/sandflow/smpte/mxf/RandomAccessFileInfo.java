@@ -282,7 +282,6 @@ public class RandomAccessFileInfo {
         /* read the one or more index segments */
 
         /* we only support indexing a single EC */
-        /* TODO: confirm that indexSID and bodySID are consistent */
         if (this.ecIndexSID == null) {
           this.ecIndexSID = pp.getIndexSID();
         } else if (!this.ecIndexSID.equals(pp.getIndexSID())) {
@@ -410,8 +409,13 @@ public class RandomAccessFileInfo {
    * @return The absolute byte offset in the file.
    */
   public long gsToFilePosition(long gsSID, long position) {
-    /* TODO: check for no generic stream */
-    return this.gsToFilePositions.get(gsSID).getFilePosition(position);
+    FilePositionMapper m = this.gsToFilePositions.get(gsSID);
+
+    if (m == null) {
+      throw new IllegalArgumentException(String.format("The Generic Stream %d does not exist", gsSID));
+    }
+
+    return m.getFilePosition(position);
   }
 
   /**
@@ -421,7 +425,9 @@ public class RandomAccessFileInfo {
    * @return The byte offset within the Essence Container.
    */
   public long euToECPosition(long position) {
-    /* TODO: check for no index */
+    if (this.euToECPosition == null) {
+      throw new IllegalStateException("No index available for the essence container");
+    }
     return this.euToECPosition.getECPosition(position);
   }
 
@@ -433,7 +439,9 @@ public class RandomAccessFileInfo {
    * @return The absolute byte offset in the file.
    */
   public long ecToFilePositions(long position) {
-    /* TODO: check for no ec */
+    if (this.ecSID == null) {
+      throw new IllegalStateException("No essence container available");
+    }
     return this.ecToFilePositions.getFilePosition(position);
   }
 
@@ -443,7 +451,9 @@ public class RandomAccessFileInfo {
    * @return The count of Edit Units.
    */
   public long getEUCount() {
-    /* TODO: check for no index */
+    if (this.euToECPosition == null) {
+      throw new IllegalStateException("No index available for the essence container");
+    }
     return this.euToECPosition.length();
   }
 
