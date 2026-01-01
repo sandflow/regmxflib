@@ -31,6 +31,7 @@
 package com.sandflow.smpte.mxf;
 
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -133,10 +134,10 @@ public class StreamingWriter {
     @Override
     public void write(int b) throws IOException {
       if (!this.isActive()) {
-        throw new RuntimeException();
+        throw new IllegalStateException("ContainerWriter is not active");
       }
       if (this.bytesToWrite - 1 < 0)
-        throw new RuntimeException();
+        throw new EOFException("Attempting to write more bytes than allocated to the container");
       StreamingWriter.this.fos.write(b);
       this.bytesToWrite--;
       this.ecOffset++;
@@ -145,10 +146,10 @@ public class StreamingWriter {
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
       if (!this.isActive()) {
-        throw new RuntimeException();
+        throw new IllegalStateException("ContainerWriter is not active");
       }
       if (this.bytesToWrite - len < 0) {
-        throw new RuntimeException();
+        throw new EOFException("Attempting to write more bytes than allocated to the container");
       }
 
       StreamingWriter.this.fos.write(b, off, len);
@@ -206,7 +207,7 @@ public class StreamingWriter {
         public Long getLocalTag(AUID auid) {
           Long localTag = StaticLocalTags.register().getLocalTag(auid);
           if (localTag == null) {
-            throw new RuntimeException();
+            throw new ArrayIndexOutOfBoundsException("No local tag found for AUID " + auid);
           }
           return localTag;
         }
@@ -267,11 +268,11 @@ public class StreamingWriter {
       }
 
       if (!this.isActive()) {
-        throw new RuntimeException();
+        throw new IllegalStateException("ContainerWriter is not active");
       }
 
       if (this.state != State.READY) {
-        throw new RuntimeException();
+        throw new IllegalStateException("ContainerWriter is not ready for the next clip");
       }
 
       long clipSize = accessUnitCount * accessUnitSize;
@@ -340,7 +341,7 @@ public class StreamingWriter {
      */
     public void nextElement(UL elementKey, long elementLength) throws IOException {
       if (!this.isActive()) {
-        throw new RuntimeException();
+        throw new IllegalStateException("ContainerWriter is not active");
       }
       StreamingWriter.this.fos.writeUL(elementKey);
       StreamingWriter.this.fos.writeBERLength(elementLength);
@@ -406,11 +407,11 @@ public class StreamingWriter {
       }
 
       if (!this.isActive()) {
-        throw new RuntimeException();
+        throw new IllegalStateException("ContainerWriter is not active");
       }
 
       if (this.state != State.READY) {
-        throw new RuntimeException();
+        throw new IllegalStateException("ContainerWriter is not ready for the next clip");
       }
 
       if (StreamingWriter.this.preface.EssenceContainers != null
@@ -558,7 +559,7 @@ public class StreamingWriter {
       }
 
       if (!this.isActive()) {
-        throw new RuntimeException();
+        throw new IllegalStateException("ContainerWriter is not active");
       }
 
       long curPos = StreamingWriter.this.fos.getWrittenCount();
@@ -638,12 +639,9 @@ public class StreamingWriter {
 
   }
 
-  /* TODO: clean-up states */
   private enum State {
     INIT,
-    START,
-    CONTAINER,
-    ELEMENT,
+    STARTED,
     DONE
   }
 
@@ -826,7 +824,7 @@ public class StreamingWriter {
    */
   public void start() throws IOException, KLVException, MXFException {
     if (this.state != State.INIT) {
-      throw new RuntimeException();
+      throw new IllegalStateException("StreamingWriter has already been started");
     }
 
     this.ecLabels = getECLabels();
@@ -838,12 +836,15 @@ public class StreamingWriter {
     startPartition(0, 0, hmb.length, 0, 0L, PartitionPack.Kind.HEADER, PartitionPack.Status.OPEN_INCOMPLETE);
     this.fos.write(hmb);
 
-    this.state = State.START;
+    this.state = State.STARTED;
   }
 
   void startPartition(ContainerWriter cw) throws IOException, KLVException, MXFException {
     if (cw == null) {
-      throw new RuntimeException();
+      throw new IllegalArgumentException("ContainerWriter cannot be null");
+    }
+    if (this.state != State.STARTED) {
+      throw new IllegalStateException("StreamingWriter has not been started");
     }
 
     this.closeCurrentPartition();
@@ -872,6 +873,9 @@ public class StreamingWriter {
   }
 
   private void addGC(long bodySID, long indexSID, ContainerWriter cw) throws MXFException {
+    if (this.state != State.INIT) {
+      throw new IllegalStateException("StreamingWriter has already been started");
+    }
     if (bodySID <= 0 || indexSID <= 0) {
       throw new IllegalArgumentException("bodySID and indexSID must be larger than 0");
     }
@@ -981,6 +985,9 @@ public class StreamingWriter {
    */
   public GSWriter addGenericStream(long bodySID)
       throws IOException, KLVException {
+    if (this.state != State.INIT) {
+      throw new IllegalStateException("StreamingWriter has already been started");
+    }
     if (bodySID <= 0) {
       throw new IllegalArgumentException("bodySID and indexSID must be larger than 0");
     }
@@ -1005,6 +1012,9 @@ public class StreamingWriter {
    * @throws MXFException If an MXF error occurs.
    */
   public void finish() throws IOException, KLVException, MXFException {
+    if (this.state != State.STARTED) {
+      throw new IllegalStateException("StreamingWriter has not been started or is already finished");
+    }
     this.closeCurrentPartition();
 
     /* update header metadata */
@@ -1149,7 +1159,7 @@ public class StreamingWriter {
         Long localTag = reg.getLocalTag(auid);
 
         if (localTag == null) {
-          throw new RuntimeException();
+          throw new ArrayIndexOutOfBoundsException("No local tag found for AUID " + auid);
         }
 
         return localTag;
