@@ -69,16 +69,6 @@ public class MXFDataOutput extends KLVDataOutput {
   }
 
   /**
-   * Uses an existing MXFDataOutput
-   *
-   * @param mos MXFDataOutput from which the byte ordering and underlying
-   * OutputStream will be used
-   */
-  public MXFDataOutput(MXFDataOutput mos) {
-    super(mos.stream(), mos.getByteOrder());
-  }
-
-  /**
    * Writes a single UUID.
    * 
    * @param uuid UUID
