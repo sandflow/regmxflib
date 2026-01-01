@@ -375,7 +375,7 @@
 "majorVersion": 1,
 "minorVersion": 3,
 "kagSize": 1,
-"thisPartition": 12543169,
+"thisPartition": 12544129,
 "previousPartition": 12990,
 "footerPartition": 0,
 "headerByteCount": 0,
@@ -545,8 +545,8 @@
 "majorVersion": 1,
 "minorVersion": 3,
 "kagSize": 1,
-"thisPartition": 12543673,
-"previousPartition": 12543169,
+"thisPartition": 12544633,
+"previousPartition": 12544129,
 "footerPartition": 0,
 "headerByteCount": 0,
 "indexByteCount": 0,
@@ -563,9 +563,9 @@
 "majorVersion": 1,
 "minorVersion": 3,
 "kagSize": 1,
-"thisPartition": 12546402,
-"previousPartition": 12543673,
-"footerPartition": 12546402,
+"thisPartition": 12547362,
+"previousPartition": 12544633,
+"footerPartition": 12547362,
 "headerByteCount": 12896,
 "indexByteCount": 0,
 "indexSID": 0,
@@ -878,12 +878,12 @@
 {
 "+class": "com.sandflow.smpte.mxf.RandomIndexPack$PartitionOffset",
 "bodySID": 0,
-"offset": 12543169},
+"offset": 12544129},
 {
 "+class": "com.sandflow.smpte.mxf.RandomIndexPack$PartitionOffset",
 "bodySID": 2,
-"offset": 12543673},
+"offset": 12544633},
 {
 "+class": "com.sandflow.smpte.mxf.RandomIndexPack$PartitionOffset",
 "bodySID": 0,
-"offset": 12546402}]}]
+"offset": 12547362}]}]
