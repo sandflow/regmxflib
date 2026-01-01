@@ -154,7 +154,7 @@ class StreamingWriterTest {
 
     StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null, uidg);
 
-    GCClipCBEWriter ec = sw.addCBEClipWrappedGC(1, 2);
+    GCClipCBEWriter ec = sw.addCBEClipWrappedGC(1, 127);
 
     sw.start();
 

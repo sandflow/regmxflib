@@ -176,7 +176,7 @@
 "footerPartition": 0,
 "headerByteCount": 0,
 "indexByteCount": 100,
-"indexSID": 2,
+"indexSID": 127,
 "bodyOffset": 0,
 "bodySID": 0,
 "operationalPattern": "urn:smpte:ul:060e2b34.04010101.0d010201.01010100",
@@ -186,7 +186,7 @@
 {
 "+class": "com.sandflow.smpte.mxf.types.IndexTableSegment",
 "IndexEditRate": "48000",
-"IndexStreamID": 2,
+"IndexStreamID": 127,
 "IndexDuration": 48000,
 "InstanceID": "urn:uuid:2777487c-8e7b-56d8-aee4-9d7a4721f837",
 "IndexStartPosition": 0,

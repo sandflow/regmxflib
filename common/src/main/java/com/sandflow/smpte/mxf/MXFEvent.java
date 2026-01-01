@@ -98,8 +98,11 @@ public class MXFEvent extends BasicEvent {
     /**
      * Inconsistent header metadata information
      */
-    INCONSISTENT_HEADER(Event.Severity.WARN);
-
+    INCONSISTENT_HEADER(Event.Severity.WARN),
+    /**
+     * Inconsistent stream identifications
+     */
+    INCONSISTENT_STREAM_ID(Event.Severity.ERROR);
 
 
     public final Event.Severity severity;

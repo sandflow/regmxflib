@@ -316,9 +316,9 @@ public class RandomAccessFileInfo {
                 "Index table segment not found in partition at file offset: " + pp.getThisPartition()));
           }
 
-          if (its.EssenceStreamID != this.ecSID || its.IndexStreamID != this.ecIndexSID) {
+          if (!its.EssenceStreamID.equals(this.ecSID) || !its.IndexStreamID.equals(this.ecIndexSID)) {
             MXFException.handle(evthandler, new MXFEvent(
-                MXFEvent.EventCodes.INCONSISTENT_HEADER,
+                MXFEvent.EventCodes.INCONSISTENT_STREAM_ID,
                 String.format("Index table segment at partition %d is for BodySID=%d and IndexSID=%d, but we are tracking BodySID=%d and IndexSID=%d",
                 pp.getThisPartition(), its.EssenceStreamID, its.IndexStreamID, this.ecSID, this.ecIndexSID)));
           }
