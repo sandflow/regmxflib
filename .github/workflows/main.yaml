@@ -31,11 +31,9 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-    - name: Test Java
-      run: mvn test
-
     - name: Run Build and Test
       run: |
+        mvn test
         docker run --rm \
           -v ${{ github.workspace }}:/workspace \
           -w /tmp \
