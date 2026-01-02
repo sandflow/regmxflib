@@ -171,11 +171,14 @@ public class ReadWriteTest {
         gc.nextElement(phdrImageElementKey, inReader.getElementLength());
       } else if (phdrGSElementKey.equalsIgnoreVersion(elementKey)) {
         phdrMetadataPayload = inReader.readNBytes((int) inReader.getElementLength());
+        assertNotEquals(0, phdrMetadataPayload.length);
+        continue;
       } else {
         fail();
       }
 
       byte[] buffer = inReader.readNBytes((int) inReader.getElementLength());
+      assertNotEquals(0, buffer.length);
       gc.write(buffer);
     }
 

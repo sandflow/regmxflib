@@ -81,14 +81,24 @@ public class StreamingWriter {
 
   private abstract class ContainerWriter extends OutputStream {
 
+    enum State {
+      READY,
+      WRITING
+    }
+
     private final long bodySID;
     private final long indexSID;
     private long bytesToWrite;
     private long ecOffset = 0;
+    private State state = State.READY;
 
     ContainerWriter(long bodySID, long indexSID) {
       this.bodySID = bodySID;
       this.indexSID = indexSID;
+    }
+
+    State getState() {
+      return this.state;
     }
 
     long getIndexSID() {
@@ -103,16 +113,16 @@ public class StreamingWriter {
       return StreamingWriter.this.currentContainer == this;
     }
 
-    long getBytesToWrite() {
-      return bytesToWrite;
+    boolean isWriting() {
+      return this.state.equals(State.WRITING);
     }
 
-    /*
-     * TODO: this is super ugly as it interferes with the ability of the GC to write
-     * stuff to itself
-     */
-    void setBytesToWrite(long bytesToWrite) {
+    void startWriting(long bytesToWrite) {
+      if (this.state != State.READY) {
+        throw new IllegalStateException("ContainerWriter is not in READY state");
+      }
       this.bytesToWrite = bytesToWrite;
+      this.state = State.WRITING;
     }
 
     abstract byte[] drainIndexSegments() throws IOException, MXFException;
@@ -136,17 +146,27 @@ public class StreamingWriter {
       if (!this.isActive()) {
         throw new IllegalStateException("ContainerWriter is not active");
       }
+      if (this.state != State.WRITING) {
+        throw new IllegalStateException("ContainerWriter is not in WRITING state");
+      }
       if (this.bytesToWrite - 1 < 0)
         throw new EOFException("Attempting to write more bytes than allocated to the container");
       StreamingWriter.this.fos.write(b);
       this.bytesToWrite--;
       this.ecOffset++;
+
+      if (this.bytesToWrite == 0) {
+        this.state = State.READY;
+      }
     }
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
       if (!this.isActive()) {
         throw new IllegalStateException("ContainerWriter is not active");
+      }
+      if (this.state != State.WRITING) {
+        throw new IllegalStateException("ContainerWriter is not in WRITING state");
       }
       if (this.bytesToWrite - len < 0) {
         throw new EOFException("Attempting to write more bytes than allocated to the container");
@@ -155,6 +175,10 @@ public class StreamingWriter {
       StreamingWriter.this.fos.write(b, off, len);
       this.bytesToWrite -= len;
       this.ecOffset += len;
+
+      if (this.bytesToWrite == 0) {
+        this.state = State.READY;
+      }
     }
 
     @Override
@@ -165,13 +189,14 @@ public class StreamingWriter {
        */
     }
 
-    static byte[] serializeIndexTableSegment(IndexTableSegment its, EventHandler evthandler) throws IOException, MXFException {
+    static byte[] serializeIndexTableSegment(IndexTableSegment its, EventHandler evthandler)
+        throws IOException, MXFException {
       /* serialize the index table segment */
 
       /*
-      * The AtomicReference is necessary since the variable is initialized in the
-      * inline MXFOutputContext
-      */
+       * The AtomicReference is necessary since the variable is initialized in the
+       * inline MXFOutputContext
+       */
       AtomicReference<Set> ars = new AtomicReference<>();
       MXFOutputContext ctx = new MXFOutputContext() {
 
@@ -234,15 +259,9 @@ public class StreamingWriter {
    */
   class GCClipCBEWriter extends ContainerWriter {
 
-    enum State {
-      READY,
-      WRITTEN,
-      DRAINED
-    }
-
     private long accessUnitSize;
     private long accessUnitCount;
-    private State state = State.READY;
+    private boolean indexTableFilled = false;
 
     public GCClipCBEWriter(long bodySID, long indexSID) {
       super(bodySID, indexSID);
@@ -257,7 +276,9 @@ public class StreamingWriter {
      * @throws IOException If an I/O error occurs.
      */
     public void nextClip(UL elementKey, long accessUnitSize, long accessUnitCount) throws IOException {
-      Objects.requireNonNull(elementKey, "Element Key cannot be null");
+      if (elementKey == null) {
+        throw new IllegalArgumentException("Element Key cannot be null");
+      }
 
       if (accessUnitCount < 0) {
         throw new IllegalArgumentException("Access Unit Count cannot be negative");
@@ -271,7 +292,7 @@ public class StreamingWriter {
         throw new IllegalStateException("ContainerWriter is not active");
       }
 
-      if (this.state != State.READY) {
+      if (this.getState() != State.READY) {
         throw new IllegalStateException("ContainerWriter is not ready for the next clip");
       }
 
@@ -279,12 +300,11 @@ public class StreamingWriter {
 
       StreamingWriter.this.fos.writeUL(elementKey);
       StreamingWriter.this.fos.writeBERLength(clipSize);
-      this.setBytesToWrite(clipSize);
+      this.startWriting(clipSize);
 
       this.accessUnitCount = accessUnitCount;
       this.accessUnitSize = accessUnitSize;
-
-      this.state = State.WRITTEN;
+      this.indexTableFilled = true;
     }
 
     @Override
@@ -294,10 +314,10 @@ public class StreamingWriter {
 
     @Override
     byte[] drainIndexSegments() throws IOException, MXFException {
-      if (this.state != State.WRITTEN) {
+      if (!this.indexTableFilled) {
         return null;
       }
-      this.state = State.DRAINED;
+      this.indexTableFilled = false;
 
       var its = new IndexTableSegment();
       its.InstanceID = StreamingWriter.this.uidGenerator.generate(this);
@@ -345,7 +365,7 @@ public class StreamingWriter {
       }
       StreamingWriter.this.fos.writeUL(elementKey);
       StreamingWriter.this.fos.writeBERLength(elementLength);
-      this.setBytesToWrite(elementLength);
+      this.startWriting(elementLength);
     }
 
     @Override
@@ -420,17 +440,16 @@ public class StreamingWriter {
          * EXCEPTION: ASDCPLib incorrectly includes the Clip KL in the essence container
          * offset for IAB files
          */
-        this.setBytesToWrite(50);
-        MXFDataOutput mos = new MXFDataOutput(this);
-        mos.writeUL(elementKey);
-        mos.writeBERLength(clipSize);
-        mos.flush();
+        long curPos = StreamingWriter.this.fos.getWrittenCount();
+        StreamingWriter.this.fos.writeUL(elementKey);
+        StreamingWriter.this.fos.writeBERLength(clipSize);
+        this.setPosition(this.getPosition() + StreamingWriter.this.fos.getWrittenCount() - curPos);
       } else {
         StreamingWriter.this.fos.writeUL(elementKey);
         StreamingWriter.this.fos.writeBERLength(clipSize);
       }
 
-      this.setBytesToWrite(clipSize);
+      this.startWriting(clipSize);
 
       this.state = State.WRITTEN;
     }
@@ -567,7 +586,7 @@ public class StreamingWriter {
       StreamingWriter.this.fos.writeBERLength(elementSize);
       this.setPosition(this.getPosition() + StreamingWriter.this.fos.getWrittenCount() - curPos);
 
-      this.setBytesToWrite(elementSize);
+      this.startWriting(elementSize);
     }
 
     @Override
@@ -667,7 +686,8 @@ public class StreamingWriter {
   private final UIDGenerator uidGenerator;
 
   /**
-   * Instantiates a StreamingWriter. The StreamingWriter makes a copy of the provided preface.
+   * Instantiates a StreamingWriter. The StreamingWriter makes a copy of the
+   * provided preface.
    * 
    * @param os         Output stream to write the MXF file to.
    * @param preface    Preface set of the MXF file.
@@ -682,7 +702,8 @@ public class StreamingWriter {
   }
 
   /**
-   * Instantiates a StreamingWriter with a custom UID generator. The StreamingWriter makes a copy of the provided preface.
+   * Instantiates a StreamingWriter with a custom UID generator. The
+   * StreamingWriter makes a copy of the provided preface.
    * 
    * @param os         Output stream to write the MXF file to.
    * @param preface    Preface set of the MXF file.
@@ -861,9 +882,8 @@ public class StreamingWriter {
     }
 
     /* are we done with the current partition? */
-    /* TODO: replace with state check */
-    if (this.currentContainer.getBytesToWrite() != 0) {
-      throw new RuntimeException();
+    if (this.currentContainer.isWriting()) {
+      throw new IllegalStateException("The current partition cannot be closed because it is still writing");
     }
     /* do we need to create an index partition for the current essence container */
     if (this.currentContainer.getIndexSID() != 0) {
