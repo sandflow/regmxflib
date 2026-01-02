@@ -97,7 +97,9 @@ public class PartitionPack {
    * Writes a Partition Pack to a Triplet
    *
    * @param pp      Partition pack to write
-   * @param triplet Triplet from which to create the Partition Pack
+   * @param kind    Kind of partition
+   * @param status  Status of partition
+   * @return Triplet
    * @throws KLVException
    */
   public static Triplet toTriplet(PartitionPack pp, Kind kind, Status status) throws KLVException {

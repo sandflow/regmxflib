@@ -46,6 +46,7 @@ import java.util.LinkedList;
 
 import org.apache.commons.numbers.fraction.Fraction;
 
+import com.github.jknack.handlebars.EscapingStrategy;
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
 import com.sandflow.smpte.mxf.adapters.ASCIICharacterAdapter;
@@ -114,7 +115,7 @@ import com.sandflow.smpte.util.UUID;
 import jakarta.xml.bind.JAXBException;
 
 public class ClassGenerator {
-  static final Handlebars handlebars = new Handlebars();
+  static final Handlebars handlebars = new Handlebars().with(EscapingStrategy.HTML_ENTITY);
   static final Template classTemplate;
   static final Template enumerationTemplate;
   static final Template recordTemplate;

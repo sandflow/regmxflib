@@ -100,7 +100,7 @@ public class RandomIndexPack {
   /**
    * Creates a Triplet
    * 
-   * @return triplet RIP as a triplet
+   * @param os Output stream where to write the triplet
    * @throws KLVException
    * @throws IOException
    */

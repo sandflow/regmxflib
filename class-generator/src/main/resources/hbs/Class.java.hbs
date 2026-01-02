@@ -59,7 +59,7 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
   private static final AUID {{symbol}}_AUID = AUID.fromURN("{{identification}}");{{/each}}
 {{#each ownMembers}}
   /**
-    * {{{description}}}
+    * {{description}}
     */
   public {{typeName}} {{symbol}};
 {{/each}}
