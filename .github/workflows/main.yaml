@@ -35,7 +35,7 @@ jobs:
       run: |
         mvn test
         docker run --rm \
-          -v ${{ github.workspace }}:/workspace \
+          -v $GITHUB_WORKSPACE:/workspace \
           -w /tmp \
           regmxflib-ci-env:latest \
           bash /workspace/library/src/test/sh/compat.sh
