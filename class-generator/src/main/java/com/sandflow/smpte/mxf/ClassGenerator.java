@@ -115,7 +115,7 @@ import com.sandflow.smpte.util.UUID;
 import jakarta.xml.bind.JAXBException;
 
 public class ClassGenerator {
-  static final Handlebars handlebars = new Handlebars().with(EscapingStrategy.HTML_ENTITY);
+  static final Handlebars handlebars = new Handlebars();
   static final Template classTemplate;
   static final Template enumerationTemplate;
   static final Template recordTemplate;
@@ -128,7 +128,7 @@ public class ClassGenerator {
 
   static {
     try {
-      classTemplate = handlebars.compile("hbs/Class.java");
+      classTemplate = handlebars.with(EscapingStrategy.HTML_ENTITY).compile("hbs/Class.java");
       enumerationTemplate = handlebars.compile("hbs/Enumeration.java");
       recordTemplate = handlebars.compile("hbs/Record.java");
       classFactoryTemplate = handlebars.compile("hbs/ClassFactoryInitializer.java");
