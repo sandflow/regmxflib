@@ -87,7 +87,7 @@ public class TestUtils {
 
   private static final String outputDirPath = "target/test-output/";
 
-  {
+  static {
     File outputDir = new File(outputDirPath);
     if (!outputDir.exists()) {
       outputDir.mkdirs();

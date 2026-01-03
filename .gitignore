@@ -11,3 +11,4 @@ CMakeSettings.json
 .vscode/
 .classpath
 src/generated/
+library/dependency-reduced-pom.xml

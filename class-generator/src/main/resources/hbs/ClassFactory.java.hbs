@@ -32,6 +32,8 @@ package com.sandflow.smpte.mxf;
 
 import java.util.HashMap;
 
+{{#.}}import com.sandflow.smpte.mxf.types.{{getSymbol}};
+{{/.}}
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.util.UL;
 
@@ -39,11 +41,8 @@ public class ClassFactory {
   static protected final HashMap<UL, Class<?>> classMap = new HashMap<>();
 
   static {
-    try {
-      Class.forName("com.sandflow.smpte.mxf.ClassFactoryInitializer");
-    } catch (Exception e) {
-      throw new InternalError("Could not initialize the MXF class factory", e);
-    }
+{{#.}}
+    ClassFactory.putClass({{getSymbol}}.getKey(), {{getSymbol}}.class);{{/.}}
 
     ClassFactory.putClass(IndexTableSegment.getKey(), IndexTableSegment.class);
   }

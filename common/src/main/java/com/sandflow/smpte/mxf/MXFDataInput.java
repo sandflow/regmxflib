@@ -146,8 +146,6 @@ public class MXFDataInput extends KLVDataInput {
    * Reads an MXF array into a Java Collection
    *
    * @param <T> Type of the collection elements
-   * @param <W> TripletValueAdapter that is used to convert MXF array elements
-   *            into Java collection elements
    * @return Collection of elements of type T
    * @throws KLVException
    * @throws IOException
@@ -160,8 +158,6 @@ public class MXFDataInput extends KLVDataInput {
    * Reads an MXF batch into a Java Collection
    *
    * @param <T> Type of the collection elements
-   * @param <W> TripletValueAdapter that is used to convert MXF batch elements
-   *            into Java collection elements
    * @return Collection of elements of type T
    * @throws KLVException
    * @throws IOException

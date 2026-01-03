@@ -5,11 +5,11 @@
 
     <parent>
         <groupId>com.sandflow</groupId>
-        <artifactId>regmxflib</artifactId>
+        <artifactId>regmxflib-root</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>library</artifactId>
+    <artifactId>regmxflib</artifactId>
 
     <packaging>jar</packaging>
 
@@ -53,7 +53,6 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>5.12.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -63,23 +62,20 @@
         </dependency>
         <dependency>
             <groupId>com.sandflow</groupId>
-            <artifactId>common</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <artifactId>regmxflib-common</artifactId>
+            <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.sandflow</groupId>
-            <artifactId>class-generator</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
-        <!-- <dependency>
-            <groupId>com.sandflow</groupId>
-            <artifactId>annotation-processor</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency> -->
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <excludes>
+                    <exclude>**</exclude>
+                </excludes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -121,9 +117,17 @@
                                 <argument>
                                     ${project.basedir}/src/main/resources/registers/Essence.xml</argument>
                             </arguments>
+                            <includePluginDependencies>true</includePluginDependencies>
                         </configuration>
                     </execution>
                 </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.sandflow</groupId>
+                        <artifactId>regmxflib-class-generator</artifactId>
+                        <version>${project.version}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -145,43 +149,60 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.0</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
                         <goals>
-                            <goal>single</goal>
+                            <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <descriptorRefs>
-                                <descriptorRef>jar-with-dependencies</descriptorRef>
-                            </descriptorRefs>
+                            <artifactSet>
+                                <includes>
+                                    <include>com.sandflow:regmxflib-common</include>
+                                </includes>
+                            </artifactSet>
+                           <attach>true</attach>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
         </plugins>
     </build>
-
     <profiles>
         <profile>
+            <id>with-dependencies</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptorRefs>
+                                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                                    </descriptorRefs>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
             <id>release</id>
-            <distributionManagement>
-                <snapshotRepository>
-                    <id>ossrh</id>
-                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-                </snapshotRepository>
-                <repository>
-                    <id>ossrh</id>
-                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-                </repository>
-            </distributionManagement>
             <build>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>2.2.1</version>
+                        <version>3.4.0</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -194,7 +215,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.9.1</version>
+                        <version>3.12.0</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -207,7 +228,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.5</version>
+                        <version>3.2.8</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -221,7 +242,7 @@
                     <plugin>
                         <groupId>org.sonatype.central</groupId>
                         <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>0.8.0</version>
+                        <version>0.9.0</version>
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>central</publishingServerId>
@@ -231,5 +252,4 @@
             </build>
         </profile>
     </profiles>
-
 </project>

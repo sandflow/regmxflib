@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Sandflow Consulting, LLC
+ * Copyright (c) Sandflow Consulting LLC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,20 +24,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
-* @author Pierre-Anthony Lemieux
-*/
+package com.sandflow.smpte.mxf.adapters;
 
-package com.sandflow.smpte.mxf;
+import java.io.IOException;
 
-{{#.}}import com.sandflow.smpte.mxf.types.{{getSymbol}};
-{{/.}}
+import com.sandflow.smpte.mxf.MXFInputContext;
+import com.sandflow.smpte.mxf.MXFDataInput;
+import com.sandflow.smpte.mxf.MXFOutputContext;
+import com.sandflow.smpte.mxf.types.Version;
+import com.sandflow.smpte.mxf.MXFDataOutput;
 
-public class ClassFactoryInitializer {
-  static {
-{{#.}}
-    ClassFactory.putClass({{getSymbol}}.getKey(), {{getSymbol}}.class);
-{{/.}}
+public class VersionAdapter {
+  public static final Integer ITEM_LENGTH = 2;
+
+  public static Version fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
+    int major = is.readUnsignedByte();
+    int minor = is.readUnsignedByte();
+
+    return new Version(major, minor);
   }
 
+  public static void toStream(Version value, MXFDataOutput os, MXFOutputContext ctx) throws IOException {
+    os.writeUnsignedByte((byte) value.getMajor());
+    os.writeUnsignedByte((byte) value.getMinor());
+  }
+
+  public static Version copyOf(Version src) {
+    if (src == null) {
+      return null;
+    }
+    return new Version(src);
+  }
 }

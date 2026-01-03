@@ -34,7 +34,7 @@ import java.io.IOException;
 
 {{#if ownMembers}}import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.util.AUID;
-import com.sandflow.smpte.mxf.SetItemAdapter;{{/if}}
+import com.sandflow.smpte.mxf.adapters.SetItemAdapter;{{/if}}
 import com.sandflow.smpte.util.UL;
 import com.sandflow.smpte.util.UUID;
 import com.sandflow.smpte.mxf.ClassFactory;
@@ -48,7 +48,7 @@ import com.sandflow.smpte.klv.Set;
 
 
 /**
-  * {{#if isAbstract}}<<abstract>> {{/if}}{{className}}
+  * {{#if isAbstract}}&lt;&lt;abstract&gt;&gt; {{/if}}{{className}}
   *{{#each allMembers}}
   *   - {{symbol}} : {{typeDefinition}}{{#if isOptional}} [0..1]{{/if}}{{/each}}
   */
@@ -59,7 +59,7 @@ public {{#if isAbstract}}abstract {{/if}}class {{className}}{{#if parentClassNam
   private static final AUID {{symbol}}_AUID = AUID.fromURN("{{identification}}");{{/each}}
 {{#each ownMembers}}
   /**
-    * {{{description}}}
+    * {{description}}
     */
   public {{typeName}} {{symbol}};
 {{/each}}

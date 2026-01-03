@@ -93,7 +93,7 @@ public class KLVDataOutput {
   /**
    * Writes a single UL.
    * 
-   * @return UL
+   * @param ul UL
    * @throws IOException
    * @throws EOFException
    */
@@ -104,7 +104,7 @@ public class KLVDataOutput {
   /**
    * Writes a single AUID.
    * 
-   * @return AUID
+   * @param auid AUID
    * @throws IOException
    * @throws EOFException
    */
@@ -117,10 +117,8 @@ public class KLVDataOutput {
    * length is 8 bytes. ECXEPTION: the minimum length is 4 bytes for
    * compatibility with ASDCPLib
    *
-   * @return Length
-   * @throws EOFException
+   * @param l Length
    * @throws IOException
-   * @throws KLVException
    */
   public void writeBERLength(long l) throws IOException {
     if (l < 0) {
@@ -147,10 +145,8 @@ public class KLVDataOutput {
   /**
    * Writes a single 4-byte BER-encoded length.
    * 
-   * @return Length
-   * @throws EOFException
+   * @param l Length
    * @throws IOException
-   * @throws KLVException
    */
   public void writeBER4Length(long l) throws IOException {
     if (l < 0) {
@@ -171,10 +167,8 @@ public class KLVDataOutput {
   /**
    * Writes a single KLV triplet.
    * 
-   * @return KLV Triplet
+   * @param t Triplet to write
    * @throws IOException
-   * @throws EOFException
-   * @throws KLVException
    */
   public void writeTriplet(Triplet t) throws IOException {
     this.writeAUID(t.getKey());
