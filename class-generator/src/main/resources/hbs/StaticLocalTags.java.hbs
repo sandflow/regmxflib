@@ -39,11 +39,8 @@ public class StaticLocalTags {
   private static final LocalTagRegister reg = new LocalTagRegister();
 
   static {
-    try {
-      Class.forName("com.sandflow.smpte.mxf.StaticLocalTagsInitializer");
-    } catch (Exception e) {
-      throw new InternalError("Cannot initialize local tag register", e);
-    }
+{{#.}}
+    StaticLocalTags.add({{getLocalIdentification}}, AUID.fromURN("{{getIdentification}}"));{{/.}}
   }
 
   private StaticLocalTags() {

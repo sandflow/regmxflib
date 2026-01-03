@@ -131,11 +131,11 @@ public class ClassGenerator {
       classTemplate = handlebars.with(EscapingStrategy.HTML_ENTITY).compile("hbs/Class.java");
       enumerationTemplate = handlebars.compile("hbs/Enumeration.java");
       recordTemplate = handlebars.compile("hbs/Record.java");
-      classFactoryTemplate = handlebars.compile("hbs/ClassFactoryInitializer.java");
+      classFactoryTemplate = handlebars.compile("hbs/ClassFactory.java");
       fixedArrayTemplate = handlebars.compile("hbs/FixedArray.java");
       variableArrayTemplate = handlebars.compile("hbs/VariableArray.java");
       labelsTemplate = handlebars.compile("hbs/Labels.java");
-      localTagsTemplate = handlebars.compile("hbs/StaticLocalTagsInitializer.java");
+      localTagsTemplate = handlebars.compile("hbs/StaticLocalTags.java");
       essenceKeysTemplate = handlebars.compile("hbs/EssenceKeys.java");
     } catch (Exception e) {
       throw new InternalError("Failed to load class generator templates", e);
@@ -726,10 +726,10 @@ public class ClassGenerator {
     }
 
     /* generate the class factory */
-    g.generateSource(classFactoryTemplate, "com.sandflow.smpte.mxf", "ClassFactoryInitializer", g.classList);
+    g.generateSource(classFactoryTemplate, "com.sandflow.smpte.mxf", "ClassFactory", g.classList);
 
     /* generate the static local tags */
-    g.generateSource(localTagsTemplate, "com.sandflow.smpte.mxf", "StaticLocalTagsInitializer", propList);
+    g.generateSource(localTagsTemplate, "com.sandflow.smpte.mxf", "StaticLocalTags", propList);
 
     /* generate labels */
     g.generateSource(

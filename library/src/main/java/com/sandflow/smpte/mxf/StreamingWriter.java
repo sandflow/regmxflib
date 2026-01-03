@@ -44,7 +44,6 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.numbers.fraction.Fraction;
 
 import com.sandflow.smpte.klv.LocalTagRegister;
@@ -370,7 +369,7 @@ public class StreamingWriter {
 
     @Override
     long getDuration() {
-      throw new NotImplementedException();
+      throw new UnsupportedOperationException("Duration is not defined for Generic Stream");
     }
 
     @Override
