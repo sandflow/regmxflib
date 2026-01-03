@@ -78,18 +78,21 @@ import com.sandflow.util.events.EventHandler;
  */
 public class StreamingWriter {
 
-  private abstract class ContainerWriter extends OutputStream {
+  /**
+   * Abstract class representing a writer for an essence container.
+   */
+  abstract class ContainerWriter extends OutputStream {
 
     enum State {
       READY,
       WRITING
     }
 
-    private final long bodySID;
-    private final long indexSID;
-    private long bytesToWrite;
-    private long ecOffset = 0;
-    private State state = State.READY;
+    final long bodySID;
+    final long indexSID;
+    long bytesToWrite;
+    long ecOffset = 0;
+    State state = State.READY;
 
     ContainerWriter(long bodySID, long indexSID) {
       this.bodySID = bodySID;
@@ -256,7 +259,7 @@ public class StreamingWriter {
   /**
    * Writer for CBE clip-wrapped essence.
    */
-  class GCClipCBEWriter extends ContainerWriter {
+  public class GCClipCBEWriter extends ContainerWriter {
 
     private long accessUnitSize;
     private long accessUnitCount;
@@ -345,7 +348,7 @@ public class StreamingWriter {
   /**
    * Writer for Generic Stream.
    */
-  class GSWriter extends ContainerWriter {
+  public class GSWriter extends ContainerWriter {
 
     public GSWriter(long bodySID) {
       super(bodySID, 0);
@@ -858,7 +861,19 @@ public class StreamingWriter {
     this.state = State.STARTED;
   }
 
-  void startPartition(ContainerWriter cw) throws IOException, KLVException, MXFException {
+  /**
+   * Starts a new partition for the specified essence container.
+   *
+   * This method ensures that the current partition is closed before starting a new one.
+   *
+   * @param cw The writer for the container for which the new partition is started.
+   * @throws IOException  If an I/O error occurs.
+   * @throws KLVException If a KLV error occurs.
+   * @throws MXFException If an MXF error occurs.
+   * @throws IllegalArgumentException If the provided ContainerWriter is null.
+   * @throws IllegalStateException If the StreamingWriter has not been started.
+   */
+  public void startPartition(ContainerWriter cw) throws IOException, KLVException, MXFException {
     if (cw == null) {
       throw new IllegalArgumentException("ContainerWriter cannot be null");
     }
