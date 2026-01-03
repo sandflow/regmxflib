@@ -5,11 +5,11 @@
 
     <parent>
         <groupId>com.sandflow</groupId>
-        <artifactId>regmxflib</artifactId>
+        <artifactId>regmxflib-root</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>library</artifactId>
+    <artifactId>regmxflib</artifactId>
 
     <packaging>jar</packaging>
 
@@ -62,7 +62,7 @@
         </dependency>
         <dependency>
             <groupId>com.sandflow</groupId>
-            <artifactId>common</artifactId>
+            <artifactId>regmxflib-common</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
@@ -124,7 +124,7 @@
                 <dependencies>
                     <dependency>
                         <groupId>com.sandflow</groupId>
-                        <artifactId>class-generator</artifactId>
+                        <artifactId>regmxflib-class-generator</artifactId>
                         <version>1.0.0-SNAPSHOT</version>
                     </dependency>
                 </dependencies>
@@ -160,7 +160,7 @@
                         <configuration>
                             <artifactSet>
                                 <includes>
-                                    <include>com.sandflow:common</include>
+                                    <include>com.sandflow:regmxflib-common</include>
                                 </includes>
                             </artifactSet>
                            <attach>true</attach>
