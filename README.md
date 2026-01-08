@@ -47,10 +47,18 @@ The following snippet illustrates the creation of an `RGBADescriptor` using the 
 
 ## Quick start
 
-    mvn package
-    java -cp library/target/library-1.0.0-jar-with-dependencies.jar com.sandflow.smpte.tools.RegMXFDump \
+    mvn package -P with-dependencies
+    java -cp library/target/regmxflib-jar-with-dependencies.jar \
+      com.sandflow.smpte.tools.RegMXFDump \
       library/src/test/resources/imps/imp_1/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.mxf > \
       library/target/test-output/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.json
+
+## Deployment
+
+The (built) library is deployed at Maven Central with the following coordinates:
+
+    <groupId>com.sandflow</groupId>
+    <artifactId>regmxflib</artifactId>
 
 ## Organization
 
