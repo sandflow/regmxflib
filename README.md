@@ -48,7 +48,7 @@ The following snippet illustrates the creation of an `RGBADescriptor` using the 
 ## Quick start
 
     mvn package
-    java -cp library/target/library-1.0.0-rc.1-jar-with-dependencies.jar com.sandflow.smpte.tools.RegMXFDump \
+    java -cp library/target/library-1.0.0-jar-with-dependencies.jar com.sandflow.smpte.tools.RegMXFDump \
       library/src/test/resources/imps/imp_1/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.mxf > \
       library/target/test-output/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.json
 
@@ -56,8 +56,8 @@ The following snippet illustrates the creation of an `RGBADescriptor` using the 
 
 The library consists of 3 modules:
 
-- `class-generator` generates POJO classes in <library/target/generated-sources> when
-  compiling the library, using the register files at <library/src/main/resources>
+- `class-generator` generates [POJO classes](./library/target/generated-sources) when
+  compiling the library using [register files](./library/src/main/resources).
 - `library` holds the generated POJO classes and classes for reading and writing MXF files
 - `common` holds classes that do not depend on the generated classes
 
@@ -132,7 +132,7 @@ The next steps is to instantiate a `StreamingReader` object (typically using the
 The `StreamingReader` does not differentiate between kinds of essence wrapping and between essence containers and generic streams: clip-wrapped essence is returned a single element, each element of a frame-wrapped essence container is returned as an individual element and each element within a Generic Stream Partition is also returned as an individual element. 
 
 The operation of the `StreamingReader` is demonstrated at
-<library/src/test/java/com/sandflow/smpte/mxf/StreamingReaderTest.java> and at <library/src/test/java/com/sandflow/smpte/mxf/ReadWriteTest.java>.
+[StreamingReaderTest.java](library/src/test/java/com/sandflow/smpte/mxf/StreamingReaderTest.java) and at [ReadWriteTest.java](library/src/test/java/com/sandflow/smpte/mxf/ReadWriteTest.java).
 
 ### Random access reader
 
@@ -149,7 +149,7 @@ To access a Generic Stream, a `GenericStreamReader` is instantiated and the `see
 The `ClipReader`, `FrameReader` and `GenericStreamReader` objects extend `InputStream` and behave similarly to the `StreamingReader`.
 
 The operation of the `RandomAccessReader` is demonstrated at
-<library/src/test/java/com/sandflow/smpte/mxf/RandomAccessReaderTest.java>.
+[RandomAccessReaderTest.java](library/src/test/java/com/sandflow/smpte/mxf/RandomAccessReaderTest.java).
 
 ## Writing
 
@@ -184,10 +184,15 @@ Each body partition contained within the file is written in turn by calling the 
 The writing of the file ends with the `finish()` method.
 
 The operation of the `StreamingWriter` is demonstrated at
-<library/src/test/java/com/sandflow/smpte/mxf/StreamingWriterTest.java> and at <library/src/test/java/com/sandflow/smpte/mxf/ReadWriteTest.java>.
+[StreamingWriterTest.java](./library/src/test/java/com/sandflow/smpte/mxf/StreamingWriterTest.java) and at [ReadWriteTest.java](/library/src/test/java/com/sandflow/smpte/mxf/ReadWriteTest.java).
+
+## Testing
+
+In addition to unit tests, the library also defines basic compatibility tests at [compat.sh](./library/src/test/sh/compat.sh) against popular MXF libraries (FFMPEG, ASDCP and BMX). A [Dockerfile](./Dockerfile) that sets up the test environment is provided.
 
 ## Prerequisites
 
 - Java 17
 - Maven
+- (recommended) Container engine, e.g. Docker or Podman
 - (recommended) Git
