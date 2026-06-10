@@ -129,7 +129,7 @@ The library implements two ways of reading the contents of an MXF file:
 
 - the `StreamingReader` reads an MXF file sequentially, from beginning to end, starting with the header metadata and then each essence element as they occur in the file, across all Essence Containers and Generic Streams, and across all partitions. Index Tables, the RIP and any Header Metadata other than that from the Header Partition are ignored.
 
-- the `RandomAccessReader` requires random access to the file, but allows seeking to any access unit within the file in constant time and in any order. The file must contain a RIP and Index Tables. It is limited to a single Essence Container but can contain any number of Generic Stream partitions.
+- random access readers (`ClipReader`, `FrameReader`, `GenericStreamReader`) require random access to the file, but allows seeking to any access unit within the file in constant time and in any order. The file must contain a RIP and Index Tables. It is limited to a single Essence Container but can contain any number of Generic Stream partitions.
 
 ### Streaming reader
 
@@ -144,7 +144,7 @@ The operation of the `StreamingReader` is demonstrated at
 
 ### Random access reader
 
-The first step to using the `RandomAccessReader` is to read-in the file's Header Metadata, Index Tables and RIP by instantiating a `RandomAccessFileInfo` object. In addition to retrieving the Header Metadata (`getPreface()`), this object can be used, for example, to determine which generic streams tracks are present in the file (`getGenericStreams()`) or the number of essence edit units present (`getEUCount()`).
+The first step is to read-in the file's Header Metadata, Index Tables and RIP by instantiating a `RandomAccessFileInfo` object. In addition to retrieving the Header Metadata (`getPreface()`), this object can be used, for example, to determine which generic streams tracks are present in the file (`getGenericStreams()`) or the number of essence edit units present (`getEUCount()`).
 
 The next step depends on the kind of wrapping used for the essence, something that the library cannot unfortunately determine on its own and which determines how the essence is indexed:
 
@@ -192,7 +192,7 @@ Each body partition contained within the file is written in turn by calling the 
 The writing of the file ends with the `finish()` method.
 
 The operation of the `StreamingWriter` is demonstrated at
-[StreamingWriterTest.java](./library/src/test/java/com/sandflow/smpte/mxf/StreamingWriterTest.java) and at [ReadWriteTest.java](/library/src/test/java/com/sandflow/smpte/mxf/ReadWriteTest.java).
+[StreamingWriterTest.java](./library/src/test/java/com/sandflow/smpte/mxf/StreamingWriterTest.java) and at [ReadWriteTest.java](./library/src/test/java/com/sandflow/smpte/mxf/ReadWriteTest.java).
 
 ## Testing
 
