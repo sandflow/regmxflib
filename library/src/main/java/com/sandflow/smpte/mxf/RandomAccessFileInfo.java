@@ -86,12 +86,13 @@ public class RandomAccessFileInfo {
     private long length;
 
     CBEClipIndex(long cbeSize, long length) {
-      if (length <= 0) {
-        throw new IllegalArgumentException();
+      if (cbeSize <= 0) {
+        throw new IllegalArgumentException("EditUnitByteCount (cbeSize) must be > 0 for CBE indexing");
       }
 
-      if (length <= 0) {
-        throw new IllegalArgumentException();
+      /* IndexDuration of 0 is permitted by ST 377-1 §11.1.9 (unspecified / entire essence container) */
+      if (length < 0) {
+        throw new IllegalArgumentException("IndexDuration (length) must not be negative");
       }
       this.cbeSize = cbeSize;
       this.length = length;
@@ -99,7 +100,8 @@ public class RandomAccessFileInfo {
 
     @Override
     public long getECPosition(long editUnit) {
-      if (editUnit >= this.length) {
+      /* length == 0 means the duration is unspecified (ST 377-1 §11.1.9), so only bound-check when known */
+      if (this.length > 0 && editUnit >= this.length) {
         throw new IllegalArgumentException();
       }
       return this.cbeSize * editUnit;
@@ -295,8 +297,15 @@ public class RandomAccessFileInfo {
 
         /* read Index Segments until the IndexByteCount is exceeded */
         while (mis.getReadCount() < pp.getIndexByteCount()) {
+          Triplet it = mis.readTriplet();
+
+          /* skip fill items that pad the index byte count to the KAG */
+          if (FillItem.getKey().equalsIgnoreVersion(it.getKey())) {
+            continue;
+          }
+
           IndexTableSegment its = IndexTableSegment.fromSet(
-              Set.fromLocalSet(mis.readTriplet(), StaticLocalTags.register()),
+              Set.fromLocalSet(it, StaticLocalTags.register()),
               new MXFInputContext() {
                 @Override
                 public Set getSet(UUID uuid) {
