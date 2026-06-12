@@ -58,7 +58,7 @@ public class GenericStreamReader extends InputStream {
    * @throws IOException  If an I/O error occurs.
    * @throws KLVException If a KLV error occurs.
    */
-  GenericStreamReader(RandomAccessFileInfo info, RandomAccessInputSource source) throws IOException, KLVException {
+  public GenericStreamReader(RandomAccessFileInfo info, RandomAccessInputSource source) throws IOException, KLVException {
     Objects.requireNonNull(info);
     Objects.requireNonNull(source);
 

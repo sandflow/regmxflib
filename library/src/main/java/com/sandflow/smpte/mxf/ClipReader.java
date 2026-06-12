@@ -58,7 +58,7 @@ public class ClipReader extends InputStream {
    * @throws IOException  If an I/O error occurs.
    * @throws KLVException If a KLV error occurs.
    */
-  ClipReader(RandomAccessFileInfo info, RandomAccessInputSource source) throws IOException, KLVException {
+  public ClipReader(RandomAccessFileInfo info, RandomAccessInputSource source) throws IOException, KLVException {
     this.info = info;
     this.source = source;
 
