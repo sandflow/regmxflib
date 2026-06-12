@@ -159,7 +159,7 @@ public class RandomAccessFileInfo {
    * @throws KLVException If a KLV parsing error occurs.
    * @throws MXFException If an MXF-specific error occurs.
    */
-  RandomAccessFileInfo(RandomAccessInputSource raip, EventHandler evthandler)
+  public RandomAccessFileInfo(RandomAccessInputSource raip, EventHandler evthandler)
       throws IOException, KLVException, MXFException {
     if (raip == null) {
       throw new IllegalArgumentException("No input source provided");

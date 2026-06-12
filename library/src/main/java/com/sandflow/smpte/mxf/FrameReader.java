@@ -52,7 +52,7 @@ public class FrameReader extends StreamingReader {
    * @throws KLVException If a KLV error occurs.
    * @throws MXFException If an MXF error occurs.
    */
-  FrameReader(RandomAccessFileInfo info, RandomAccessInputSource source)
+  public FrameReader(RandomAccessFileInfo info, RandomAccessInputSource source)
       throws IOException, KLVException, MXFException {
     super(source, null);
 
