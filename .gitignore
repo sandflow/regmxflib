@@ -12,3 +12,4 @@ CMakeSettings.json
 .classpath
 src/generated/
 library/dependency-reduced-pom.xml
+library/.flattened-pom.xml

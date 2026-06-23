@@ -6,12 +6,12 @@
     <parent>
         <groupId>com.sandflow</groupId>
         <artifactId>regmxflib-root</artifactId>
-        <version>1.0.1-SNAPSHOT</version>
+        <version>1.0.1-rc.1</version>
     </parent>
 
     <groupId>com.sandflow</groupId>
     <artifactId>regmxflib</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.1-rc.1</version>
 
     <packaging>jar</packaging>
 
@@ -208,7 +208,6 @@
                         <version>3.4.0</version>
                         <executions>
                             <execution>
-                                <id>attach-sources</id>
                                 <goals>
                                     <goal>jar-no-fork</goal>
                                 </goals>
@@ -221,7 +220,6 @@
                         <version>3.12.0</version>
                         <executions>
                             <execution>
-                                <id>attach-javadocs</id>
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
@@ -234,7 +232,6 @@
                         <version>3.2.8</version>
                         <executions>
                             <execution>
-                                <id>sign-artifacts</id>
                                 <phase>verify</phase>
                                 <goals>
                                     <goal>sign</goal>
@@ -250,6 +247,30 @@
                         <configuration>
                             <publishingServerId>central</publishingServerId>
                         </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>flatten-maven-plugin</artifactId>
+                        <version>1.6.0</version>
+                        <configuration>
+                            <flattenMode>ossrh</flattenMode>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>flatten</id>
+                                <phase>process-classes</phase>
+                                <goals>
+                                    <goal>flatten</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>flatten.clean</id>
+                                <phase>clean</phase>
+                                <goals>
+                                    <goal>clean</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
