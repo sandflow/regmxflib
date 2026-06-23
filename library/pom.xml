@@ -208,7 +208,6 @@
                         <version>3.4.0</version>
                         <executions>
                             <execution>
-                                <id>attach-sources</id>
                                 <goals>
                                     <goal>jar-no-fork</goal>
                                 </goals>
@@ -221,7 +220,6 @@
                         <version>3.12.0</version>
                         <executions>
                             <execution>
-                                <id>attach-javadocs</id>
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
@@ -234,7 +232,6 @@
                         <version>3.2.8</version>
                         <executions>
                             <execution>
-                                <id>sign-artifacts</id>
                                 <phase>verify</phase>
                                 <goals>
                                     <goal>sign</goal>
@@ -261,7 +258,7 @@
                         <executions>
                             <execution>
                                 <id>flatten</id>
-                                <phase>process-resources</phase>
+                                <phase>process-classes</phase>
                                 <goals>
                                     <goal>flatten</goal>
                                 </goals>
