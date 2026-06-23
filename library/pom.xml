@@ -6,12 +6,12 @@
     <parent>
         <groupId>com.sandflow</groupId>
         <artifactId>regmxflib-root</artifactId>
-        <version>1.0.1-SNAPSHOT</version>
+        <version>1.0.1-rc.1</version>
     </parent>
 
     <groupId>com.sandflow</groupId>
     <artifactId>regmxflib</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.1-rc.1</version>
 
     <packaging>jar</packaging>
 
