@@ -93,6 +93,22 @@ class KLVDataInputTest {
     kis = new KLVDataInput(new ByteArrayInputStream(longLen4));
     assertEquals(16777216L, kis.readBERLength());
 
+    /* Long form value larger than Integer.MAX_VALUE */
+    byte[] longLen7 = { (byte) 0x87, 0x00, 0x00, 0x01, 0x33, (byte) 0xD4, (byte) 0x8E, 0x50 };
+    kis = new KLVDataInput(new ByteArrayInputStream(longLen7));
+    assertEquals(5164535376L, kis.readBERLength());
+
+    /* Maximum supported value */
+    byte[] maxLong = { (byte) 0x88, 0x7F, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+        (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF };
+    kis = new KLVDataInput(new ByteArrayInputStream(maxLong));
+    assertEquals(Long.MAX_VALUE, kis.readBERLength());
+
+    /* Error: value exceeds Long.MAX_VALUE */
+    byte[] exceedsLong = { (byte) 0x88, (byte) 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+    KLVDataInput exceedsLongKis = new KLVDataInput(new ByteArrayInputStream(exceedsLong));
+    assertThrows(KLVException.class, exceedsLongKis::readBERLength);
+
     /* Error: too long (> 8 bytes) */
     byte[] tooLong = { (byte) 0x89 };
     KLVDataInput kisErr = new KLVDataInput(new ByteArrayInputStream(tooLong));
@@ -120,6 +136,18 @@ class KLVDataInputTest {
     assertArrayEquals(key, t.getKey().getBytes());
     assertEquals(2, t.getLength());
     assertArrayEquals(val, t.getValue());
+  }
+
+  @Test
+  void testReadTripletRejectsLargeValue() throws Exception {
+    byte[] key = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    byte[] len = { (byte) 0x84, (byte) 0x80, 0x00, 0x00, 0x00 };
+    byte[] data = new byte[key.length + len.length];
+    System.arraycopy(key, 0, data, 0, key.length);
+    System.arraycopy(len, 0, data, key.length, len.length);
+
+    KLVDataInput kis = new KLVDataInput(new ByteArrayInputStream(data));
+    assertThrows(KLVException.class, kis::readTriplet);
   }
 
   @Test

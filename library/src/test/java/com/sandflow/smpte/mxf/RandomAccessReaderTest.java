@@ -45,6 +45,7 @@ import com.sandflow.smpte.klv.KLVDataInput;
 import com.sandflow.smpte.mxf.types.IABEssenceDescriptor;
 import com.sandflow.smpte.mxf.types.RGBADescriptor;
 import com.sandflow.smpte.util.FileRandomAccessInputSource;
+import com.sandflow.smpte.util.UL;
 
 class RandomAccessReaderTest {
 
@@ -92,6 +93,9 @@ class RandomAccessReaderTest {
     GenericStreamReader gsr = new GenericStreamReader(fi, rais);
     for (var sid : fi.getGenericStreams()) {
       gsr.seek(sid);
+      // Expected ST 410 Generic Stream Data Element key
+      assertArrayEquals(UL.fromURN("urn:smpte:ul:060e2b34.0101010c.0d010509.01000000").getBytes(),
+          gsr.getElementKey().getBytes());
       assertTrue(gsr.getElementLength() > 0);
     }
     gsr.close();

@@ -172,7 +172,7 @@ public class KLVDataInput {
       int tmp = (((int) octets[i]) & 0xFF);
       val = (val << 8) + tmp;
 
-      if (val > Integer.MAX_VALUE) {
+      if (val < 0) {
         throw new KLVException(MAX_LENGTH_EXCEEED);
       }
     }

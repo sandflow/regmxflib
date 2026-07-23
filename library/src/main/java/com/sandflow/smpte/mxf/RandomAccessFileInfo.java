@@ -30,6 +30,7 @@
 
 package com.sandflow.smpte.mxf;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,6 +44,7 @@ import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.PartitionPack.Status;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.mxf.types.Preface;
+import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.RandomAccessInputSource;
 import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.Event;
@@ -231,11 +233,15 @@ public class RandomAccessFileInfo {
 
         /* skip over the optional fill item and map the generic stream position */
         long pos = raip.position();
-        t = mis.readTriplet();
-        FillItem fi = FillItem.fromTriplet(t);
-        if (fi == null) {
+        AUID key = mis.readAUID();
+        if (!FillItem.isInstance(key)) {
           gs.addPartition(pp.getBodyOffset(), pos);
         } else {
+          long valueLength = mis.readBERLength();
+          long skipped = mis.skipFully(valueLength);
+          if (skipped != valueLength) {
+            throw new EOFException();
+          }
           gs.addPartition(pp.getBodyOffset(), raip.position());
         }
 
@@ -264,9 +270,13 @@ public class RandomAccessFileInfo {
        * the partition pack
        */
       long pos = raip.position();
-      t = mis.readTriplet();
-      FillItem fi = FillItem.fromTriplet(t);
-      if (fi != null) {
+      AUID key = mis.readAUID();
+      if (FillItem.isInstance(key)) {
+        long valueLength = mis.readBERLength();
+        long skipped = mis.skipFully(valueLength);
+        if (skipped != valueLength) {
+          throw new EOFException();
+        }
         /*
          * so we have skipped a Fill Item and are either at the start of the
          * header metadata or index table
