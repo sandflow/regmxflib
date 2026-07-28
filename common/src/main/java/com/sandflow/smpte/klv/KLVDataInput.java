@@ -150,7 +150,7 @@ public class KLVDataInput {
 
     int b = read();
 
-    if (b <= 0) {
+    if (b < 0) {
       throw new EOFException();
     }
 
