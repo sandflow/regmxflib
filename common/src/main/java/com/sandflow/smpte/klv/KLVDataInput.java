@@ -158,6 +158,10 @@ public class KLVDataInput {
       return b;
     }
 
+    if (b == 0x80) {
+      throw new KLVException("First byte of length field equals 0x80 (non-deterministic length)");
+    }
+
     int bersz = (b & 0x0f);
 
     if (bersz > 8) {
