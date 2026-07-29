@@ -33,7 +33,7 @@ package com.sandflow.smpte.klv;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.klv.exceptions.TripletLengthException;
@@ -215,7 +215,7 @@ public class Set implements Group {
 
   }
 
-  private final HashMap<AUID, Triplet> items = new HashMap<>();
+  private final LinkedHashMap<AUID, Triplet> items = new LinkedHashMap<>();
 
   private final UL key;
 

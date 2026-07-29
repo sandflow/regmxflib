@@ -6,12 +6,12 @@
     <parent>
         <groupId>com.sandflow</groupId>
         <artifactId>regmxflib-root</artifactId>
-        <version>1.0.1-rc.1</version>
+        <version>1.1.0-beta.1</version>
     </parent>
 
     <groupId>com.sandflow</groupId>
     <artifactId>regmxflib</artifactId>
-    <version>1.0.1-rc.1</version>
+    <version>1.1.0-beta.1</version>
 
     <packaging>jar</packaging>
 
@@ -77,6 +77,12 @@
                 <excludes>
                     <exclude>**</exclude>
                 </excludes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>reg.xsd</include>
+                </includes>
             </resource>
         </resources>
         <plugins>
@@ -146,6 +152,20 @@
                             <sources>
                                 <source>${project.build.directory}/generated-sources</source>
                             </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-shared-test-resources</id>
+                        <phase>generate-test-resources</phase>
+                        <goals>
+                            <goal>add-test-resource</goal>
+                        </goals>
+                        <configuration>
+                            <resources>
+                                <resource>
+                                    <directory>${project.parent.basedir}/test-resources/src/main/resources</directory>
+                                </resource>
+                            </resources>
                         </configuration>
                     </execution>
                 </executions>

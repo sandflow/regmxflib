@@ -32,8 +32,13 @@ package com.sandflow.smpte.mxf;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.SeekableByteChannel;
 
+import com.sandflow.smpte.klv.KLVDataInput;
 import com.sandflow.smpte.klv.MemoryTriplet;
+import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.PartitionPack.Kind;
 import com.sandflow.smpte.util.AUID;
@@ -151,6 +156,105 @@ public class MXFFiles {
     }
 
     return new EssenceElementInfo(elementKey, elementLength, sid);
+  }
+
+  /**
+   * Seeks to the footer partition, assuming the current position of the
+   * channel is within the run-in (SMPTE ST 377-1 Section 6.5), the footer
+   * partition offset is listed in the Header Partition Pack or a Random Index
+   * Pack is present.
+   *
+   * @param mxffile Channel containing an MXF file
+   * @return Offset of the Footer Partition, or -1 if a Footer Partition was
+   *         not found
+   * @throws IOException
+   * @throws KLVException
+   */
+  public static long seekFooterPartition(SeekableByteChannel mxffile) throws IOException, KLVException {
+    long headeroffset = seekHeaderPartition(mxffile);
+
+    KLVDataInput kis = new KLVDataInput(Channels.newInputStream(mxffile));
+
+    Triplet t = kis.readTriplet();
+
+    if (t == null) {
+      return -1;
+    }
+
+    PartitionPack pp = PartitionPack.fromTriplet(t);
+
+    if (pp == null) {
+      return -1;
+    }
+
+    if (pp.getFooterPartition() != 0) {
+      mxffile.position(headeroffset + pp.getFooterPartition());
+      return mxffile.position();
+    }
+
+    /* look for the RIP start */
+
+    mxffile.position(mxffile.size() - 4);
+
+    ByteBuffer bytes = ByteBuffer.allocate(4);
+
+    if (mxffile.read(bytes) != bytes.limit()) {
+      return -1;
+    }
+
+    /* move to start of RIP */
+
+    mxffile.position(mxffile.size() - bytes.getInt(0));
+
+    /* read RIP */
+
+    kis = new KLVDataInput(Channels.newInputStream(mxffile));
+
+    t = kis.readTriplet();
+
+    if (t == null) {
+      return -1;
+    }
+
+    RandomIndexPack rip = RandomIndexPack.fromTriplet(t);
+
+    if (rip == null) {
+      return -1;
+    }
+
+    mxffile.position(rip.getOffsets().get(rip.getOffsets().size() - 1).getOffset());
+
+    return mxffile.position();
+  }
+
+  /**
+   * Seeks to the first byte of the Header partition, assuming the current
+   * position of the channel is within the run-in (SMPTE ST 377-1 Section 6.5)
+   *
+   * @param mxffile Channel containing an MXF file
+   * @return Offset of the first byte of the Header Partition, or -1 if the
+   *         Header Partition was not found
+   * @throws IOException
+   */
+  public static long seekHeaderPartition(SeekableByteChannel mxffile) throws IOException {
+    ByteBuffer ulbytes = ByteBuffer.allocate(16);
+
+    long offset = mxffile.position();
+
+    while (mxffile.read(ulbytes) == ulbytes.limit() && offset <= 65536) {
+
+      UL ul = new UL(ulbytes.array());
+
+      if (ul.equalsWithMask(PartitionPack.getKey(), 65248 /* first eleven bytes minus the version byte */)) {
+        mxffile.position(offset);
+        return offset;
+      }
+
+      mxffile.position(++offset);
+      ulbytes.clear();
+    }
+
+    return -1;
   }
 
 }
