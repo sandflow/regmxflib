@@ -48,10 +48,10 @@ The following snippet illustrates the creation of an `RGBADescriptor` using the 
 ## Quick start
 
     mvn package -P with-dependencies
-    java -cp library/target/regmxflib-jar-with-dependencies.jar \
+    java -cp java-library/target/regmxflib-jar-with-dependencies.jar \
       com.sandflow.smpte.tools.RegMXFDump \
-      library/src/test/resources/imps/imp_1/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.mxf > \
-      library/target/test-output/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.json
+      test-resources/imps/imp_1/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.mxf > \
+      java-library/target/test-output/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.json
 
 ## Deployment
 
@@ -64,12 +64,12 @@ The (built) library is deployed at Maven Central with the following coordinates:
 
 The library consists of 3 modules:
 
-- `class-generator` generates [POJO classes](./library/target/generated-sources) when
-  compiling the library using [register files](./library/src/main/resources).
-- `library` holds the generated POJO classes and classes for reading and writing MXF files
-- `common` holds classes that do not depend on the generated classes
+- `java-class-generator` generates [POJO classes](./java-library/target/generated-sources) when
+  compiling the library using [register files](./java-library/src/main/resources).
+- `java-library` holds the generated POJO classes and classes for reading and writing MXF files
+- `java-common` holds classes that do not depend on the generated classes
 
-_NOTE_: `common` is largely based on [regxmllib](https://github.com/sandflow/regxmllib) and
+_NOTE_: `java-common` is largely based on [regxmllib](https://github.com/sandflow/regxmllib) and
 combining the two libraries is expected in the long run.
 
 ## MXF concepts
@@ -140,7 +140,7 @@ The next steps is to instantiate a `StreamingReader` object (typically using the
 The `StreamingReader` does not differentiate between kinds of essence wrapping and between essence containers and generic streams: clip-wrapped essence is returned a single element, each element of a frame-wrapped essence container is returned as an individual element and each element within a Generic Stream Partition is also returned as an individual element. 
 
 The operation of the `StreamingReader` is demonstrated at
-[StreamingReaderTest.java](library/src/test/java/com/sandflow/smpte/mxf/StreamingReaderTest.java) and at [ReadWriteTest.java](library/src/test/java/com/sandflow/smpte/mxf/ReadWriteTest.java).
+[StreamingReaderTest.java](java-library/src/test/java/com/sandflow/smpte/mxf/StreamingReaderTest.java) and at [ReadWriteTest.java](java-library/src/test/java/com/sandflow/smpte/mxf/ReadWriteTest.java).
 
 ### Random access reader
 
@@ -157,7 +157,7 @@ To access a Generic Stream, a `GenericStreamReader` is instantiated and the `see
 The `ClipReader`, `FrameReader` and `GenericStreamReader` objects extend `InputStream` and behave similarly to the `StreamingReader`.
 
 The operation of the `RandomAccessReader` is demonstrated at
-[RandomAccessReaderTest.java](library/src/test/java/com/sandflow/smpte/mxf/RandomAccessReaderTest.java).
+[RandomAccessReaderTest.java](java-library/src/test/java/com/sandflow/smpte/mxf/RandomAccessReaderTest.java).
 
 ## Writing
 
@@ -192,11 +192,11 @@ Each body partition contained within the file is written in turn by calling the 
 The writing of the file ends with the `finish()` method.
 
 The operation of the `StreamingWriter` is demonstrated at
-[StreamingWriterTest.java](./library/src/test/java/com/sandflow/smpte/mxf/StreamingWriterTest.java) and at [ReadWriteTest.java](./library/src/test/java/com/sandflow/smpte/mxf/ReadWriteTest.java).
+[StreamingWriterTest.java](./java-library/src/test/java/com/sandflow/smpte/mxf/StreamingWriterTest.java) and at [ReadWriteTest.java](./java-library/src/test/java/com/sandflow/smpte/mxf/ReadWriteTest.java).
 
 ## Testing
 
-In addition to unit tests, the library also defines basic compatibility tests at [compat.sh](./library/src/test/sh/compat.sh) against popular MXF libraries (FFMPEG, ASDCP and BMX). A [Dockerfile](./Dockerfile) that sets up the test environment is provided.
+In addition to unit tests, the library also defines basic compatibility tests at [compat.sh](./java-library/src/test/sh/compat.sh) against popular MXF libraries (FFMPEG, ASDCP and BMX). A [Dockerfile](./Dockerfile) that sets up the test environment is provided.
 
 ## Prerequisites
 

@@ -57,7 +57,7 @@
             <configuration>
               <resources>
                 <resource>
-                  <directory>${project.parent.basedir}/test-resources/src/main/resources</directory>
+                  <directory>${project.parent.basedir}/test-resources</directory>
                 </resource>
               </resources>
             </configuration>

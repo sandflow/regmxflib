@@ -98,7 +98,7 @@ public class TestUtils {
     return new File(outputDirPath, filename);
   }
 
-  private static final String referenceDirPath = "references/";
+  private static final String referenceDirPath = "regmxf-ref-files/";
 
   public static void compareToReference(File mxfFile, final String refJsonFilename)
       throws FileNotFoundException, Exception, IOException, URISyntaxException {

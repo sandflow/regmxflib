@@ -38,4 +38,4 @@ jobs:
           -v $GITHUB_WORKSPACE:/workspace \
           -w /tmp \
           regmxflib-ci-env:latest \
-          bash /workspace/library/src/test/sh/compat.sh
+          bash /workspace/java-library/src/test/sh/compat.sh

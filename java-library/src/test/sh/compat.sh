@@ -27,10 +27,10 @@ run_test() {
 # Define files to test along with the format:
 # "/path/to/file|exclusion1,exclusion2,..."
 FILES_TO_TEST=(
-  "/workspace/library/target/test-output/testVBE.mxf"
-  "/workspace/library/target/test-output/testCBE.mxf"
-  "/workspace/library/target/test-output/testClipVBE.mxf|ffmpeg,mxf2raw"
-  "/workspace/library/target/test-output/testPHDR.mxf"
+  "/workspace/java-library/target/test-output/testVBE.mxf"
+  "/workspace/java-library/target/test-output/testCBE.mxf"
+  "/workspace/java-library/target/test-output/testClipVBE.mxf|ffmpeg,mxf2raw"
+  "/workspace/java-library/target/test-output/testPHDR.mxf"
 )
 
 for item in "${FILES_TO_TEST[@]}"; do

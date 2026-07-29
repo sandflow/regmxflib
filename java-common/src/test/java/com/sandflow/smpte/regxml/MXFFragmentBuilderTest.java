@@ -71,7 +71,7 @@ public class MXFFragmentBuilderTest {
 
   private final static String registers_dir_path = "registers";
   private final static String mxf_files_dir_path = "mxf-files";
-  private final static String ref_files_dir_path = "regxml-files";
+  private final static String ref_files_dir_path = "regxml-ref-files";
 
   private static MetaDictionaryCollection mds;
   private static DocumentBuilder db;
