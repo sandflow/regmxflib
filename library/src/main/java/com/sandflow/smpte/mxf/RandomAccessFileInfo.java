@@ -30,7 +30,6 @@
 
 package com.sandflow.smpte.mxf;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -237,11 +236,7 @@ public class RandomAccessFileInfo {
         if (!FillItem.isInstance(key)) {
           gs.addPartition(pp.getBodyOffset(), pos);
         } else {
-          long valueLength = mis.readBERLength();
-          long skipped = mis.skipFully(valueLength);
-          if (skipped != valueLength) {
-            throw new EOFException();
-          }
+          mis.skipTripletLV();
           gs.addPartition(pp.getBodyOffset(), raip.position());
         }
 
@@ -272,11 +267,7 @@ public class RandomAccessFileInfo {
       long pos = raip.position();
       AUID key = mis.readAUID();
       if (FillItem.isInstance(key)) {
-        long valueLength = mis.readBERLength();
-        long skipped = mis.skipFully(valueLength);
-        if (skipped != valueLength) {
-          throw new EOFException();
-        }
+        mis.skipTripletLV();
         /*
          * so we have skipped a Fill Item and are either at the start of the
          * header metadata or index table

@@ -107,12 +107,14 @@ class KLVDataInputTest {
     /* Error: value exceeds Long.MAX_VALUE */
     byte[] exceedsLong = { (byte) 0x88, (byte) 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
     KLVDataInput exceedsLongKis = new KLVDataInput(new ByteArrayInputStream(exceedsLong));
-    assertThrows(KLVException.class, exceedsLongKis::readBERLength);
+    KLVException exceedsLongException = assertThrows(KLVException.class, exceedsLongKis::readBERLength);
+    assertEquals(KLVException.MAX_BER_SIZE_EXCEEED, exceedsLongException.getMessage());
 
     /* Error: too long (> 8 bytes) */
     byte[] tooLong = { (byte) 0x89 };
     KLVDataInput kisErr = new KLVDataInput(new ByteArrayInputStream(tooLong));
-    assertThrows(KLVException.class, kisErr::readBERLength);
+    KLVException tooLongException = assertThrows(KLVException.class, kisErr::readBERLength);
+    assertEquals(KLVException.MAX_BER_SIZE_EXCEEED, tooLongException.getMessage());
 
     /* Error: EOF */
     KLVDataInput kisEOF = new KLVDataInput(new ByteArrayInputStream(new byte[0]));
@@ -147,7 +149,8 @@ class KLVDataInputTest {
     System.arraycopy(len, 0, data, key.length, len.length);
 
     KLVDataInput kis = new KLVDataInput(new ByteArrayInputStream(data));
-    assertThrows(KLVException.class, kis::readTriplet);
+    KLVException exception = assertThrows(KLVException.class, kis::readTriplet);
+    assertEquals(KLVException.MAX_LENGTH_EXCEEED, exception.getMessage());
   }
 
   @Test
@@ -181,6 +184,26 @@ class KLVDataInputTest {
 
     kis.skipFully(2);
     assertEquals(-1, kis.read());
+  }
+
+  @Test
+  void testSkipTripletLV() throws Exception {
+    byte[] shortForm = { 0x02, (byte) 0xAA, (byte) 0xBB, 0x7F };
+    KLVDataInput shortFormKis = new KLVDataInput(new ByteArrayInputStream(shortForm));
+    shortFormKis.skipTripletLV();
+    assertEquals(0x7F, shortFormKis.read());
+
+    byte[] longForm = new byte[131];
+    longForm[0] = (byte) 0x81;
+    longForm[1] = (byte) 0x80;
+    longForm[longForm.length - 1] = 0x7F;
+    KLVDataInput longFormKis = new KLVDataInput(new ByteArrayInputStream(longForm));
+    longFormKis.skipTripletLV();
+    assertEquals(0x7F, longFormKis.read());
+
+    byte[] truncated = { 0x02, (byte) 0xAA };
+    KLVDataInput truncatedKis = new KLVDataInput(new ByteArrayInputStream(truncated));
+    assertThrows(EOFException.class, truncatedKis::skipTripletLV);
   }
 
 }
