@@ -43,6 +43,7 @@ import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.PartitionPack.Status;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.mxf.types.Preface;
+import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.RandomAccessInputSource;
 import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.Event;
@@ -231,11 +232,11 @@ public class RandomAccessFileInfo {
 
         /* skip over the optional fill item and map the generic stream position */
         long pos = raip.position();
-        t = mis.readTriplet();
-        FillItem fi = FillItem.fromTriplet(t);
-        if (fi == null) {
+        AUID key = mis.readAUID();
+        if (!FillItem.isInstance(key)) {
           gs.addPartition(pp.getBodyOffset(), pos);
         } else {
+          mis.skipTripletLV();
           gs.addPartition(pp.getBodyOffset(), raip.position());
         }
 
@@ -264,9 +265,9 @@ public class RandomAccessFileInfo {
        * the partition pack
        */
       long pos = raip.position();
-      t = mis.readTriplet();
-      FillItem fi = FillItem.fromTriplet(t);
-      if (fi != null) {
+      AUID key = mis.readAUID();
+      if (FillItem.isInstance(key)) {
+        mis.skipTripletLV();
         /*
          * so we have skipped a Fill Item and are either at the start of the
          * header metadata or index table
