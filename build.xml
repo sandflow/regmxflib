@@ -1,42 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project>
 
+    <property name="resources.dir" location="${basedir}/resources"/>
+    <property name="test-resources.dir" location="${basedir}/test-resources"/>
+
     <property name="samples.dir" value="${test-resources.dir}/mxf-files"/>
     <property name="ref.files.dir" value="${test-resources.dir}/regxml-ref-files"/>
-    <property name="dict.dir" value="${sresources.dir}/regxml-dicts"/>
+    <property name="dict.dir" value="${resources.dir}/regxml-dicts"/>
     <property name="ref.regs.dir" value="${resources.dir}/registers"/>
     <property name="elements.register" value="${ref.regs.dir}/Elements.xml"/>
     <property name="groups.register" value="${ref.regs.dir}/Groups.xml"/>
     <property name="types.register" value="${ref.regs.dir}/Types.xml"/>
     <property name="labels.register" value="${ref.regs.dir}/Labels.xml"/>
 
+    <!-- Deletes previously generated reference files, only when -Dforce=true is given -->
+
+    <target name="-clean-outputs" if="force">
+        <delete>
+            <fileset dir="${ref.files.dir}" includes="*"/>
+        </delete>
+        <delete>
+            <fileset dir="${dict.dir}" includes="*"/>
+        </delete>
+    </target>
+
     <!--Generate Reference Test Files-->
 
-    <target name="build-reference-test-files">
+    <target name="build-reference-test-files" depends="-clean-outputs">
 
         <!-- properties that must be set by the caller -->
 
-        <fail message="Missing classpath property" unless="classpath"/>
-        <fail message="Missing resources.dir property" unless="resources.dir"/>
-        <fail message="Missing test-resources.dir property" unless="test-resources.dir"/>
+        <fail message="Missing classpath property. Build it first with 'mvn package -P with-dependencies' and pass -Dclasspath=java-library/target/regmxflib-jar-with-dependencies.jar"
+              unless="classpath"/>
 
-        <!-- Do not overwrite existing reference file -->
+        <!-- Do not overwrite existing reference and dictionary files, unless -Dforce=true is given -->
 
-        <fail message="Reference regxml files already present. Delete manually.">
-            <condition>
+        <condition property="ref.files.present.unforced">
+            <and>
+                <not><isset property="force"/></not>
                 <resourcecount when="greater" count="0">
                     <fileset dir="${ref.files.dir}" includes="*"/>
                 </resourcecount>
-            </condition>
-        </fail>
+            </and>
+        </condition>
 
-        <fail message="Reference metadictionaries present already. Delete manually.">
-            <condition>
+        <fail message="Reference regxml files already present. Delete manually, or pass -Dforce=true to delete and regenerate."
+              if="ref.files.present.unforced"/>
+
+        <condition property="dict.files.present.unforced">
+            <and>
+                <not><isset property="force"/></not>
                 <resourcecount when="greater" count="0">
                     <fileset dir="${dict.dir}" includes="*"/>
                 </resourcecount>
-            </condition>
-        </fail>
+            </and>
+        </condition>
+
+        <fail message="Reference metadictionaries present already. Delete manually, or pass -Dforce=true to delete and regenerate."
+              if="dict.files.present.unforced"/>
 
         <!--Generate RegXML dictionary-->
 

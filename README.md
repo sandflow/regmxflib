@@ -170,6 +170,23 @@ lives under `cpp/`; see [RegXML](#regxml) below.
 - `GenerateDictionaryXMLSchema` generates XSDs for RegXML Fragments from RegXML metadictionaries
 - `GenerateXMLSchemaDocuments` generates XSDs for the SMPTE metadata registers
 
+### Regenerating reference and metadictionary files
+
+The RegXML metadictionaries under `resources/regxml-dicts` and the RegXML reference files under
+`test-resources/regxml-ref-files` are checked into the repo, but can be regenerated from the
+registers and sample MXF files using the `build-reference-test-files` Ant target in `build.xml`:
+
+    mvn package -P with-dependencies
+    ant -f build.xml build-reference-test-files \
+      -Dclasspath=java-library/target/regmxflib-jar-with-dependencies.jar
+
+By default the target refuses to run if either output directory already contains files, to avoid
+accidentally clobbering the checked-in copies. Pass `-Dforce=true` to delete the existing files
+and regenerate them from scratch.
+
+`resources.dir` and `test-resources.dir` default to the `resources/` and `test-resources/`
+directories at the root of the repo, and can be overridden with `-D` if needed.
+
 ### Known limitations and issues
 
 RegXML generation deviates from ST 2001-1:2013 in one narrow instance: no baseline
