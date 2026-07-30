@@ -86,7 +86,7 @@ public class MXFFragmentBuilderTest {
   @BeforeAll
   static void loadDictionaries() throws Exception {
 
-    final String register_dir = registers_dir_path + "/snapshot/";
+    final String register_dir = registers_dir_path + "/";
 
     /* load the registers */
 

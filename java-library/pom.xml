@@ -74,12 +74,6 @@
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
-                <excludes>
-                    <exclude>**</exclude>
-                </excludes>
-            </resource>
-            <resource>
-                <directory>src/main/resources</directory>
                 <includes>
                     <include>reg.xsd</include>
                 </includes>
@@ -120,11 +114,11 @@
                         <configuration>
                             <mainClass>com.sandflow.smpte.mxf.ClassGenerator</mainClass>
                             <arguments>
-                                <argument>${project.basedir}/src/main/resources/regxml-dicts</argument>
+                                <argument>${project.parent.basedir}/resources/regxml-dicts</argument>
                                 <argument>${project.build.directory}/generated-sources</argument>
-                                <argument>${project.basedir}/src/main/resources/registers/Labels.xml</argument>
+                                <argument>${project.parent.basedir}/resources/registers/Labels.xml</argument>
                                 <argument>
-                                    ${project.basedir}/src/main/resources/registers/Essence.xml</argument>
+                                    ${project.parent.basedir}/resources/registers/Essence.xml</argument>
                             </arguments>
                             <includePluginDependencies>true</includePluginDependencies>
                         </configuration>
@@ -164,6 +158,9 @@
                             <resources>
                                 <resource>
                                     <directory>${project.parent.basedir}/test-resources</directory>
+                                </resource>
+                                <resource>
+                                    <directory>${project.parent.basedir}/resources</directory>
                                 </resource>
                             </resources>
                         </configuration>

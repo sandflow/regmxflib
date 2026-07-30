@@ -30,9 +30,10 @@ include(CTest)
 
 file( GLOB_RECURSE UNIT_TESTS src/test/cpp/*.cpp )
 
-# test fixtures are shared with the other language implementations; see /test-resources
+# test fixtures are shared with the other language implementations; see /test-resources and /resources
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../test-resources" DESTINATION "${CMAKE_BINARY_DIR}")
 file(RENAME "${CMAKE_BINARY_DIR}/test-resources" "${CMAKE_BINARY_DIR}/resources")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../resources/registers" "${CMAKE_CURRENT_SOURCE_DIR}/../resources/regxml-dicts" DESTINATION "${CMAKE_BINARY_DIR}/resources")
 
 foreach( UNIT_TEST_PATH ${UNIT_TESTS} )
 	get_filename_component(UNIT_TEST_NAME ${UNIT_TEST_PATH} NAME_WE)
