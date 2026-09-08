@@ -42,7 +42,7 @@ import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.UL;
 
 /**
- * LocalSet implements a Local Set as specified in SMPTE ST 336.
+ * Implements a Set as specified in SMPTE ST 336.
  */
 public class Set implements Group {
 
