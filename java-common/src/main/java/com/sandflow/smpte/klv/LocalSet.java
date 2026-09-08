@@ -30,6 +30,7 @@
 
 package com.sandflow.smpte.klv;
 
+import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.util.UL;
 
 /**
@@ -37,6 +38,26 @@ import com.sandflow.smpte.util.UL;
  */
 @Deprecated
 public class LocalSet extends Set {
+
+  /**
+   * @deprecated Use {@link Set#fromLocalSet(Triplet, LocalTagResolver)} instead.
+   */
+  @Deprecated
+  public static LocalSet fromTriplet(Triplet localset, LocalTagResolver reg) throws KLVException {
+    Set s = Set.fromLocalSet(localset, reg);
+
+    if (s == null) {
+      return null;
+    }
+
+    LocalSet ls = new LocalSet(s.getKey());
+
+    for (Triplet t : s.getItems()) {
+      ls.addItem(t);
+    }
+
+    return ls;
+  }
 
   public LocalSet(UL key) {
     super(key);

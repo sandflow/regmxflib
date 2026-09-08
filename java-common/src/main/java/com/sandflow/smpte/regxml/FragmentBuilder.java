@@ -244,7 +244,7 @@ public class FragmentBuilder {
     private static final String ESCAPE_ATTR = "escape";
 
     private final DefinitionResolver defresolver;
-    private final Map<UUID, Group> setresolver;
+    private final Map<UUID, ? extends Group> setresolver;
     private final HashMap<URI, String> nsprefixes = new HashMap<>();
     private final AUIDNameResolver anameresolver;
     private final EventHandler evthandler;
@@ -281,7 +281,7 @@ public class FragmentBuilder {
      * null.
      */
     public FragmentBuilder(DefinitionResolver defresolver,
-            Map<UUID, Group> setresolver,
+            Map<UUID, ? extends Group> setresolver,
             AUIDNameResolver anameresolver,
             EventHandler evthandler) {
 
@@ -312,7 +312,7 @@ public class FragmentBuilder {
      * null.
      */
     public FragmentBuilder(DefinitionResolver defresolver,
-            Map<UUID, Group> setresolver,
+            Map<UUID, ? extends Group> setresolver,
             AUIDNameResolver anameresolver) {
 
         this(defresolver,
@@ -353,7 +353,7 @@ public class FragmentBuilder {
      * @param setresolver Resolves Strong References to groups. Must not be
      * null.
      */
-    public FragmentBuilder(DefinitionResolver defresolver, Map<UUID, Group> setresolver) {
+    public FragmentBuilder(DefinitionResolver defresolver, Map<UUID, ? extends Group> setresolver) {
         this(defresolver, setresolver, null);
     }
 

@@ -30,9 +30,61 @@
 
 package com.sandflow.smpte.mxf;
 
+import java.util.Collection;
+
+import com.sandflow.smpte.klv.Group;
+import com.sandflow.smpte.klv.Triplet;
+import com.sandflow.smpte.util.UL;
+import com.sandflow.smpte.util.UUID;
+
 /**
  * @deprecated Use {@link HeaderMetadataSet} instead.
  */
 @Deprecated
-public class Set extends HeaderMetadataSet {
+public class Set extends HeaderMetadataSet implements Group {
+
+  /**
+   * @deprecated Use {@link HeaderMetadataSet#getInstanceID(com.sandflow.smpte.klv.Set)} instead.
+   */
+  @Deprecated
+  public static Set fromGroup(Group group) {
+    if (!(group instanceof com.sandflow.smpte.klv.Set)) {
+      return null;
+    }
+
+    UUID instanceID = HeaderMetadataSet.getInstanceID((com.sandflow.smpte.klv.Set) group);
+
+    if (instanceID == null) {
+      return null;
+    }
+
+    return new Set(group, instanceID);
+  }
+
+  private final Group group;
+  private final UUID instanceID;
+
+  private Set(Group group, UUID instanceID) {
+    this.group = group;
+    this.instanceID = instanceID;
+  }
+
+  @Override
+  public Collection<Triplet> getItems() {
+    return group.getItems();
+  }
+
+  @Override
+  public UL getKey() {
+    return group.getKey();
+  }
+
+  /**
+   * @deprecated Use {@link HeaderMetadataSet#getInstanceID(com.sandflow.smpte.klv.Set)} instead.
+   */
+  @Deprecated
+  public UUID getInstanceID() {
+    return instanceID;
+  }
+
 }
