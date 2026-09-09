@@ -36,7 +36,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
-import java.util.HexFormat;
 
 import org.apache.commons.numbers.fraction.Fraction;
 import org.junit.jupiter.api.Test;
@@ -590,8 +589,8 @@ class StreamingWriterTest {
     sd.PictureComponentSizing.add(new J2KComponentSizing((short) 15, (short) 1, (short) 1));
     sd.PictureComponentSizing.add(new J2KComponentSizing((short) 15, (short) 1, (short) 1));
     sd.PictureComponentSizing.add(new J2KComponentSizing((short) 15, (short) 1, (short) 1));
-    sd.CodingStyleDefault = HexFormat.of().parseHex("01040001010503030001778888888888");
-    sd.QuantizationDefault = HexFormat.of().parseHex("20909898a09898a09898a0989898909098");
+    sd.CodingStyleDefault = parseHex("01040001010503030001778888888888");
+    sd.QuantizationDefault = parseHex("20909898a09898a09898a0989898909098");
     sd.J2CLayout = d.PixelLayout;
 
     d.SubDescriptors.add(sd);
@@ -708,8 +707,8 @@ class StreamingWriterTest {
     sd.PictureComponentSizing.add(new J2KComponentSizing((short) 15, (short) 1, (short) 1));
     sd.PictureComponentSizing.add(new J2KComponentSizing((short) 15, (short) 1, (short) 1));
     sd.PictureComponentSizing.add(new J2KComponentSizing((short) 15, (short) 1, (short) 1));
-    sd.CodingStyleDefault = HexFormat.of().parseHex("01040001010503030001778888888888");
-    sd.QuantizationDefault = HexFormat.of().parseHex("20909898a09898a09898a0989898909098");
+    sd.CodingStyleDefault = parseHex("01040001010503030001778888888888");
+    sd.QuantizationDefault = parseHex("20909898a09898a09898a0989898909098");
     sd.J2CLayout = d.PixelLayout;
 
     d.SubDescriptors.add(sd);
@@ -759,6 +758,14 @@ class StreamingWriterTest {
     /* compare file to reference */
 
     TestUtils.compareToReference(of, outFN + ".json");
+  }
+
+  private static byte[] parseHex(String hex) {
+    byte[] bytes = new byte[hex.length() / 2];
+    for (int i = 0; i < bytes.length; i++) {
+      bytes[i] = (byte) Integer.parseInt(hex.substring(2 * i, 2 * i + 2), 16);
+    }
+    return bytes;
   }
 
 }

@@ -3,26 +3,52 @@ name: Test
 on: [push, pull_request]
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'pull_request'
+
+    outputs:
+      java-versions: ${{ steps.versions.outputs.java-versions }}
+
+    steps:
+    - id: versions
+      run: |
+        # huge hack since the value of strategy.matrix.java-versions cannot be retrieved
+        # and we want to run the compatibility tests only on one version
+        echo 'java-versions=["11", "17"]' >> "$GITHUB_OUTPUT"
+
   java-build:
+    needs: setup
 
     runs-on: ubuntu-latest
 
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'pull_request'
 
+    strategy:
+      fail-fast: false
+      matrix:
+        java-version: ${{ fromJson(needs.setup.outputs.java-versions) }}
+
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
-    - name: Set up JDK 17
+    - name: Set up JDK ${{ matrix.java-version }}
       uses: actions/setup-java@v3
       with:
-        java-version: '17'
+        java-version: ${{ matrix.java-version }}
         distribution: 'corretto'
         cache: maven
 
+    - name: Run Build and Test
+      run: mvn test
+
     - name: Set up Docker Build
+      if: matrix.java-version == fromJson(needs.setup.outputs.java-versions)[0]
       uses: docker/setup-buildx-action@v3
 
     - name: Build Docker Image
+      if: matrix.java-version == fromJson(needs.setup.outputs.java-versions)[0]
       uses: docker/build-push-action@v5
       with:
         context: .
@@ -31,9 +57,9 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-    - name: Run Build and Test
+    - name: Run Compatibility Tests
+      if: matrix.java-version == fromJson(needs.setup.outputs.java-versions)[0]
       run: |
-        mvn test
         docker run --rm \
           -v $GITHUB_WORKSPACE:/workspace \
           -w /tmp \

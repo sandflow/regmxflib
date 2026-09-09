@@ -86,7 +86,29 @@ public class MXFFiles {
    * @param length Length of the element
    * @param sid BodySID of the element (if applicable, otherwise 0)
    */
-  static public record EssenceElementInfo(AUID key, long length, long sid) {
+  public static final class EssenceElementInfo {
+
+    private final AUID key;
+    private final long length;
+    private final long sid;
+
+    public EssenceElementInfo(AUID key, long length, long sid) {
+      this.key = key;
+      this.length = length;
+      this.sid = sid;
+    }
+
+    public AUID getKey() {
+      return key;
+    }
+
+    public long getLength() {
+      return length;
+    }
+
+    public long getSID() {
+      return sid;
+    }
   }
 
   /**

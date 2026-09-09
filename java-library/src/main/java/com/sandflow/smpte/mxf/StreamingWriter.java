@@ -43,6 +43,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.apache.commons.numbers.fraction.Fraction;
 
@@ -81,20 +82,22 @@ public class StreamingWriter {
   /**
    * Abstract class representing a writer for an essence container.
    */
-  abstract class ContainerWriter extends OutputStream {
+  abstract static class ContainerWriter extends OutputStream {
 
     enum State {
       READY,
       WRITING
     }
 
+    final StreamingWriter writer;
     final long bodySID;
     final long indexSID;
     long bytesToWrite;
     long ecOffset = 0;
     State state = State.READY;
 
-    ContainerWriter(long bodySID, long indexSID) {
+    ContainerWriter(StreamingWriter writer, long bodySID, long indexSID) {
+      this.writer = writer;
       this.bodySID = bodySID;
       this.indexSID = indexSID;
     }
@@ -112,7 +115,7 @@ public class StreamingWriter {
     }
 
     boolean isActive() {
-      return StreamingWriter.this.currentContainer == this;
+      return this.writer.currentContainer == this;
     }
 
     boolean isWriting() {
@@ -153,7 +156,7 @@ public class StreamingWriter {
       }
       if (this.bytesToWrite - 1 < 0)
         throw new EOFException("Attempting to write more bytes than allocated to the container");
-      StreamingWriter.this.fos.write(b);
+      this.writer.fos.write(b);
       this.bytesToWrite--;
       this.ecOffset++;
 
@@ -174,7 +177,7 @@ public class StreamingWriter {
         throw new EOFException("Attempting to write more bytes than allocated to the container");
       }
 
-      StreamingWriter.this.fos.write(b, off, len);
+      this.writer.fos.write(b, off, len);
       this.bytesToWrite -= len;
       this.ecOffset += len;
 
@@ -191,7 +194,7 @@ public class StreamingWriter {
        */
     }
 
-    static byte[] serializeIndexTableSegment(IndexTableSegment its, EventHandler evthandler)
+    byte[] serializeIndexTableSegment(IndexTableSegment its, EventHandler evthandler)
         throws IOException, MXFException {
       /* serialize the index table segment */
 
@@ -259,14 +262,14 @@ public class StreamingWriter {
   /**
    * Writer for CBE clip-wrapped essence.
    */
-  public class GCClipCBEWriter extends ContainerWriter {
+  public static class GCClipCBEWriter extends ContainerWriter {
 
     private long accessUnitSize;
     private long accessUnitCount;
     private boolean indexTableFilled = false;
 
-    public GCClipCBEWriter(long bodySID, long indexSID) {
-      super(bodySID, indexSID);
+    public GCClipCBEWriter(StreamingWriter writer, long bodySID, long indexSID) {
+      super(writer, bodySID, indexSID);
     }
 
     /**
@@ -300,8 +303,8 @@ public class StreamingWriter {
 
       long clipSize = accessUnitCount * accessUnitSize;
 
-      StreamingWriter.this.fos.writeUL(elementKey);
-      StreamingWriter.this.fos.writeBERLength(clipSize);
+      this.writer.fos.writeUL(elementKey);
+      this.writer.fos.writeBERLength(clipSize);
       this.startWriting(clipSize);
 
       this.accessUnitCount = accessUnitCount;
@@ -322,15 +325,15 @@ public class StreamingWriter {
       this.indexTableFilled = false;
 
       var its = new IndexTableSegment();
-      its.InstanceID = StreamingWriter.this.uidGenerator.generate(this);
-      its.IndexEditRate = StreamingWriter.this.getECEditRate(this.getBodySID());
+      its.InstanceID = this.writer.uidGenerator.generate(this);
+      its.IndexEditRate = this.writer.getECEditRate(this.getBodySID());
       its.IndexStartPosition = 0L;
       its.IndexDuration = this.accessUnitCount;
       its.IndexStreamID = this.getIndexSID();
       its.EssenceStreamID = this.getBodySID();
       its.EditUnitByteCount = this.accessUnitSize;
 
-      return serializeIndexTableSegment(its, StreamingWriter.this.evthandler);
+      return serializeIndexTableSegment(its, this.writer.evthandler);
     }
 
     @Override
@@ -348,15 +351,15 @@ public class StreamingWriter {
   /**
    * Writer for Generic Stream.
    */
-  public class GSWriter extends ContainerWriter {
+  public static class GSWriter extends ContainerWriter {
 
-    public GSWriter(long bodySID) {
-      super(bodySID, 0);
+    public GSWriter(StreamingWriter writer, long bodySID) {
+      super(writer, bodySID, 0);
     }
 
     /**
      * Writes the next element.
-     * 
+     *
      * @param elementKey    Key of the element.
      * @param elementLength Length of the element.
      * @throws IOException If an I/O error occurs.
@@ -365,8 +368,8 @@ public class StreamingWriter {
       if (!this.isActive()) {
         throw new IllegalStateException("ContainerWriter is not active");
       }
-      StreamingWriter.this.fos.writeUL(elementKey);
-      StreamingWriter.this.fos.writeBERLength(elementLength);
+      this.writer.fos.writeUL(elementKey);
+      this.writer.fos.writeBERLength(elementLength);
       this.startWriting(elementLength);
     }
 
@@ -395,7 +398,7 @@ public class StreamingWriter {
   /**
    * Writer for VBE clip-wrapped essence.
    */
-  public class GCClipVBEWriter extends ContainerWriter {
+  public static class GCClipVBEWriter extends ContainerWriter {
 
     enum State {
       READY,
@@ -410,8 +413,8 @@ public class StreamingWriter {
      */
     private List<Long> auOffsets = new ArrayList<>();
 
-    GCClipVBEWriter(long bodySID, long indexSID) {
-      super(bodySID, indexSID);
+    GCClipVBEWriter(StreamingWriter writer, long bodySID, long indexSID) {
+      super(writer, bodySID, indexSID);
     }
 
     /**
@@ -436,19 +439,19 @@ public class StreamingWriter {
         throw new IllegalStateException("ContainerWriter is not ready for the next clip");
       }
 
-      if (StreamingWriter.this.preface.EssenceContainers != null
-          && StreamingWriter.this.preface.EssenceContainers.contains(Labels.IMF_IABEssenceClipWrappedContainer)) {
+      if (this.writer.preface.EssenceContainers != null
+          && this.writer.preface.EssenceContainers.contains(Labels.IMF_IABEssenceClipWrappedContainer)) {
         /**
          * EXCEPTION: ASDCPLib incorrectly includes the Clip KL in the essence container
          * offset for IAB files
          */
-        long curPos = StreamingWriter.this.fos.getWrittenCount();
-        StreamingWriter.this.fos.writeUL(elementKey);
-        StreamingWriter.this.fos.writeBERLength(clipSize);
-        this.setPosition(this.getPosition() + StreamingWriter.this.fos.getWrittenCount() - curPos);
+        long curPos = this.writer.fos.getWrittenCount();
+        this.writer.fos.writeUL(elementKey);
+        this.writer.fos.writeBERLength(clipSize);
+        this.setPosition(this.getPosition() + this.writer.fos.getWrittenCount() - curPos);
       } else {
-        StreamingWriter.this.fos.writeUL(elementKey);
-        StreamingWriter.this.fos.writeBERLength(clipSize);
+        this.writer.fos.writeUL(elementKey);
+        this.writer.fos.writeBERLength(clipSize);
       }
 
       this.startWriting(clipSize);
@@ -491,8 +494,8 @@ public class StreamingWriter {
         int endIndex = Math.min((segIndex + 1) * MAX_INDEX_ENTRIES, this.auOffsets.size());
 
         var its = new IndexTableSegment();
-        its.InstanceID = StreamingWriter.this.uidGenerator.generate(this);
-        its.IndexEditRate = StreamingWriter.this.getECEditRate(this.getBodySID());
+        its.InstanceID = this.writer.uidGenerator.generate(this);
+        its.IndexEditRate = this.writer.getECEditRate(this.getBodySID());
         its.IndexStartPosition = (long) startIndex;
         its.IndexDuration = (long) (endIndex - startIndex);
         its.IndexStreamID = this.getIndexSID();
@@ -513,7 +516,7 @@ public class StreamingWriter {
           its.IndexEntryArray.add(e);
         }
 
-        bos.write(serializeIndexTableSegment(its, StreamingWriter.this.evthandler));
+        bos.write(serializeIndexTableSegment(its, this.writer.evthandler));
       }
 
       return bos.toByteArray();
@@ -534,7 +537,7 @@ public class StreamingWriter {
   /**
    * Writer for VBE frame-wrapped essence.
    */
-  public class GCFrameVBEWriter extends ContainerWriter {
+  public static class GCFrameVBEWriter extends ContainerWriter {
 
     /*
      * position of content packages within the essence container since the last
@@ -553,8 +556,8 @@ public class StreamingWriter {
      */
     private long cpFirstEditUnit = 0;
 
-    GCFrameVBEWriter(long bodySID, long indexSID) {
-      super(bodySID, indexSID);
+    GCFrameVBEWriter(StreamingWriter writer, long bodySID, long indexSID) {
+      super(writer, bodySID, indexSID);
     }
 
     /**
@@ -583,10 +586,10 @@ public class StreamingWriter {
         throw new IllegalStateException("ContainerWriter is not active");
       }
 
-      long curPos = StreamingWriter.this.fos.getWrittenCount();
-      StreamingWriter.this.fos.writeUL(elementKey);
-      StreamingWriter.this.fos.writeBERLength(elementSize);
-      this.setPosition(this.getPosition() + StreamingWriter.this.fos.getWrittenCount() - curPos);
+      long curPos = this.writer.fos.getWrittenCount();
+      this.writer.fos.writeUL(elementKey);
+      this.writer.fos.writeBERLength(elementSize);
+      this.setPosition(this.getPosition() + this.writer.fos.getWrittenCount() - curPos);
 
       this.startWriting(elementSize);
     }
@@ -618,8 +621,8 @@ public class StreamingWriter {
         int endIndex = Math.min((segIndex + 1) * MAX_INDEX_ENTRIES, this.cpPositions.size());
 
         var its = new IndexTableSegment();
-        its.InstanceID = StreamingWriter.this.uidGenerator.generate(this);
-        its.IndexEditRate = StreamingWriter.this.getECEditRate(this.getBodySID());
+        its.InstanceID = this.writer.uidGenerator.generate(this);
+        its.IndexEditRate = this.writer.getECEditRate(this.getBodySID());
         its.IndexStartPosition = cpFirstEditUnit + startIndex;
         its.IndexDuration = (long) (endIndex - startIndex);
         its.IndexStreamID = this.getIndexSID();
@@ -639,7 +642,7 @@ public class StreamingWriter {
           its.IndexEntryArray.add(e);
         }
 
-        bos.write(serializeIndexTableSegment(its, StreamingWriter.this.evthandler));
+        bos.write(serializeIndexTableSegment(its, this.writer.evthandler));
       }
 
       this.cpFirstEditUnit = this.duration;
@@ -788,7 +791,7 @@ public class StreamingWriter {
   private List<MaterialPackage> getMaterialPackages() {
     return this.preface.ContentStorageObject.Packages.stream()
         .filter(p -> p instanceof MaterialPackage).map(e -> (MaterialPackage) e)
-        .toList();
+        .collect(Collectors.toList());
   }
 
   private java.util.Set<UL> getECLabels() {
@@ -922,7 +925,7 @@ public class StreamingWriter {
     }
 
     List<EssenceData> gcs = this.preface.ContentStorageObject.EssenceDataObjects.stream()
-        .filter(e -> e.EssenceStreamID == bodySID).toList();
+        .filter(e -> e.EssenceStreamID == bodySID).collect(Collectors.toList());
 
     if (gcs.size() != 1) {
       MXFException.handle(evthandler, new MXFEvent(
@@ -959,7 +962,7 @@ public class StreamingWriter {
   public GCClipCBEWriter addCBEClipWrappedGC(long bodySID, long indexSID)
       throws IOException, KLVException, MXFException {
 
-    GCClipCBEWriter w = new GCClipCBEWriter(bodySID, indexSID);
+    GCClipCBEWriter w = new GCClipCBEWriter(this, bodySID, indexSID);
 
     this.addGC(bodySID, indexSID, w);
 
@@ -980,7 +983,7 @@ public class StreamingWriter {
   public GCClipVBEWriter addVBEClipWrappedGC(long bodySID, long indexSID)
       throws IOException, KLVException, MXFException {
 
-    GCClipVBEWriter w = new GCClipVBEWriter(bodySID, indexSID);
+    GCClipVBEWriter w = new GCClipVBEWriter(this, bodySID, indexSID);
 
     this.addGC(bodySID, indexSID, w);
 
@@ -1001,7 +1004,7 @@ public class StreamingWriter {
   public GCFrameVBEWriter addVBEFrameWrappedGC(long bodySID, long indexSID)
       throws IOException, KLVException, MXFException {
 
-    GCFrameVBEWriter w = new GCFrameVBEWriter(bodySID, indexSID);
+    GCFrameVBEWriter w = new GCFrameVBEWriter(this, bodySID, indexSID);
 
     this.addGC(bodySID, indexSID, w);
 
@@ -1029,7 +1032,7 @@ public class StreamingWriter {
       throw new RuntimeException(String.format("BodySID %d is already registered.", bodySID));
     }
 
-    GSWriter w = new GSWriter(bodySID);
+    GSWriter w = new GSWriter(this, bodySID);
 
     this.sids.add(bodySID);
     this.ecs.put(bodySID, w);

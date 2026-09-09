@@ -40,7 +40,23 @@ import com.sandflow.smpte.util.AUID;
  */
 public class LocalTagRegister implements LocalTagResolver {
 
-  public record Entry(Long localTag, AUID auid) {
+  public static final class Entry {
+
+    private final Long localTag;
+    private final AUID auid;
+
+    public Entry(Long localTag, AUID auid) {
+      this.localTag = localTag;
+      this.auid = auid;
+    }
+
+    public Long getLocalTag() {
+      return localTag;
+    }
+
+    public AUID getAUID() {
+      return auid;
+    }
   }
 
   private final HashMap<Long, Entry> tagToEntry = new HashMap<>();
@@ -62,7 +78,7 @@ public class LocalTagRegister implements LocalTagResolver {
    */
   public LocalTagRegister(Collection<Entry> entries) {
     for (Entry entry : entries) {
-      this.add(entry.localTag(), entry.auid());
+      this.add(entry.getLocalTag(), entry.getAUID());
     }
   }
 
@@ -70,13 +86,13 @@ public class LocalTagRegister implements LocalTagResolver {
   public AUID getAUID(long localtag) {
     Entry e = tagToEntry.get(localtag);
 
-    return e != null ? e.auid() : null;
+    return e != null ? e.getAUID() : null;
   }
 
   @Override
   public Long getLocalTag(AUID auid) {
     Entry e = auidToEntry.get(auid);
-    return e == null ? null : e.localTag();
+    return e == null ? null : e.getLocalTag();
   }
 
   /**

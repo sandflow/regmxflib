@@ -68,7 +68,7 @@ class StreamingReaderTest {
     StreamingFileInfo info = new StreamingFileInfo(is, null);
     GCEssenceTracks tracks = new GCEssenceTracks(info.getPreface());
     assertEquals(1, tracks.getTrackCount());
-    RGBADescriptor d = (RGBADescriptor) tracks.getTrackInfo(0).descriptor();
+    RGBADescriptor d = (RGBADescriptor) tracks.getTrackInfo(0).getDescriptor();
     assertEquals(640L, d.StoredWidth);
 
     StreamingReader sr = new StreamingReader(is, null);
@@ -94,7 +94,7 @@ class StreamingReaderTest {
 
     int i = 0;
     while (sr.nextElement()) {
-      WAVEPCMDescriptor d = (WAVEPCMDescriptor) tracks.getTrackInfo(sr.getElementKey()).descriptor();
+      WAVEPCMDescriptor d = (WAVEPCMDescriptor) tracks.getTrackInfo(sr.getElementKey()).getDescriptor();
       assertEquals(d.AverageBytesPerSecond, 288000);
       i++;
       assertEquals(288000, sr.getElementLength());

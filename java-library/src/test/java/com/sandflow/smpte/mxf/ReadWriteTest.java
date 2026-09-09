@@ -83,8 +83,8 @@ public class ReadWriteTest {
 
     PictureDescriptor d = null;
     for (int i = 0; i < inTracks.getTrackCount(); i++) {
-      if (inTracks.getTrackInfo(0).descriptor() instanceof PictureDescriptor) {
-        d = (PictureDescriptor) inTracks.getTrackInfo(0).descriptor();
+      if (inTracks.getTrackInfo(0).getDescriptor() instanceof PictureDescriptor) {
+        d = (PictureDescriptor) inTracks.getTrackInfo(0).getDescriptor();
       }
     }
 
@@ -216,8 +216,8 @@ public class ReadWriteTest {
     GCEssenceTracks inTracks = new GCEssenceTracks(sourceInfo.getPreface());
 
     assertEquals(1, inTracks.getTrackCount());
-    assertInstanceOf(SoundDescriptor.class, inTracks.getTrackInfo(0).descriptor());
-    SoundDescriptor d = (SoundDescriptor) inTracks.getTrackInfo(0).descriptor();
+    assertInstanceOf(SoundDescriptor.class, inTracks.getTrackInfo(0).getDescriptor());
+    SoundDescriptor d = (SoundDescriptor) inTracks.getTrackInfo(0).getDescriptor();
 
     long bytesPerSample = (d.QuantizationBits / 8) * d.ChannelCount;
 
@@ -318,8 +318,8 @@ public class ReadWriteTest {
     GCEssenceTracks inTracks = new GCEssenceTracks(sourceInfo.getPreface());
 
     assertEquals(1, inTracks.getTrackCount());
-    assertInstanceOf(IABEssenceDescriptor.class, inTracks.getTrackInfo(0).descriptor());
-    IABEssenceDescriptor d = (IABEssenceDescriptor) inTracks.getTrackInfo(0).descriptor();
+    assertInstanceOf(IABEssenceDescriptor.class, inTracks.getTrackInfo(0).getDescriptor());
+    IABEssenceDescriptor d = (IABEssenceDescriptor) inTracks.getTrackInfo(0).getDescriptor();
 
     /* create header metadata */
 

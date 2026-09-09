@@ -35,6 +35,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.numbers.fraction.Fraction;
 
@@ -77,9 +78,42 @@ public class OP1aHelper {
    * @param dataDefinition Data definition of the track.
    * @param trackName Track Name for the track.
    */
-  public record TrackInfo(byte trackId, UL essenceKey,
-      FileDescriptor descriptor,
-      AUID dataDefinition, String trackName) {
+  public static final class TrackInfo {
+
+    private final byte trackId;
+    private final UL essenceKey;
+    private final FileDescriptor descriptor;
+    private final AUID dataDefinition;
+    private final String trackName;
+
+    public TrackInfo(byte trackId, UL essenceKey, FileDescriptor descriptor,
+        AUID dataDefinition, String trackName) {
+      this.trackId = trackId;
+      this.essenceKey = essenceKey;
+      this.descriptor = descriptor;
+      this.dataDefinition = dataDefinition;
+      this.trackName = trackName;
+    }
+
+    public byte getTrackID() {
+      return trackId;
+    }
+
+    public UL getEssenceKey() {
+      return essenceKey;
+    }
+
+    public FileDescriptor getDescriptor() {
+      return descriptor;
+    }
+
+    public AUID getDataDefinition() {
+      return dataDefinition;
+    }
+
+    public String getTrackName() {
+      return trackName;
+    }
   }
 
   /**
@@ -92,13 +126,53 @@ public class OP1aHelper {
    * @param indexSID Index SID of the essence container.
    * @param duration Duration of the essence container.
    */
-  public record EssenceContainerInfo(
-      java.util.List<TrackInfo> tracks,
-      java.util.Set<AUID> conformsToSpecifications,
-      Fraction editRate,
-      long bodySID,
-      long indexSID,
-      Long duration) {
+  public static final class EssenceContainerInfo {
+
+    private final java.util.List<TrackInfo> tracks;
+    private final java.util.Set<AUID> conformsToSpecifications;
+    private final Fraction editRate;
+    private final long bodySID;
+    private final long indexSID;
+    private final Long duration;
+
+    public EssenceContainerInfo(
+        java.util.List<TrackInfo> tracks,
+        java.util.Set<AUID> conformsToSpecifications,
+        Fraction editRate,
+        long bodySID,
+        long indexSID,
+        Long duration) {
+      this.tracks = tracks;
+      this.conformsToSpecifications = conformsToSpecifications;
+      this.editRate = editRate;
+      this.bodySID = bodySID;
+      this.indexSID = indexSID;
+      this.duration = duration;
+    }
+
+    public java.util.List<TrackInfo> getTracks() {
+      return tracks;
+    }
+
+    public java.util.Set<AUID> getConformsToSpecifications() {
+      return conformsToSpecifications;
+    }
+
+    public Fraction getEditRate() {
+      return editRate;
+    }
+
+    public long getBodySID() {
+      return bodySID;
+    }
+
+    public long getIndexSID() {
+      return indexSID;
+    }
+
+    public Long getDuration() {
+      return duration;
+    }
   }
 
   private final EssenceContainerInfo ecInfo;
@@ -123,11 +197,11 @@ public class OP1aHelper {
     }
     this.ecInfo = ecInfo;
 
-    if (ecInfo.tracks().size() > 127 || ecInfo.tracks().size() == 0)
+    if (ecInfo.getTracks().size() > 127 || ecInfo.getTracks().size() == 0)
       throw new RuntimeException("Number of tracks must be between 1 and 127");
-    final byte trackCount = (byte) ecInfo.tracks().size();
+    final byte trackCount = (byte) ecInfo.getTracks().size();
 
-    if (ecInfo.bodySID() == 0 || ecInfo.indexSID() == 0)
+    if (ecInfo.getBodySID() == 0 || ecInfo.getIndexSID() == 0)
       throw new RuntimeException("BodySID and IndexSID must be non-zero");
 
     if (uidg == null) {
@@ -157,40 +231,41 @@ public class OP1aHelper {
     Map<UL, Byte> itemCountByKey = new HashMap<>();
 
     for (byte i = 0; i < trackCount; i++) {
-      byte trackId = ecInfo.tracks().get(i).trackId();
+      byte trackId = ecInfo.getTracks().get(i).getTrackID();
       if (trackId < 1 || trackIDToElementKeys.containsKey(trackId)) {
         throw new RuntimeException();
       }
 
-      FileDescriptor d = ecInfo.tracks().get(i).descriptor();
+      FileDescriptor d = ecInfo.getTracks().get(i).getDescriptor();
       /**
        * EXCEPTION: some MXF files do not have one essence descriptor per track
        */
       if (d != null) {
-        d.EssenceLength = this.ecInfo.duration();
-        d.LinkedTrackID = (long) trackId /* ecInfo.tracks().size() > 1 true ? (long) trackId : null */;
+        d.EssenceLength = this.ecInfo.getDuration();
+        d.LinkedTrackID = (long) trackId /* ecInfo.getTracks().size() > 1 true ? (long) trackId : null */;
       }
 
-      byte itemCount = (byte) (itemCountByKey.getOrDefault(ecInfo.tracks().get(i).essenceKey(), (byte) 0) + 1);
-      itemCountByKey.put(ecInfo.tracks().get(i).essenceKey(), itemCount);
+      byte itemCount = (byte) (itemCountByKey.getOrDefault(ecInfo.getTracks().get(i).getEssenceKey(), (byte) 0) + 1);
+      itemCountByKey.put(ecInfo.getTracks().get(i).getEssenceKey(), itemCount);
 
-      UL elementKey = MXFFiles.makeEssenceElementKey(ecInfo.tracks().get(i).essenceKey(), itemCount, (byte) trackId);
+      UL elementKey = MXFFiles.makeEssenceElementKey(ecInfo.getTracks().get(i).getEssenceKey(), itemCount, (byte) trackId);
 
       this.trackIDToElementKeys.put(trackId, elementKey);
 
-      sp.PackageTracks.add(makeTimelineTrack(uidg, ecInfo.editRate(),
-          this.ecInfo.duration() == null ? -1L : this.ecInfo.duration(), UMID.NULL_UMID,
+      sp.PackageTracks.add(makeTimelineTrack(uidg, ecInfo.getEditRate(),
+          this.ecInfo.getDuration() == null ? -1L : this.ecInfo.getDuration(), UMID.NULL_UMID,
           (long) MXFFiles.getTrackNumber(elementKey), null, (long) trackId,
-          ecInfo.tracks().get(i).dataDefinition(), ecInfo.tracks().get(i).trackName));
+          ecInfo.getTracks().get(i).getDataDefinition(), ecInfo.getTracks().get(i).getTrackName()));
 
       mp.PackageTracks
-          .add(makeTimelineTrack(uidg, ecInfo.editRate(),
-              this.ecInfo.duration() == null ? -1L : this.ecInfo.duration(), sp.PackageID, null, (long) trackId,
+          .add(makeTimelineTrack(uidg, ecInfo.getEditRate(),
+              this.ecInfo.getDuration() == null ? -1L : this.ecInfo.getDuration(), sp.PackageID, null, (long) trackId,
               (long) trackId,
-              ecInfo.tracks().get(i).dataDefinition(), ecInfo.tracks().get(i).trackName));
+              ecInfo.getTracks().get(i).getDataDefinition(), ecInfo.getTracks().get(i).getTrackName()));
     }
 
-    List<FileDescriptor> fds = ecInfo.tracks().stream().map(e -> e.descriptor()).filter(e -> e != null).toList();
+    List<FileDescriptor> fds = ecInfo.getTracks().stream().map(e -> e.getDescriptor()).filter(e -> e != null)
+        .collect(Collectors.toList());
 
     if (fds.size() == 1) {
       sp.EssenceDescription = fds.get(0);
@@ -198,7 +273,7 @@ public class OP1aHelper {
       MultipleDescriptor md = new MultipleDescriptor();
       md.InstanceID = uidg.generate(md);
       md.EssenceLength = null;
-      md.SampleRate = ecInfo.editRate();
+      md.SampleRate = ecInfo.getEditRate();
       md.ContainerFormat = Labels.MXFGCGenericEssenceMultipleMappings;
       md.FileDescriptors = new FileDescriptorStrongReferenceVector();
       md.FileDescriptors.addAll(fds);
@@ -208,8 +283,8 @@ public class OP1aHelper {
     /* EssenceDataObject */
     var edo = new EssenceData();
     edo.InstanceID = uidg.generate(edo);
-    edo.EssenceStreamID = this.ecInfo.bodySID();
-    edo.IndexStreamID = this.ecInfo.indexSID();
+    edo.EssenceStreamID = this.ecInfo.getBodySID();
+    edo.IndexStreamID = this.ecInfo.getIndexSID();
     edo.LinkedPackageID = sp.PackageID;
 
     /* Content Storage Object */
@@ -223,12 +298,12 @@ public class OP1aHelper {
 
     /* EssenceContainers */
     var ecs = new AUIDSet();
-    for (TrackInfo info : ecInfo.tracks()) {
+    for (TrackInfo info : ecInfo.getTracks()) {
       /**
        * EXCEPTION: some descriptor can be null
        */
-      if (info.descriptor() != null) {
-        AUID ecLabel = info.descriptor().ContainerFormat;
+      if (info.getDescriptor() != null) {
+        AUID ecLabel = info.getDescriptor().ContainerFormat;
         if (ecLabel != null && !ecs.contains(ecLabel)) {
           ecs.add(ecLabel);
         }
@@ -255,9 +330,9 @@ public class OP1aHelper {
         : Labels.MXFOP1aSingleItemSinglePackageUniTrackStreamInternal;
     this.preface.IdentificationList = idList;
     this.preface.ContentStorageObject = cs;
-    if (this.ecInfo.conformsToSpecifications != null) {
+    if (this.ecInfo.getConformsToSpecifications() != null) {
       this.preface.ConformsToSpecifications = new AUIDSet();
-      this.preface.ConformsToSpecifications.addAll(this.ecInfo.conformsToSpecifications);
+      this.preface.ConformsToSpecifications.addAll(this.ecInfo.getConformsToSpecifications());
     }
     this.preface.DescriptiveSchemes = dms;
   }

@@ -96,9 +96,9 @@ public class StreamingReader extends InputStream {
       return false;
     }
 
-    this.elementKey = this.elementInfo.key();
+    this.elementKey = this.elementInfo.getKey();
 
-    this.remainingElementBytes = this.elementInfo.length();
+    this.remainingElementBytes = this.elementInfo.getLength();
 
     this.state = State.IN_PAYLOAD;
 
@@ -110,7 +110,7 @@ public class StreamingReader extends InputStream {
    * @return SID
    */
   public long getSID() {
-    return this.elementInfo.sid();
+    return this.elementInfo.getSID();
   }
 
   /**
@@ -134,7 +134,7 @@ public class StreamingReader extends InputStream {
     if (this.state != State.IN_PAYLOAD) {
       throw new RuntimeException();
     }
-    return this.elementInfo.length();
+    return this.elementInfo.getLength();
   }
 
   public boolean isDone() {

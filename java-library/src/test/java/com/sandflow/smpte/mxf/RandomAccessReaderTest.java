@@ -56,7 +56,7 @@ class RandomAccessReaderTest {
     RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
     GCEssenceTracks tracks = new GCEssenceTracks(fi.getPreface());
     assertEquals(1, tracks.getTrackCount());
-    RGBADescriptor d = (RGBADescriptor) tracks.getTrackInfo(0).descriptor();
+    RGBADescriptor d = (RGBADescriptor) tracks.getTrackInfo(0).getDescriptor();
     assertEquals(640L, d.StoredWidth);
     assertEquals(24, fi.getEUCount());
 
@@ -76,7 +76,7 @@ class RandomAccessReaderTest {
     RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
     GCEssenceTracks tracks = new GCEssenceTracks(fi.getPreface());
     assertEquals(1, tracks.getTrackCount());
-    assertInstanceOf(IABEssenceDescriptor.class, tracks.getTrackInfo(0).descriptor());
+    assertInstanceOf(IABEssenceDescriptor.class, tracks.getTrackInfo(0).getDescriptor());
 
     final byte[] iaFrameMagic = { 01, 00, 00, 06, 67, 17, 01, 14 };
     byte[] buffer = new byte[iaFrameMagic.length];

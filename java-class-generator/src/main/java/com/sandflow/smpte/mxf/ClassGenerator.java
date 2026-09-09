@@ -155,26 +155,26 @@ public class ClassGenerator {
   }
 
   class TypeMaker extends NullDefinitionVisitor {
-    private static final UL UUID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01030300.00000000");
-    private static final UL J2KExtendedCapabilities_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.03010d00.00000000");
-    private static final UL Character_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01100100.00000000");
-    private static final UL Char_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01100300.00000000");
-    private static final UL UTF8Character_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01100500.00000000");
-    private static final UL ProductReleaseType_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.02010101.00000000");
-    private static final UL PrimaryPackage_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010104.06010104.01080000");
-    private static final AUID UINT16_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.01010200.00000000");
-    private static final AUID AUID_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.01030100.00000000");
-    private static final UL METADEFINITIONS_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.02000000");
-    private static final AUID INTERCHANGE_OBJECT_AUID = AUID
+    private final UL UUID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01030300.00000000");
+    private final UL J2KExtendedCapabilities_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.03010d00.00000000");
+    private final UL Character_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01100100.00000000");
+    private final UL Char_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01100300.00000000");
+    private final UL UTF8Character_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01100500.00000000");
+    private final UL ProductReleaseType_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.02010101.00000000");
+    private final UL PrimaryPackage_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010104.06010104.01080000");
+    private final AUID UINT16_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.01010200.00000000");
+    private final AUID AUID_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.01030100.00000000");
+    private final UL METADEFINITIONS_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.02000000");
+    private final AUID INTERCHANGE_OBJECT_AUID = AUID
         .fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.01010100");
-    private static final AUID DateStruct_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.03010500.00000000");
-    private static final AUID PackageIDType_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.01030200.00000000");
-    private static final AUID Rational_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.03010100.00000000");
-    private static final AUID TimeStruct_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.03010600.00000000");
-    private static final AUID TimeStamp_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.03010700.00000000");
-    private static final AUID VersionType_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.03010300.00000000");
-    private static final UL ObjectClass_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.06010104.01010000");
-    private static final UL PICTUREDESCRIPTOR_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.01012700");
+    private final AUID DateStruct_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.03010500.00000000");
+    private final AUID PackageIDType_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.01030200.00000000");
+    private final AUID Rational_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.03010100.00000000");
+    private final AUID TimeStruct_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.03010600.00000000");
+    private final AUID TimeStamp_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.03010700.00000000");
+    private final AUID VersionType_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.03010300.00000000");
+    private final UL ObjectClass_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.06010104.01010000");
+    private final UL PICTUREDESCRIPTOR_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.01012700");
 
     String typeName;
     String adapterName;
@@ -266,7 +266,7 @@ public class ClassGenerator {
             allMembers.addFirst(member);
 
           } catch (Exception e) {
-            System.out.println("Skipping %s because of %s".formatted(propertyDef.getSymbol(), e.getMessage()));
+            System.out.println(String.format("Skipping %s because of %s", propertyDef.getSymbol(), e.getMessage()));
             continue;
           }
         }
@@ -368,7 +368,7 @@ public class ClassGenerator {
       this.adapterName = ULAdapter.class.getName();
     }
 
-    private final static UL BOOLEAN_TYPE = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01040100.00000000");
+    private final UL BOOLEAN_TYPE = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01040100.00000000");
 
     @Override
     public void visit(EnumerationTypeDefinition def) throws VisitorException {
@@ -578,9 +578,9 @@ public class ClassGenerator {
       }
     }
 
-    private static final UL IndexEntryArray_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.04020700.00000000");
-    private static final UL DeltaEntryArray_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.04020800.00000000");
-    private static final UL DataValue_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.04100100.00000000");
+    private final UL IndexEntryArray_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.04020700.00000000");
+    private final UL DeltaEntryArray_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.04020800.00000000");
+    private final UL DataValue_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.04100100.00000000");
 
     @Override
     public void visit(VariableArrayTypeDefinition def) throws VisitorException {

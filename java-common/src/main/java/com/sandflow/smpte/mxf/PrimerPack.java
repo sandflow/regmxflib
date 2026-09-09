@@ -101,8 +101,8 @@ public class PrimerPack {
     os.writeUnsignedInt(18); // itemlength
 
     for (var entry : reg.getEntries()) {
-      os.writeUnsignedShort((int) entry.localTag().longValue());
-      os.writeAUID(entry.auid());
+      os.writeUnsignedShort((int) entry.getLocalTag().longValue());
+      os.writeAUID(entry.getAUID());
     }
     return new MemoryTriplet(new AUID(KEY), bos.toByteArray());
   }

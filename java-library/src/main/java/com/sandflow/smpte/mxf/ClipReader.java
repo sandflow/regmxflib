@@ -74,7 +74,7 @@ public class ClipReader extends InputStream {
      */
     GCEssenceTracks tracks = new GCEssenceTracks(this.info.getPreface());
     TrackInfo ti = tracks.getTrackInfo(this.elementKey);
-    if (ti != null && Labels.IMF_IABEssenceClipWrappedContainer.equals(ti.descriptor().ContainerFormat)
+    if (ti != null && Labels.IMF_IABEssenceClipWrappedContainer.equals(ti.getDescriptor().ContainerFormat)
         && this.info.euToECPosition(0) != 0) {
       this.essenceOffset = 0;
     } else {

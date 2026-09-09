@@ -57,10 +57,29 @@ public class GCEssenceTracks {
    * @param track      Track metadata.
    * @param container  Essence container reference.
    */
-  public record TrackInfo(
-      FileDescriptor descriptor,
-      Track track,
-      EssenceData container) {
+  public static final class TrackInfo {
+
+    private final FileDescriptor descriptor;
+    private final Track track;
+    private final EssenceData container;
+
+    public TrackInfo(FileDescriptor descriptor, Track track, EssenceData container) {
+      this.descriptor = descriptor;
+      this.track = track;
+      this.container = container;
+    }
+
+    public FileDescriptor getDescriptor() {
+      return descriptor;
+    }
+
+    public Track getTrack() {
+      return track;
+    }
+
+    public EssenceData getContainer() {
+      return container;
+    }
   }
 
   private final List<TrackInfo> tracks = new ArrayList<>();
@@ -148,7 +167,7 @@ public class GCEssenceTracks {
     /* find track info */
     for (int i = 0; i < this.tracks.size(); i++) {
       TrackInfo info = this.tracks.get(i);
-      if (info.track().EssenceTrackNumber == trackNum) {
+      if (info.getTrack().EssenceTrackNumber == trackNum) {
         return info;
       }
     }
