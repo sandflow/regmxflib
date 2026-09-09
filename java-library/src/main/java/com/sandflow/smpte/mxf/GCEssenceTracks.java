@@ -52,10 +52,6 @@ public class GCEssenceTracks {
 
   /**
    * Represents information associated with an Essence Track.
-   *
-   * @param descriptor File descriptor associated with the track.
-   * @param track      Track metadata.
-   * @param container  Essence container reference.
    */
   public static final class TrackInfo {
 
@@ -63,6 +59,11 @@ public class GCEssenceTracks {
     private final Track track;
     private final EssenceData container;
 
+    /**
+     * @param descriptor File descriptor associated with the track.
+     * @param track      Track metadata.
+     * @param container  Essence container reference.
+     */
     public TrackInfo(FileDescriptor descriptor, Track track, EssenceData container) {
       this.descriptor = descriptor;
       this.track = track;

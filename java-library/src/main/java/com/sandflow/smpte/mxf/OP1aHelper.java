@@ -71,12 +71,6 @@ public class OP1aHelper {
 
   /**
    * Information about a track.
-   * 
-   * @param trackId Track ID of the track.
-   * @param essenceKey Essence Element Key of the track.
-   * @param descriptor File descriptor associated with the track.
-   * @param dataDefinition Data definition of the track.
-   * @param trackName Track Name for the track.
    */
   public static final class TrackInfo {
 
@@ -86,6 +80,13 @@ public class OP1aHelper {
     private final AUID dataDefinition;
     private final String trackName;
 
+    /**
+     * @param trackId Track ID of the track.
+     * @param essenceKey Essence Element Key of the track.
+     * @param descriptor File descriptor associated with the track.
+     * @param dataDefinition Data definition of the track.
+     * @param trackName Track Name for the track.
+     */
     public TrackInfo(byte trackId, UL essenceKey, FileDescriptor descriptor,
         AUID dataDefinition, String trackName) {
       this.trackId = trackId;
@@ -118,13 +119,6 @@ public class OP1aHelper {
 
   /**
    * Information about the essence container.
-   * 
-   * @param tracks List of tracks in the essence container.
-   * @param conformsToSpecifications Set of specifications the file conforms to.
-   * @param editRate Edit rate of the essence container.
-   * @param bodySID Body SID of the essence container.
-   * @param indexSID Index SID of the essence container.
-   * @param duration Duration of the essence container.
    */
   public static final class EssenceContainerInfo {
 
@@ -135,6 +129,14 @@ public class OP1aHelper {
     private final long indexSID;
     private final Long duration;
 
+    /**
+     * @param tracks List of tracks in the essence container.
+     * @param conformsToSpecifications Set of specifications the file conforms to.
+     * @param editRate Edit rate of the essence container.
+     * @param bodySID Body SID of the essence container.
+     * @param indexSID Index SID of the essence container.
+     * @param duration Duration of the essence container.
+     */
     public EssenceContainerInfo(
         java.util.List<TrackInfo> tracks,
         java.util.Set<AUID> conformsToSpecifications,
