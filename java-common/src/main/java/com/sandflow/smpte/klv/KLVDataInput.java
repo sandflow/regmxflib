@@ -30,6 +30,7 @@
 
 package com.sandflow.smpte.klv;
 
+import static com.sandflow.smpte.klv.exceptions.KLVException.MAX_BER_SIZE_EXCEEED;
 import static com.sandflow.smpte.klv.exceptions.KLVException.MAX_LENGTH_EXCEEED;
 
 import java.io.EOFException;
@@ -165,7 +166,7 @@ public class KLVDataInput {
     int bersz = (b & 0x0f);
 
     if (bersz > 8) {
-      throw new KLVException(MAX_LENGTH_EXCEEED);
+      throw new KLVException(MAX_BER_SIZE_EXCEEED);
     }
 
     byte[] octets = new byte[bersz];
@@ -176,8 +177,8 @@ public class KLVDataInput {
       int tmp = (((int) octets[i]) & 0xFF);
       val = (val << 8) + tmp;
 
-      if (val > Integer.MAX_VALUE) {
-        throw new KLVException(MAX_LENGTH_EXCEEED);
+      if (val < 0) {
+        throw new KLVException(MAX_BER_SIZE_EXCEEED);
       }
     }
 
@@ -206,6 +207,22 @@ public class KLVDataInput {
     readFully(value);
 
     return new MemoryTriplet(auid, value);
+  }
+
+  /**
+   * Reads the length and skips the value of a KLV triplet after its key has
+   * already been read.
+   *
+   * @throws IOException
+   * @throws EOFException
+   * @throws KLVException
+   */
+  public void skipTripletLV() throws IOException, EOFException, KLVException {
+    long len = readBERLength();
+
+    if (skipFully(len) != len) {
+      throw new EOFException();
+    }
   }
 
   public int read(byte[] b, int off, int len) throws IOException {
