@@ -23,10 +23,7 @@
     <dependency>
       <groupId>com.github.jknack</groupId>
       <artifactId>handlebars</artifactId>
-      <!--
-        Last release compiled for Java 8.
-      -->
-      <version>4.3.1</version>
+      <version>4.4.0</version>
     </dependency>
   </dependencies>
 
@@ -72,4 +69,19 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <!-- Exclude class generation from runtime tests -->
+    <profile>
+      <id>runtime-test</id>
+      <activation>
+        <property>
+          <name>compatTestJdk</name>
+        </property>
+      </activation>
+      <properties>
+        <maven.test.skip>true</maven.test.skip>
+      </properties>
+    </profile>
+  </profiles>
 </project>
