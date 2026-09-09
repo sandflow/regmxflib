@@ -47,6 +47,41 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+            <plugin>
+                <!--
+                  Pinned so the compat-test profile below runs the exact same surefire version
+                -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!--
+          Allows unit testing under a different JDK than the one used to build the library
+        -->
+        <profile>
+            <id>compat-test</id>
+            <activation>
+                <property>
+                    <name>compatTestJdk</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <jdkToolchain>
+                                <version>${compatTestJdk}</version>
+                            </jdkToolchain>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
