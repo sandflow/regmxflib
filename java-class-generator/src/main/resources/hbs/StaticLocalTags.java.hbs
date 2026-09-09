@@ -40,7 +40,7 @@ public class StaticLocalTags {
 
   static {
 {{#.}}
-    StaticLocalTags.add({{getLocalIdentification}}, AUID.fromURN("{{getIdentification}}"));{{/.}}
+    StaticLocalTags.add({{localIdentification}}, AUID.fromURN("{{identification}}"));{{/.}}
   }
 
   private StaticLocalTags() {

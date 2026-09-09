@@ -32,7 +32,7 @@ package com.sandflow.smpte.mxf;
 
 import java.util.HashMap;
 
-{{#.}}import com.sandflow.smpte.mxf.types.{{getSymbol}};
+{{#.}}import com.sandflow.smpte.mxf.types.{{symbol}};
 {{/.}}
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.util.UL;
@@ -42,7 +42,7 @@ public class ClassFactory {
 
   static {
 {{#.}}
-    ClassFactory.putClass({{getSymbol}}.getKey(), {{getSymbol}}.class);{{/.}}
+    ClassFactory.putClass({{symbol}}.getKey(), {{symbol}}.class);{{/.}}
 
     ClassFactory.putClass(IndexTableSegment.getKey(), IndexTableSegment.class);
   }
