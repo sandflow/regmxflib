@@ -204,7 +204,7 @@ Issues are tracked at https://github.com/sandflow/regmxflib/issues.
 
 ### Java
 
-* Java 17
+* Java 17 (building) and Java 11+ (runtime)
 * Maven
 
 ### C++
