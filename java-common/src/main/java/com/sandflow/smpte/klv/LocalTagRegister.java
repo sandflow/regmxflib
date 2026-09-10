@@ -32,6 +32,7 @@ package com.sandflow.smpte.klv;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 
 import com.sandflow.smpte.util.AUID;
 
@@ -82,11 +83,29 @@ public class LocalTagRegister implements LocalTagResolver {
     }
   }
 
+  /**
+   * @deprecated Use {@link #LocalTagRegister(Collection)} instead.
+   */
+  @Deprecated
+  public LocalTagRegister(Map<Long, AUID> entries) {
+    for (Map.Entry<Long, AUID> e : entries.entrySet()) {
+      this.add(e.getKey(), e.getValue());
+    }
+  }
+
   @Override
   public AUID getAUID(long localtag) {
     Entry e = tagToEntry.get(localtag);
 
     return e != null ? e.getAUID() : null;
+  }
+
+  /**
+   * @deprecated Use {@link #getAUID(long)} instead.
+   */
+  @Deprecated
+  public AUID get(long localtag) {
+    return getAUID(localtag);
   }
 
   @Override

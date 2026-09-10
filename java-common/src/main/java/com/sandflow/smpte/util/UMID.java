@@ -95,6 +95,14 @@ public class UMID {
     return value.clone();
   }
 
+  /**
+   * @deprecated Use {@link #getBytes()} instead.
+   */
+  @Deprecated
+  public byte[] getValue() {
+    return getBytes();
+  }
+
   @Override
   public int hashCode() {
     return Arrays.hashCode(value);

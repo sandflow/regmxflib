@@ -64,6 +64,14 @@ public class UUID {
     return this.value.clone();
   }
 
+  /**
+   * @deprecated Use {@link #getBytes()} instead.
+   */
+  @Deprecated
+  public byte[] getValue() {
+    return getBytes();
+  }
+
   @Override
   public int hashCode() {
     int hash = 7;

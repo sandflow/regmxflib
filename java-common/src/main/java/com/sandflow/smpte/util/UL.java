@@ -269,6 +269,22 @@ public class UL {
     return value[i];
   }
 
+  /**
+   * @deprecated Use {@link #getBytes()} instead.
+   */
+  @Deprecated
+  public byte[] getValue() {
+    return getBytes();
+  }
+
+  /**
+   * @deprecated Use {@link #getOctet(int)} instead.
+   */
+  @Deprecated
+  public byte getValueOctet(int i) {
+    return getOctet(i);
+  }
+
   @Override
   public int hashCode() {
     return Arrays.hashCode(value);
