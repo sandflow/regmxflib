@@ -3,7 +3,8 @@ name: Test
 on: [push, pull_request]
 
 jobs:
-  build:
+  java-build:
+    name: Test Java
 
     runs-on: ubuntu-latest
 
@@ -12,14 +13,27 @@ jobs:
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
-    - name: Set up JDK 17
+
+    - name: Set up JDK 11 (for testing)
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'corretto'
+
+    - name: Set up JDK 17 (for building and testing)
       uses: actions/setup-java@v3
       with:
         java-version: '17'
         distribution: 'corretto'
         cache: maven
 
-    - name: Set up Docker Buildx
+    - name: Java 17 build and test
+      run: mvn test
+
+    - name: Java 11 Test
+      run: mvn test -P runtime-test -DcompatTestJdk=11
+
+    - name: Set up Docker Build
       uses: docker/setup-buildx-action@v3
 
     - name: Build Docker Image
@@ -31,11 +45,29 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-    - name: Run Build and Test
+    - name: Run Compatibility Tests
       run: |
-        mvn test
         docker run --rm \
           -v $GITHUB_WORKSPACE:/workspace \
           -w /tmp \
           regmxflib-ci-env:latest \
-          bash /workspace/library/src/test/sh/compat.sh
+          bash /workspace/java-library/src/test/sh/compat.sh
+
+  cpp_build:
+    name: Test C++
+
+    runs-on: ubuntu-latest
+
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'pull_request'
+
+    steps:
+    - name: install dependencies
+      run: sudo apt install libxerces-c-dev
+    - name: Checkout repo
+      uses: actions/checkout@v3
+    - name: Test C++
+      run: |
+        cmake -B cpp/build -S cpp
+        cd cpp/build
+        make
+        ctest
