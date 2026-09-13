@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--Created: Wed Jul 29 21:46:41 PDT 2026--><!--By: regmxflib build n/a--><!--See: https://github.com/sandflow/regmxflib--><Extension xmlns="http://www.smpte-ra.org/schemas/2001-1b/2013/metadict">
+    <SchemeID>urn:uuid:151590fa-371f-5fd9-be08-0778d27a395a</SchemeID>
+    <SchemeURI>http://www.smpte-ra.org/reg/2003/2012/13/4/archive</SchemeURI>
+    <MetaDefinitions>
+        <TypeDefinitionEnumeration>
+            <Identification>urn:smpte:ul:060e2b34.01040101.0d040101.01010101</Identification>
+            <Symbol>APP_TimecodeTypeEnum</Symbol>
+            <Name>APP Timecode Type Enum</Name>
+            <ElementType>urn:smpte:ul:060e2b34.01040101.01010200.00000000</ElementType>
+            <Elements>
+                <Name>TC_VITC</Name>
+                <Value>1</Value>
+                <Name>TC_LTC</Name>
+                <Value>2</Value>
+                <Name>TC_Both</Name>
+                <Value>3</Value>
+            </Elements>
+        </TypeDefinitionEnumeration>
+    </MetaDefinitions>
+</Extension>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--Created: Wed Jul 29 21:46:41 PDT 2026--><!--By: regmxflib build n/a--><!--See: https://github.com/sandflow/regmxflib--><Extension xmlns="http://www.smpte-ra.org/schemas/2001-1b/2013/metadict">
+    <SchemeID>urn:uuid:11296958-b2b1-5452-b6b7-8a65760052af</SchemeID>
+    <SchemeURI>http://www.smpte-ra.org/reg/395/2014/13/13</SchemeURI>
+    <MetaDefinitions>
+        <ClassDefinition>
+            <Identification>urn:smpte:ul:060e2b34.027f010d.0d0d0100.00000000</Identification>
+            <Symbol>DMS_AS_12_AdID_Slate</Symbol>
+            <Description>AS_12 Ad-ID advertisement identification metadata framework</Description>
+            <Name>DMS_AS_12_AdID_Slate</Name>
+            <ParentClass>urn:smpte:ul:060e2b34.027f0101.0d010701.0c010200</ParentClass>
+            <IsConcrete>true</IsConcrete>
+        </ClassDefinition>
+    </MetaDefinitions>
+</Extension>

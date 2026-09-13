@@ -11,5 +11,5 @@ CMakeSettings.json
 .vscode/
 .classpath
 src/generated/
-library/dependency-reduced-pom.xml
-library/.flattened-pom.xml
+java-library/dependency-reduced-pom.xml
+java-library/.flattened-pom.xml
