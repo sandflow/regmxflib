@@ -39,7 +39,7 @@ namespace rxml {
 
 		UL ul = t.getKey().asUL();
 
-		switch (ul.getValueOctet(14)) {
+		switch (ul.getOctet(14)) {
 
 		case 0x01:
 			status = OPEN_INCOMPLETE;
@@ -57,7 +57,7 @@ namespace rxml {
 			throw MXFException("Illegal Partition Pack");
 		}
 
-		switch (ul.getValueOctet(13)) {
+		switch (ul.getOctet(13)) {
 		case 0x02:
 			kind = HEADER;
 

@@ -105,8 +105,15 @@ namespace rxml {
 			VERSION_BYTE = 7
 		};
 
-		unsigned char getValueOctet(int i) const {
+		unsigned char getOctet(int i) const {
 			return value[i];
+		}
+
+		/**
+		* @deprecated Use getOctet(int) instead.
+		*/
+		unsigned char getValueOctet(int i) const {
+			return getOctet(i);
 		}
 
 		void setValueOctet(int i, unsigned char v) {
