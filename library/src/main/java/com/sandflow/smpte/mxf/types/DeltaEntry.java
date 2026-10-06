@@ -38,7 +38,7 @@ import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.MXFDataOutput;
 
 public class DeltaEntry {
-  public static final int ITEM_LENGTH = 16;
+  public static final int ITEM_LENGTH = 6;
 
   public Byte PosTableIndex;
   public Short Slice;
