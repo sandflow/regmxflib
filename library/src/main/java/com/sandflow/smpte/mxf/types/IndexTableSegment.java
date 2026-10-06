@@ -70,7 +70,6 @@ import com.sandflow.smpte.util.UUID;
  */
 public class IndexTableSegment {
   private static final UL KEY = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010201.01100100");
-  public static final int ITEM_LENGTH = 16;
 
   private static final AUID SliceCount_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01010104.04040401.01000000");
   private static final AUID DeltaEntryArray_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01010105.04040401.06000000");
