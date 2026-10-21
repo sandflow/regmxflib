@@ -850,9 +850,9 @@ class StreamingWriterTest {
 
     StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null, uidg);
 
-    /* the track spans @duration edit units even though it is a single access unit */
+    /* the track spans @duration edit units even though it is a single element */
 
-    var gc = sw.addVBEClipWrappedGC(BODY_SID, INDEX_SID, duration);
+    var gc = sw.addSingleElementGC(BODY_SID, INDEX_SID, duration);
 
     var gss = new GSWriter[ancillaryIDs.length];
     for (int i = 0; i < gss.length; i++) {
@@ -861,11 +861,10 @@ class StreamingWriterTest {
 
     sw.start();
 
-    /* the Timed Events Resource is a single access unit */
+    /* the Timed Events Resource is a single element */
 
     sw.startPartition(gc);
-    gc.nextClip(header.getElementKey(trackID), timedEvents.length);
-    gc.nextAccessUnit();
+    gc.firstAndOnlyElement(header.getElementKey(trackID), timedEvents.length);
     gc.write(timedEvents);
 
     /* each Timed Events Ancillary Resource is carried in its own generic stream */

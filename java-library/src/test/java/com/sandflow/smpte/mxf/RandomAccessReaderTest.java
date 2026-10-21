@@ -186,7 +186,7 @@ class RandomAccessReaderTest {
         .iterator().next();
     assertEquals(12L, sd.TimedEventsAncillaryResourceStreamID);
 
-    /* the Timed Events Resource is a single access unit */
+    /* the Timed Events Resource is a single element */
 
     assertEquals(1, fi.getEUCount());
 
