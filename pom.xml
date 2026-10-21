@@ -6,19 +6,19 @@
 
     <groupId>com.sandflow</groupId>
     <artifactId>regmxflib-root</artifactId>
-    <version>1.0.1-rc.2</version>
+    <version>1.1.0-beta.4</version>
     <packaging>pom</packaging>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <modules>
-        <module>common</module>
-        <module>class-generator</module>
-        <module>library</module>
+        <module>java-common</module>
+        <module>java-class-generator</module>
+        <module>java-library</module>
     </modules>
 
     <dependencyManagement>
@@ -26,6 +26,12 @@
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter-api</artifactId>
+                <version>5.14.0</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-params</artifactId>
                 <version>5.14.0</version>
                 <scope>test</scope>
             </dependency>
@@ -41,6 +47,37 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+            <plugin>
+                <!-- Pinned so the runtime-test profile below runs the same surefire version -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- Allows unit testing under a different JDK than the one used to build the library -->
+        <profile>
+            <id>runtime-test</id>
+            <activation>
+                <property>
+                    <name>compatTestJdk</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <jdkToolchain>
+                                <version>${compatTestJdk}</version>
+                            </jdkToolchain>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

@@ -11,19 +11,49 @@
 
 ## Introduction
 
-regmxflib is a pure Java library that:
+regmxflib is a collection of tools and libraries for manipulating MXF files.
+Because regmxflib is built from the  [SMPTE metadata registers](https://registry.smpte-ra.org/apps/pages/), applications can remain
+up-to-date with recent additions to the MXF standard with minimal effort.
 
-- creates bindings between MXF header metadata classes and POJOs
-  using the [SMPTE metadata registers](https://registry.smpte-ra.org/apps/pages/),
-  allowing applications to remain up-to-date with recent additions to the MXF standard
-  with minimal effort
+regmxflib currently includes:
 
-- implements MXF reading and writing classes
+- Java bindings for MXF header metadata classes (SMPTE ST 377-1);
 
-- implements a simple tool that creates a JSON summary of an input MXF file
+- Java and C++ implementation of the RegXML (SMPTE ST 2001-1) standard to
+  express MXF Header Metadata as XML elements; and
 
-The following snippet illustrates the creation of an `RGBADescriptor` using the library:
+- Java classes for reading and writing MXF files.
 
+regmxflib includes all functionality of [regxmlib](https://github.com/sandflow/regxmllib), which is no longer maintained.
+
+## Quick start
+
+The RegMXFDump utility provides an example of the use of the bindings to generate a JSON representation of an MXF file:
+
+    mvn package -P with-dependencies
+    java -cp java-library/target/regmxflib-jar-with-dependencies.jar \
+      com.sandflow.smpte.tools.RegMXFDump \
+      test-resources/imps/imp_1/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.mxf > \
+      java-library/target/test-output/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.json
+
+## Overall architecture
+
+### Registers and metadictionaries
+
+regmxflib relies on the SMPTE Metadata Registers, which contain a complete description of MXF Header Metadata and are [published by SMPTE](https://smpte-ra.org/smpte-metadata-registry). Before they are used by regmxflib, the registers are transformed into RegXML metadictionaries, which are normalized representations optimized for MXF. This transformation is performed using the `com.sandflow.smpte.tools.XMLRegistersToDict` tool. This repo includes [a recent copy of the registers](./resources/registers) and their corresponding [RegXML metadictionary representation](./resources/regxml-dicts).
+
+The metadictionaries are used:
+
+* by `com.sandflow.smpte.mxf.ClassGenerator.main()` tool at compile time to generate POJO bindings for MXF header metadata classes;
+* at runtime by `com.sandflow.smpte.regxml.FragmentBuilder.fragmentFromTriplet()` to generate RegXML fragments from MXF Header Metadata objects;
+* by `com.sandflow.smpte.regxml.XMLSchemaBuilder.fromDictionary()` to generate an XML Schema that can be used to validate RegXML fragments.
+
+### MXF Header Metadata POJOs
+
+The MXF Header Metadata POJOs live in the `com.sandflow.smpte.mxf.types` package. The following snippet illustrates their use using the creation of an `RGBADescriptor` as an example:
+
+    import com.sandflow.smpte.mxf.types.RGBADescriptor;
+    ...
     RGBADescriptor d = new RGBADescriptor();
     d.InstanceID = UUID.fromRandom();
     d.SampleRate = sampleRate;
@@ -45,85 +75,9 @@ The following snippet illustrates the creation of an `RGBADescriptor` using the 
     d.PixelLayout.add(new RGBAComponent(RGBAComponentKind.CompRed, (short) 16));
     ...
 
-## Quick start
+### MXF Reading
 
-    mvn package -P with-dependencies
-    java -cp library/target/regmxflib-jar-with-dependencies.jar \
-      com.sandflow.smpte.tools.RegMXFDump \
-      library/src/test/resources/imps/imp_1/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.mxf > \
-      library/target/test-output/VIDEO_f031aa43-88c8-4de9-856f-904a33a78505.json
-
-## Deployment
-
-The (built) library is deployed at Maven Central with the following coordinates:
-
-    <groupId>com.sandflow</groupId>
-    <artifactId>regmxflib</artifactId>
-
-## Organization
-
-The library consists of 3 modules:
-
-- `class-generator` generates [POJO classes](./library/target/generated-sources) when
-  compiling the library using [register files](./library/src/main/resources).
-- `library` holds the generated POJO classes and classes for reading and writing MXF files
-- `common` holds classes that do not depend on the generated classes
-
-_NOTE_: `common` is largely based on [regxmllib](https://github.com/sandflow/regxmllib) and
-combining the two libraries is expected in the long run.
-
-## MXF concepts
-
-### Data model
-
-At the highest level, an MXF file consists of:
-
-- essence containers and generic streams, which each consists of a sequence of KLV packets containing essence or metadata;
-
-- header metadata, which describes the contents of these essence containers and generic streams and contains additional metadata; and
-
-- index tables, which allow temporal offset within these these essence containers and generic streams to be accessed in constant time and in any order.
-
-### Physical structure
-
-An MXF file is divided into partitions:
-
-- two copies of the header metadata is typically stored in an MXF: at the beginning of the file (file header) and at the end of the file (file footer). The latter is assumed to contain the definitive information, once the entire file is has been written.
-
-- each essence container and generic stream is partitioned into one or more partitions on KLV Triplet boundaries. Partitions from different essence containers and generic streams can be interleaved.
-
-- Each partition that contains data from an essence container or generic stream that is indexed is followed by a partition that contains an index table for that partition.
-
-- At the very end of the file, a random index pack (RIP) contains a table of contents of all the partitions contained in the file
-
-### Essence wrapping
-
-#### Frame-wrapping
-
-In the case of frame-wrapping, each access unit of the essence or data stream is
-wrapped into its own KLV triplet (called an _element_) and all elements that belong to
-the same edit unit are grouped into a logical _content package_.
-
-Index entries point to the first byte of the K of each element.
-
-#### Clip-wrapping
-
-In the case of clip-wrapping, the entire essence stream is wrapped into a single KLV triplet (also called an _element_).
-
-Index entries are relative to the first byte of the V of each element, _with the
-exception of IAB Track Files, where they are relative to the K of the IAB Clip
-Wrap element._
-
-### Indexing
-
-Indexes come in one of two forms:
-
-- CBE, where all index entries point to elements of the same size in bytes
-- VBE, in all other cases
-
-## Reading
-
-### General
+#### General
 
 The library implements two ways of reading the contents of an MXF file:
 
@@ -131,7 +85,7 @@ The library implements two ways of reading the contents of an MXF file:
 
 - random access readers (`ClipReader`, `FrameReader`, `GenericStreamReader`) require random access to the file, but allows seeking to any access unit within the file in constant time and in any order. The file must contain a RIP and Index Tables. It is limited to a single Essence Container but can contain any number of Generic Stream partitions.
 
-### Streaming reader
+#### Streaming reader
 
 The first step to using the `StreamingReader` is to read the Header Metadata from the file's header by instantiating a `StreamingFileInfo` object, which advances the file pointer just past the file header. The application can retrieve and inspect the Header Metadata using the `getPreface()` method. The Header Metadata can be used, for example, to determine which tracks are present in the file using the `GCEssenceTracks` helper class.
 
@@ -140,9 +94,9 @@ The next steps is to instantiate a `StreamingReader` object (typically using the
 The `StreamingReader` does not differentiate between kinds of essence wrapping and between essence containers and generic streams: clip-wrapped essence is returned a single element, each element of a frame-wrapped essence container is returned as an individual element and each element within a Generic Stream Partition is also returned as an individual element. 
 
 The operation of the `StreamingReader` is demonstrated at
-[StreamingReaderTest.java](library/src/test/java/com/sandflow/smpte/mxf/StreamingReaderTest.java) and at [ReadWriteTest.java](library/src/test/java/com/sandflow/smpte/mxf/ReadWriteTest.java).
+[StreamingReaderTest.java](java-library/src/test/java/com/sandflow/smpte/mxf/StreamingReaderTest.java) and at [ReadWriteTest.java](java-library/src/test/java/com/sandflow/smpte/mxf/ReadWriteTest.java).
 
-### Random access reader
+#### Random access reader
 
 The first step is to read-in the file's Header Metadata, Index Tables and RIP by instantiating a `RandomAccessFileInfo` object. In addition to retrieving the Header Metadata (`getPreface()`), this object can be used, for example, to determine which generic streams tracks are present in the file (`getGenericStreams()`) or the number of essence edit units present (`getEUCount()`).
 
@@ -157,9 +111,9 @@ To access a Generic Stream, a `GenericStreamReader` is instantiated and the `see
 The `ClipReader`, `FrameReader` and `GenericStreamReader` objects extend `InputStream` and behave similarly to the `StreamingReader`.
 
 The operation of the `RandomAccessReader` is demonstrated at
-[RandomAccessReaderTest.java](library/src/test/java/com/sandflow/smpte/mxf/RandomAccessReaderTest.java).
+[RandomAccessReaderTest.java](java-library/src/test/java/com/sandflow/smpte/mxf/RandomAccessReaderTest.java).
 
-## Writing
+### Writing
 
 The library implements a `StreamingWriter` class that writes an MXF file sequentially, from beginning to end.
 
@@ -192,15 +146,85 @@ Each body partition contained within the file is written in turn by calling the 
 The writing of the file ends with the `finish()` method.
 
 The operation of the `StreamingWriter` is demonstrated at
-[StreamingWriterTest.java](./library/src/test/java/com/sandflow/smpte/mxf/StreamingWriterTest.java) and at [ReadWriteTest.java](./library/src/test/java/com/sandflow/smpte/mxf/ReadWriteTest.java).
+[StreamingWriterTest.java](./java-library/src/test/java/com/sandflow/smpte/mxf/StreamingWriterTest.java) and at [ReadWriteTest.java](./java-library/src/test/java/com/sandflow/smpte/mxf/ReadWriteTest.java).
 
-## Testing
+## Structure
 
-In addition to unit tests, the library also defines basic compatibility tests at [compat.sh](./library/src/test/sh/compat.sh) against popular MXF libraries (FFMPEG, ASDCP and BMX). A [Dockerfile](./Dockerfile) that sets up the test environment is provided.
+The library consists of 3 Java modules and one C++ library
+
+- `java-class-generator` generates [POJO classes](./java-library/target/generated-sources) using [register files](./resources/registers).
+
+- `java-library` holds the generated POJO classes and classes for reading and writing MXF files
+- `java-common` holds classes that do not depend on the generated classes
+
+A separate C++ implementation of the RegXML fragment builder, also ported from regxmllib,
+lives under `cpp/`; see [RegXML](#regxml) below.
+
+
+
+### Tools
+
+- `RegXMLDump` dumps either the first essence descriptor or the entire header metadata of an MXF
+  file as a RegXML structure
+- `XMLRegistersToDict` converts XML-based SMPTE metadata registers to RegXML metadictionaries
+- `GenerateDictionaryXMLSchema` generates XSDs for RegXML Fragments from RegXML metadictionaries
+- `GenerateXMLSchemaDocuments` generates XSDs for the SMPTE metadata registers
+
+### Regenerating reference and metadictionary files
+
+The RegXML metadictionaries under `resources/regxml-dicts` and the RegXML reference files under
+`test-resources/regxml-ref-files` are checked into the repo, but can be regenerated from the
+registers and sample MXF files using the `build-reference-test-files` Ant target in `build.xml`:
+
+    mvn package -P with-dependencies
+    ant -f build.xml build-reference-test-files \
+      -Dclasspath=java-library/target/regmxflib-jar-with-dependencies.jar
+
+By default the target refuses to run if either output directory already contains files, to avoid
+accidentally clobbering the checked-in copies. Pass `-Dforce=true` to delete the existing files
+and regenerate them from scratch.
+
+`resources.dir` and `test-resources.dir` default to the `resources/` and `test-resources/`
+directories at the root of the repo, and can be overridden with `-D` if needed.
+
+### Known limitations and issues
+
+RegXML generation deviates from ST 2001-1:2013 in one narrow instance: no baseline
+metadictionary is used; instead, one extension metadictionary is used per namespace.
+
+Issues are tracked at https://github.com/sandflow/regmxflib/issues.
+
 
 ## Prerequisites
 
-- Java 17
-- Maven
-- (recommended) Container engine, e.g. Docker or Podman
-- (recommended) Git
+### General
+
+* (recommended) Container engine, e.g. Docker or Podman
+* (recommended) Git
+
+### Java
+
+* Java 17 (building) and Java 11+ (runtime)
+* Maven
+
+### C++
+
+* C++03 toolchain
+* Metadictionaries generated by regxmllibj (see _Building Metadictionaries_ above)
+* [Xerces-C++](https://xerces.apache.org/xerces-c/) Version 3.1.4 (or above)
+* CMake
+
+## Known issues and limitations
+
+regmxflib relies on SMPTE Metadata Registers that conform to SMPTE ST 335, ST
+395, ST 400, ST 2003. These registers are published at [1].
+
+[1] https://smpte-ra.org/smpte-metadata-registry
+
+regmxflib deviates from ST 2001-1:2013 in a few narrow instances. Such deviations
+are noted in the source code and are expected to be submitted for consideration at
+the next revision of ST 2001-1. In particular:
+
+* no baseline metadictionary is used, instead one extension metadictionary per
+  namespace is used
+
