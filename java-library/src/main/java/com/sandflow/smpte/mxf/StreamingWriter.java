@@ -413,8 +413,15 @@ public class StreamingWriter {
      */
     private List<Long> auOffsets = new ArrayList<>();
 
-    GCClipVBEWriter(StreamingWriter writer, long bodySID, long indexSID) {
+    /**
+     * duration recorded in the header metadata, or null if it is the number of
+     * access units written
+     */
+    private final Long duration;
+
+    GCClipVBEWriter(StreamingWriter writer, long bodySID, long indexSID, Long duration) {
       super(writer, bodySID, indexSID);
+      this.duration = duration;
     }
 
     /**
@@ -468,7 +475,7 @@ public class StreamingWriter {
 
     @Override
     long getDuration() {
-      return this.auOffsets.size();
+      return this.duration != null ? this.duration : this.auOffsets.size();
     }
 
     /**
@@ -775,7 +782,7 @@ public class StreamingWriter {
 
   private Package getPackageByID(UMID id) {
     return this.preface.ContentStorageObject.Packages.stream()
-        .filter(p -> id == p.PackageID)
+        .filter(p -> id.equals(p.PackageID))
         .findFirst()
         .orElse(null);
   }
@@ -982,8 +989,32 @@ public class StreamingWriter {
    */
   public GCClipVBEWriter addVBEClipWrappedGC(long bodySID, long indexSID)
       throws IOException, KLVException, MXFException {
+    return addVBEClipWrappedGC(bodySID, indexSID, null);
+  }
 
-    GCClipVBEWriter w = new GCClipVBEWriter(this, bodySID, indexSID);
+  /**
+   * Adds a clip-wrapped essence container with Variable Byte per Element (VBE)
+   * indexing, and a duration that differs from the number of access units
+   * written, e.g., a Timed Events Track File (SMPTE ST 2067-206) where a single
+   * access unit spans the entire track.
+   * 
+   * @param bodySID  Body SID of the essence container.
+   * @param indexSID Index SID of the essence container.
+   * @param duration Duration in edit units recorded in the header metadata, or
+   *                 null to use the number of access units written. The index
+   *                 table is not affected.
+   * @return A writer for the essence container.
+   * @throws IOException  If an I/O error occurs.
+   * @throws KLVException If a KLV error occurs.
+   * @throws MXFException If an MXF error occurs.
+   */
+  public GCClipVBEWriter addVBEClipWrappedGC(long bodySID, long indexSID, Long duration)
+      throws IOException, KLVException, MXFException {
+    if (duration != null && duration < 0) {
+      throw new IllegalArgumentException("Duration cannot be negative");
+    }
+
+    GCClipVBEWriter w = new GCClipVBEWriter(this, bodySID, indexSID, duration);
 
     this.addGC(bodySID, indexSID, w);
 

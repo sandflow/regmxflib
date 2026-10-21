@@ -4004,6 +4004,11 @@
           <IsUniqueID>false</IsUniqueID>
           <IsOptional>true</IsOptional>
         </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060601.0b000000</UL>
+          <IsUniqueID>false</IsUniqueID>
+          <IsOptional>true</IsOptional>
+        </Record>
       </Contents>
     </Entry>
     <Entry>
@@ -7334,6 +7339,12 @@
       <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01014200</Parent>
       <IsConcrete>true</IsConcrete>
       <KLVSyntax>06 53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0402030c.05000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+      </Contents>
     </Entry>
     <Entry>
       <Register>Groups</Register>
@@ -7605,6 +7616,86 @@
     <Entry>
       <Register>Groups</Register>
       <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>VC6SubDescriptor</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010101.01018104</UL>
+      <Kind>LEAF</Kind>
+      <Name>VC-6 Sub-Descriptor</Name>
+      <Definition>VC-6 Sub-Descriptor</Definition>
+      <DefiningDocument>SMPTE ST 2117-10</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01015900</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>06 53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0401060d.01000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0401060d.02000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0401060d.03000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0401060d.04000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0401060d.05000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0401060d.06000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0401060d.07000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0401060d.08000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0401060d.09000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>VC6EchelonProperties</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010101.01018105</UL>
+      <Kind>LEAF</Kind>
+      <Name>VC-6 Echelon Properties</Name>
+      <Definition>Properties that describe an Echelon in a VC-6 bitstream</Definition>
+      <DefiningDocument>SMPTE ST 2117-10</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01010100</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>06 53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0401060d.0a000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0401060d.0b000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0401060d.0c000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
       <Symbol>MGASoundEssenceDescriptor</Symbol>
       <UL>urn:smpte:ul:060e2b34.027f0101.0d010101.01018106</UL>
       <Kind>LEAF</Kind>
@@ -7789,6 +7880,262 @@
         <Record>
           <UL>urn:smpte:ul:060e2b34.0101010e.05010206.04000000</UL>
           <IsOptional>false</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>RIFFChunkDefinitionSubDescriptor</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010101.0101810d</UL>
+      <Kind>LEAF</Kind>
+      <Name>RIFF Chunk Definition Sub-Descriptor</Name>
+      <Definition>RIFF Chunk Definition Sub-Descriptor</Definition>
+      <DefiningDocument>SMPTE ST 2131</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01015900</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>06 53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04020308.01000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04020308.02000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04020308.03000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04020308.04000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>ADM_CHNASubDescriptor</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010101.0101810e</UL>
+      <Kind>LEAF</Kind>
+      <Name>ADM CHNA Sub-Descriptor</Name>
+      <Definition>ADM CHNA Sub-Descriptor</Definition>
+      <DefiningDocument>SMPTE ST 2131</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01015900</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>06 53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04020309.01000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04020309.02000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04020309.03000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>ADMChannelMapping</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010101.0101810f</UL>
+      <Kind>LEAF</Kind>
+      <Name>ADM Channel Mapping</Name>
+      <Definition>ADM Channel Mapping</Definition>
+      <DefiningDocument>SMPTE ST 2131</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01010100</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>06 53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04020309.04000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04020309.05000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04020309.06000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04020309.07000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>RIFFChunkReferencesSubDescriptor</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010101.01018110</UL>
+      <Kind>LEAF</Kind>
+      <Name>RIFF Chunk References Sub-Descriptor</Name>
+      <Definition>RIFF Chunk References Sub-Descriptor</Definition>
+      <DefiningDocument>SMPTE ST 2131</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01015900</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>06 53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04020308.06000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>ADMAudioMetadataSubDescriptor</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010101.01018111</UL>
+      <Kind>LEAF</Kind>
+      <Name>ADM Audio Metadata Sub-Descriptor</Name>
+      <Definition>ADM Audio Metadata Sub-Descriptor</Definition>
+      <DefiningDocument>SMPTE ST 2131</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01015900</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>06 53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0402030a.01000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0402030a.02000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>ADMSoundfieldGroupLabelSubDescriptor</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010101.01018112</UL>
+      <Kind>LEAF</Kind>
+      <Name>ADM Soundfield Group Label Sub-Descriptor</Name>
+      <Definition>ADM Soundfield Group Label Sub-Descriptor</Definition>
+      <DefiningDocument>SMPTE ST 2131</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01016c00</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>06 53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0402030b.01000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0402030b.02000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0402030b.03000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0402030b.04000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TimedEventsTextDescriptor</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010101.01018113</UL>
+      <Kind>LEAF</Kind>
+      <Name>Timed Events Text Descriptor</Name>
+      <Definition>Timed Events Text Descriptor</Definition>
+      <DefiningDocument>SMPTE ST 2067-206</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01014300</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>06 53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04030303.01000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04030303.02000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04030303.03000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TimedEventsAncillaryResourceSubDescriptor</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010101.01018114</UL>
+      <Kind>LEAF</Kind>
+      <Name>Timed Events Ancillary Resource Sub-Descriptor</Name>
+      <Definition>Timed Events Ancillary Resource Sub-Descriptor</Definition>
+      <DefiningDocument>SMPTE ST 2067-206</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01015900</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>06 53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04030304.01000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04030304.02000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04030304.03000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>IABChannelSubDescriptor</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010101.01018115</UL>
+      <Kind>LEAF</Kind>
+      <Name>IABChannelSubDescriptor</Name>
+      <Definition>IAB Channel Sub-Descriptor</Definition>
+      <DefiningDocument>SMPTE ST 2067-201</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01015900</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>06 53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0402030c.01000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0402030c.02000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0402030c.03000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.0402030c.04000000</UL>
+          <IsOptional>true</IsOptional>
         </Record>
       </Contents>
     </Entry>
@@ -10983,6 +11330,756 @@
       <Contents>
         <Record>
           <UL>urn:smpte:ul:060e2b34.0101010e.01011514.00000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>DMS_TLC_Classes</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06000000</UL>
+      <Kind>NODE</Kind>
+      <Name>DMS-TLC Classes</Name>
+      <Definition>DMS-TLC Classes</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>DMS_TLC_Definition</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06010000</UL>
+      <Kind>NODE</Kind>
+      <Name>DMS-TLC Definition</Name>
+      <Definition>DMS-TLC Definition</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>DescriptiveSchemeDefinition</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06010100</UL>
+      <Kind>LEAF</Kind>
+      <Name>Descriptive Scheme Definition</Name>
+      <Definition>Descriptive Scheme Definition</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01011a00</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060601.01000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060601.02000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>DescriptiveFrameworkDefinition</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06010200</UL>
+      <Kind>LEAF</Kind>
+      <Name>Descriptive Framework Definition</Name>
+      <Definition>Descriptive Framework Definition</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01011a00</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060601.03000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060601.04000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060601.05000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060601.06000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060601.07000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>ObjectConstraintDefinition</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06010300</UL>
+      <Kind>LEAF</Kind>
+      <Name>Object Constraint Definition</Name>
+      <Definition>Object Constraint Definition</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01011a00</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060601.08000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060601.09000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060601.0a000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCSchemeDefinition</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06010400</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Scheme Definition</Name>
+      <Definition>TLC Scheme Definition</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010401.06010100</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>DMS_TLC_Structure</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06020000</UL>
+      <Kind>NODE</Kind>
+      <Name>DMS-TLC Structure</Name>
+      <Definition>DMS-TLC Structure</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCTrack</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06020100</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Track</Name>
+      <Definition>TLC Track</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01013900</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCSequence</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06020200</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Sequence</Name>
+      <Definition>TLC Sequence</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01010f00</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>DescriptiveDerivedComponent</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06020300</UL>
+      <Kind>LEAF</Kind>
+      <Name>Descriptive Derived Component</Name>
+      <Definition>Descriptive Derived Component</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01014500</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060602.02000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCDerivedComponent</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06020400</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Derived Component</Name>
+      <Definition>TLC Derived Component</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010401.06020300</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCSegment</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06020500</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Segment</Name>
+      <Definition>TLC Segment</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01014100</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCLabel</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06020600</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Label</Name>
+      <Definition>TLC Label</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010401.00000000</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060602.01000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCItem</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06020700</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Item</Name>
+      <Definition>TLC Item</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010400.00000000</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>DMS_TLC_Framework</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06030000</UL>
+      <Kind>NODE</Kind>
+      <Name>DMS-TLC Framework</Name>
+      <Definition>DMS-TLC Framework</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCFixedItem</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06030100</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Fixed Item</Name>
+      <Definition>TLC Fixed Item</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010401.06020700</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCSourceName</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06030200</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Source Name</Name>
+      <Definition>TLC Source Name</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010401.06030100</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.01000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCSourceIdentifier</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06030300</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Source Identifier</Name>
+      <Definition>TLC Source Identifier</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010401.06030100</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.02000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.03000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLC_BasicUMID</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06030400</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Basic UMID</Name>
+      <Definition>TLC Basic UMID</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010401.06030100</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.04000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCDynamicItem</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06030500</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Dynamic Item</Name>
+      <Definition>TLC Dynamic Item</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010401.06020700</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.05000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.06000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCMediaCount</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06030600</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Media Count</Name>
+      <Definition>TLC Media Count</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010401.06030500</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.07000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCIntervalItem</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06030700</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Interval Item</Name>
+      <Definition>TLC Interval Item</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010401.06030500</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.08000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.09000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.0a000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.0b000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCBasicTimecode</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06030800</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Basic Timecode</Name>
+      <Definition>TLC Basic Timecode</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010401.06030700</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.1c000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.1d000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.1e000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.1f000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.20000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCEdgeCode</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06030900</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Edge Code</Name>
+      <Definition>TLC Edge Code</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010401.06030500</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.21000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.22000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.23000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.24000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCAugmentedTimecode</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06030a00</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Augmented Timecode</Name>
+      <Definition>TLC Augmented Timecode</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010401.06030800</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLC_ST2059_1</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06030b00</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC ST2059-1</Name>
+      <Definition>TLC ST2059-1</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010401.06030800</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLC_IEEE1588</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06030c00</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC IEEE1588</Name>
+      <Definition>TLC IEEE1588</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010401.06030700</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.25000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCIncrement</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06030d00</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Increment</Name>
+      <Definition>TLC Increment</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01010100</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.0c000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.0d000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.0e000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.0f000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCTimeScale</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06030e00</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Time Scale</Name>
+      <Definition>TLC Time Scale</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01010100</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.10000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.11000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.12000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.13000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.14000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.15000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCTimeZone</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06030f00</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Time Zone</Name>
+      <Definition>TLC Time Zone</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01010100</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.16000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.17000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.18000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLCCalendar</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06031000</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC Calendar</Name>
+      <Definition>TLC Calendar</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010101.01010100</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.19000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.1a000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.1b000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLC_ST12</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06031100</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC ST12</Name>
+      <Definition>TLC ST12</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010401.06030b00</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.26000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.27000000</UL>
+          <IsOptional>false</IsOptional>
+        </Record>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.28000000</UL>
+          <IsOptional>true</IsOptional>
+        </Record>
+      </Contents>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLC_ST2059_2</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06031200</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC ST2059-2</Name>
+      <Definition>TLC ST2059-2</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010401.06030c00</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/1/aaf</NamespaceName>
+      <Symbol>TLC_NTP</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d010401.06031300</UL>
+      <Kind>LEAF</Kind>
+      <Name>TLC NTP</Name>
+      <Definition>TLC NTP</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <Parent>urn:smpte:ul:060e2b34.027f0101.0d010401.06030500</Parent>
+      <IsConcrete>true</IsConcrete>
+      <KLVSyntax>53</KLVSyntax>
+      <Contents>
+        <Record>
+          <UL>urn:smpte:ul:060e2b34.0101010e.04060603.29000000</UL>
           <IsOptional>false</IsOptional>
         </Record>
       </Contents>
@@ -17629,6 +18726,16 @@
     </Entry>
     <Entry>
       <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/13/16</NamespaceName>
+      <Symbol>HAND</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0d100000.00000000</UL>
+      <Kind>NODE</Kind>
+      <Name>HAND</Name>
+      <Definition>Metadata registered by HAND - The Universal Talent Identifier, Inc. for public use</Definition>
+      <IsDeprecated>false</IsDeprecated>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
       <NamespaceName>http://www.smpte-ra.org/reg/395/2014/14</NamespaceName>
       <Symbol>OrganizationallyRegisteredasPrivate</Symbol>
       <UL>urn:smpte:ul:060e2b34.027f0101.0e000000.00000000</UL>
@@ -18057,6 +19164,36 @@
       <Kind>NODE</Kind>
       <Name>Fraunhofer</Name>
       <Definition>Metadata registered by Fraunhofer for private use</Definition>
+      <IsDeprecated>false</IsDeprecated>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/14/34</NamespaceName>
+      <Symbol>RED</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0e220000.00000000</UL>
+      <Kind>NODE</Kind>
+      <Name>RED</Name>
+      <Definition>Metadata registered by RED Digital Cinema, LLC. for private use</Definition>
+      <IsDeprecated>false</IsDeprecated>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/14/35</NamespaceName>
+      <Symbol>CRIFST</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0e230000.00000000</UL>
+      <Kind>NODE</Kind>
+      <Name>CRIFST</Name>
+      <Definition>Metadata registered by CRIFST for private use</Definition>
+      <IsDeprecated>false</IsDeprecated>
+    </Entry>
+    <Entry>
+      <Register>Groups</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/395/2014/14/36</NamespaceName>
+      <Symbol>FUJIFILM</Symbol>
+      <UL>urn:smpte:ul:060e2b34.027f0101.0e240000.00000000</UL>
+      <Kind>NODE</Kind>
+      <Name>FUJIFILM</Name>
+      <Definition>Metadata registered by FUJIFILM for private use</Definition>
       <IsDeprecated>false</IsDeprecated>
     </Entry>
     <Entry>

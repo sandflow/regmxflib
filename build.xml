@@ -110,6 +110,10 @@
         <genreffile samplename="utf8_embedded_text"/>
         <genreffile samplename="class14"/>
         <genreffile samplename="escape-chars"/>
+        <genreffile samplename="timed_events"/>
+        <genreffile samplename="iab"/>
+        <genreffile samplename="video"/>
+        <genreffile samplename="audio"/>
 
     </target>
 
