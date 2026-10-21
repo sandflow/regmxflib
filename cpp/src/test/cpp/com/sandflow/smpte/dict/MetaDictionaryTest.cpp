@@ -246,7 +246,11 @@ int main(int argc, char **argv) {
 		"indirect",
 		"utf8_embedded_text",
 		"class14",
-		"escape-chars"
+		"escape-chars",
+		"timed_events",
+		"iab",
+		"video",
+		"audio"
 	};
 
 	for (size_t i = 0; i < sizeof(test_names) / sizeof(char*); i++) {
