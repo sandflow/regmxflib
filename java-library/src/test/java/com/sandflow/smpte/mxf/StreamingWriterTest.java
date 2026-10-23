@@ -35,6 +35,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Collections;
 
 import org.apache.commons.numbers.fraction.Fraction;
@@ -42,6 +44,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
 import com.sandflow.smpte.mxf.StreamingWriter.GCClipCBEWriter;
+import com.sandflow.smpte.mxf.StreamingWriter.GSWriter;
 import com.sandflow.smpte.mxf.types.AudioChannelLabelSubDescriptor;
 import com.sandflow.smpte.mxf.types.IABEssenceDescriptor;
 import com.sandflow.smpte.mxf.types.IABSoundfieldLabelSubDescriptor;
@@ -57,6 +60,8 @@ import com.sandflow.smpte.mxf.types.RGBALayout;
 import com.sandflow.smpte.mxf.types.ScanningDirectionType;
 import com.sandflow.smpte.mxf.types.SoundfieldGroupLabelSubDescriptor;
 import com.sandflow.smpte.mxf.types.SubDescriptorStrongReferenceVector;
+import com.sandflow.smpte.mxf.types.TimedEventsAncillaryResourceSubDescriptor;
+import com.sandflow.smpte.mxf.types.TimedEventsTextDescriptor;
 import com.sandflow.smpte.mxf.types.WAVEPCMDescriptor;
 import com.sandflow.smpte.util.UL;
 
@@ -753,6 +758,129 @@ class StreamingWriterTest {
       cw.write(j2cFrame);
     }
     sw.finish();
+    os.close();
+
+    /* compare file to reference */
+
+    TestUtils.compareToReference(of, outFN + ".json");
+  }
+
+  /*
+   * Creates a Timed Events Track File as specified in SMPTE ST 2067-206, modeled
+   * after the example file published with the specification (and supported by
+   * https://github.com/ebu/bmx/pull/46): the Timed Events Resource is clip-wrapped
+   * in a generic container and each Timed Events Ancillary Resource is carried by
+   * its own generic stream, referenced by a Timed Events Ancillary Resource
+   * Sub-Descriptor.
+   */
+
+  @Test
+  void testTimedEvents(TestInfo testInfo) throws Exception {
+
+    final DeterministicUIDGenerator uidg = new DeterministicUIDGenerator();
+    final Fraction editRate = Fraction.of(25);
+    final long duration = 2160000L; /* 24 hours at 25 fps */
+    final byte trackID = 1;
+    final long BODY_SID = 10;
+    final long INDEX_SID = 11;
+    final long FIRST_GS_SID = 12;
+
+    /* Timed Events Resource (text-based metadata document) */
+
+    final byte[] timedEvents = ("{\n"
+        + "  \"editRate\": [25, 1],\n"
+        + "  \"events\": [\n"
+        + "    {\"id\": \"e1\", \"begin\": 0, \"end\": 250, \"props\": [\"image:C01\"]},\n"
+        + "    {\"id\": \"e2\", \"begin\": 250, \"end\": 500, \"props\": [\"image:C02\"]},\n"
+        + "    {\"id\": \"e3\", \"begin\": 500, \"end\": 750, \"props\": [\"image:C03\"]}\n"
+        + "  ]\n"
+        + "}\n").getBytes(StandardCharsets.UTF_8);
+
+    /* Timed Events Ancillary Resources (1x1 PNG images) */
+
+    final byte[] png = Base64.getDecoder().decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==");
+    final String[] ancillaryIDs = { "C01.png", "C02.png", "C03.png" };
+
+    /* create descriptors */
+
+    TimedEventsTextDescriptor d = new TimedEventsTextDescriptor();
+    d.InstanceID = uidg.generate(d);
+    d.ContainerFormat = Labels.MXFGCTimedEventsTextStream;
+    d.SampleRate = editRate;
+    d.TextMIMEType = "application/json";
+    d.TextCharacterEncoding = "UTF-8";
+    /* the first URI is the Event Scheme URI, the next ones are Parent Event Scheme URIs */
+    d.EventSchemeURIs = "http://www.example.com/characters http://www.smpte-ra.org/ns/2067-206/2023/simple-scheme";
+    d.SubDescriptors = new SubDescriptorStrongReferenceVector();
+
+    for (int i = 0; i < ancillaryIDs.length; i++) {
+      TimedEventsAncillaryResourceSubDescriptor sd = new TimedEventsAncillaryResourceSubDescriptor();
+      sd.InstanceID = uidg.generate(sd);
+      sd.TimedEventsAncillaryResourceID = ancillaryIDs[i];
+      sd.TimedEventsAncillaryResourceMIMEType = "image/png";
+      sd.TimedEventsAncillaryResourceStreamID = FIRST_GS_SID + i;
+      d.SubDescriptors.add(sd);
+    }
+
+    /* create header metadata */
+
+    OP1aHelper.TrackInfo ti = new OP1aHelper.TrackInfo(
+        trackID,
+        UL.fromURN("urn:smpte:ul:060e2b34.01020101.0d010301.17011001"),
+        d,
+        Labels.DataEssenceTrack,
+        null);
+
+    OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
+        Collections.singletonList(ti),
+        null,
+        editRate,
+        BODY_SID,
+        INDEX_SID,
+        duration);
+
+    OP1aHelper header = new OP1aHelper(eci, TestUtils.makeIdentification(uidg), uidg);
+
+    /* start writing file */
+
+    final String outFN = testInfo.getTestMethod().get().getName() + ".mxf";
+    File of = TestUtils.getOutputFile(outFN);
+    OutputStream os = new FileOutputStream(of);
+
+    StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null, uidg);
+
+    /* the track spans @duration edit units even though it is a single element */
+
+    var gc = sw.addSingleElementGC(BODY_SID, INDEX_SID, duration);
+
+    var gss = new GSWriter[ancillaryIDs.length];
+    for (int i = 0; i < gss.length; i++) {
+      gss[i] = sw.addGenericStream(FIRST_GS_SID + i);
+    }
+
+    sw.start();
+
+    /* the Timed Events Resource is a single element */
+
+    sw.startPartition(gc);
+    gc.firstAndOnlyElement(header.getElementKey(trackID), timedEvents.length);
+    gc.write(timedEvents);
+
+    /* each Timed Events Ancillary Resource is carried in its own generic stream */
+
+    final UL gsElementKey = UL.fromURN("urn:smpte:ul:060e2b34.0101010c.0d010509.01000000");
+
+    for (GSWriter gs : gss) {
+      sw.startPartition(gs);
+      gs.nextElement(gsElementKey, png.length);
+      gs.write(png);
+    }
+
+    /* complete the file */
+
+    sw.finish();
+    os.flush();
     os.close();
 
     /* compare file to reference */

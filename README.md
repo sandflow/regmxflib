@@ -125,6 +125,8 @@ The next step is to register the essence containers and generic stream that the 
 
 - `addVBEClipWrappedGC()` registers a clip-wrapped essence container with variable rate essence, e.g., IA bitstream, and returns a `GCClipVBEWriter` instance;
 
+- `addSingleElementGC()` registers a clip-wrapped essence container that carries a single element, e.g., the Timed Events Resource of an SMPTE ST 2067-206 Timed Events Track File, and returns a `GCSingleElementWriter` instance;
+
 - `addVBEFrameWrappedGC()` registers a frame-wrapped essence container, e.g., J2K image essence, and returns a `GCFrameVBEWriter` instance;
 
 - `addGenericStream()` registers a generic stream, and returns a `GSWriter` instance.
@@ -140,6 +142,8 @@ Each body partition contained within the file is written in turn by calling the 
 - in the case of `GCClipCBEWriter`, the clip is written by calling the `nextClip()` method and writing the contents of the clip using the `GCClipCBEWriter` itself;
 
 - in the case of `GCClipVBEWriter`, the clip is written by calling the `nextClip()` method and writing the contents of the clip using the `GCClipVBEWriter` itself, prefacing each access unit by a call to `nextAccessUnit()`;
+
+- in the case of `GCSingleElementWriter`, the single element is written by calling the `firstAndOnlyElement()` method, which can be called at most once, and writing the contents of the element using the `GCSingleElementWriter` itself. The index table consists of a single index table segment with a single index entry, regardless of the duration of the track, which is specified when the writer is registered, as is required for the Timed Events Resource of an SMPTE ST 2067-206 Timed Events Track File;
 
 - in the case of `GCFrameVBEWriter`, each element within a content package is written by calling the `nextElement()` method and writing the contents of the element using the `GCFrameVBEWriter` itself, prefacing each access unit by a call to `nextContentPackage()`;
 

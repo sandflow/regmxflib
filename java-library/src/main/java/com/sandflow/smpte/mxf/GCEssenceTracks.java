@@ -33,6 +33,7 @@ package com.sandflow.smpte.mxf;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import com.sandflow.smpte.mxf.types.EssenceData;
@@ -122,7 +123,7 @@ public class GCEssenceTracks {
       }
 
       for (FileDescriptor fd : fds) {
-        Optional<Track> foundTrack = fp.PackageTracks.stream().filter(t -> t.TrackID == fd.LinkedTrackID).findFirst();
+        Optional<Track> foundTrack = fp.PackageTracks.stream().filter(t -> Objects.equals(t.TrackID, fd.LinkedTrackID)).findFirst();
 
         if (!foundTrack.isPresent()) {
           /* can simply be a timecode track */

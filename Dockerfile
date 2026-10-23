@@ -32,8 +32,12 @@ RUN git clone https://github.com/cinecert/asdcplib.git \
     && cd /tmp && rm -rf asdcplib
 
 # Clone, build, and install bmx
+# TODO: build from the default branch once Timed Events (SMPTE ST 2067-206) support is merged
+# https://github.com/ebu/bmx/pull/46
 RUN git clone https://github.com/ebu/bmx.git \
     && cd bmx \
+    && git fetch origin pull/46/head \
+    && git checkout FETCH_HEAD \
     && mkdir build \
     && cd build \
     && cmake -DCMAKE_BUILD_TYPE=Release .. \

@@ -535,6 +535,115 @@ public class StreamingWriter {
   }
 
   /**
+   * Writer for a generic container that carries a single clip-wrapped element ,
+   * e.g., the Timed Events Resource of a Timed Events Track File (SMPTE ST
+   * 2067-206).
+   */
+  public static class GCSingleElementWriter extends ContainerWriter {
+
+    private final long duration;
+
+    private boolean elementStarted = false;
+
+    private boolean indexDrained = false;
+
+    /**
+     *
+     * @param writer   Streaming writer to which the element is written.
+     * @param bodySID  Body SID of the essence container.
+     * @param indexSID Index SID of the essence container.
+     * @param duration Duration of the essence container
+     */
+    GCSingleElementWriter(StreamingWriter writer, long bodySID, long indexSID, long duration) {
+      super(writer, bodySID, indexSID);
+      this.duration = duration;
+    }
+
+    /**
+     * Writes the key and length of the element.
+     * This method can be called at most once.
+     *
+     * @param elementKey  Key of the element.
+     * @param elementSize Size of the element in bytes.
+     * @throws IOException              If an I/O error occurs.
+     * @throws NullPointerException     If @elementKey is null.
+     * @throws IllegalArgumentException If @elementSize is negative.
+     * @throws IllegalStateException    If this writer is not the active writer,
+     *                                  i.e., {@link StreamingWriter#startPartition}
+     *                                  was not called with this writer, or if the
+     *                                  element has already been written.
+     */
+    public void firstAndOnlyElement(UL elementKey, long elementSize) throws IOException {
+      Objects.requireNonNull(elementKey, "Element Key cannot be null");
+
+      if (elementSize < 0) {
+        throw new IllegalArgumentException("Element size cannot be negative");
+      }
+
+      if (!this.isActive()) {
+        throw new IllegalStateException("ContainerWriter is not active");
+      }
+
+      if (this.elementStarted) {
+        throw new IllegalStateException("The single element has already been written");
+      }
+
+      this.writer.fos.writeUL(elementKey);
+      this.writer.fos.writeBERLength(elementSize);
+      this.startWriting(elementSize);
+
+      this.elementStarted = true;
+    }
+
+    @Override
+    long getDuration() {
+      return this.duration;
+    }
+
+    @Override
+    byte[] drainIndexSegments() throws IOException, MXFException {
+      if (!this.elementStarted || this.indexDrained) {
+        return null;
+      }
+      this.indexDrained = true;
+
+      /* a single index table segment with a single index entry, in which all offsets are zero */
+
+      var e = new IndexEntry();
+      e.TemporalOffset = 0;
+      e.KeyFrameOffset = 0;
+      e.Flags = (byte) 0x80;
+      e.StreamOffset = 0L;
+
+      var its = new IndexTableSegment();
+      its.InstanceID = this.writer.uidGenerator.generate(this);
+      its.IndexEditRate = this.writer.getECEditRate(this.getBodySID());
+      its.IndexStartPosition = 0L;
+      its.IndexDuration = 1L;
+      its.IndexStreamID = this.getIndexSID();
+      its.EssenceStreamID = this.getBodySID();
+      its.EditUnitByteCount = 0L;
+      its.SliceCount = 0;
+      its.PositionTableCount = 0;
+      its.IndexEntryArray = new IndexEntryArray();
+      its.IndexEntryArray.add(e);
+
+      return serializeIndexTableSegment(its, this.writer.evthandler);
+    }
+
+    @Override
+    PartitionPack.Kind getPartitionKind() {
+      return PartitionPack.Kind.BODY;
+    }
+
+    @Override
+    PartitionPack.Status getPartitionStatus() {
+      return PartitionPack.Status.CLOSED_COMPLETE;
+    }
+
+  }
+
+  /**
    * Writer for VBE frame-wrapped essence.
    */
   public static class GCFrameVBEWriter extends ContainerWriter {
@@ -775,7 +884,7 @@ public class StreamingWriter {
 
   private Package getPackageByID(UMID id) {
     return this.preface.ContentStorageObject.Packages.stream()
-        .filter(p -> id == p.PackageID)
+        .filter(p -> id.equals(p.PackageID))
         .findFirst()
         .orElse(null);
   }
@@ -984,6 +1093,32 @@ public class StreamingWriter {
       throws IOException, KLVException, MXFException {
 
     GCClipVBEWriter w = new GCClipVBEWriter(this, bodySID, indexSID);
+
+    this.addGC(bodySID, indexSID, w);
+
+    return w;
+  }
+
+  /**
+   * Adds an essence container that carries a single element spanning
+   * the entire track, e.g., the Timed Events Resource of a Timed Events Track
+   * File (SMPTE ST 2067-206).
+   * 
+   * @param bodySID  Body SID of the essence container.
+   * @param indexSID Index SID of the essence container.
+   * @param duration Duration of the essence container in edit units.
+   * @return A writer for the essence container.
+   * @throws IOException  If an I/O error occurs.
+   * @throws KLVException If a KLV error occurs.
+   * @throws MXFException If an MXF error occurs.
+   */
+  public GCSingleElementWriter addSingleElementGC(long bodySID, long indexSID, long duration)
+      throws IOException, KLVException, MXFException {
+    if (duration < 0) {
+      throw new IllegalArgumentException("Duration cannot be negative");
+    }
+
+    GCSingleElementWriter w = new GCSingleElementWriter(this, bodySID, indexSID, duration);
 
     this.addGC(bodySID, indexSID, w);
 

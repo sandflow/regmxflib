@@ -183,6 +183,22 @@
     <Entry>
       <Register>Types</Register>
       <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>Int48</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.01010a00.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>48 bit signed integer</Name>
+      <Definition>48 bit signed integer</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>DefinedContext</ContextScope>
+      <TypeKind>Integer</TypeKind>
+      <TypeSize>6</TypeSize>
+      <TypeQualifiers>isNumeric isSigned</TypeQualifiers>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
       <Symbol>RenamedIntegerTypes</Symbol>
       <UL>urn:smpte:ul:060e2b34.01040101.01012000.00000000</UL>
       <Kind>NODE</Kind>
@@ -3532,6 +3548,151 @@
     <Entry>
       <Register>Types</Register>
       <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>TimeScaleTagType</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.02020208.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>Controlled vocabulary string value identifying a time scale</Name>
+      <Definition>Controlled vocabulary string value identifying a time scale</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>DefinedContext</ContextScope>
+      <TypeKind>Enumeration</TypeKind>
+      <BaseType>urn:smpte:ul:060e2b34.01040101.01100400.00000000</BaseType>
+      <Facets>
+        <Facet>
+          <Symbol>Unknown</Symbol>
+          <Name>Unknown</Name>
+          <Value>Unknown</Value>
+          <Applications>DMS_TLC</Applications>
+          <IsDeprecated>false</IsDeprecated>
+        </Facet>
+        <Facet>
+          <Symbol>None</Symbol>
+          <Name>None</Name>
+          <Value>None</Value>
+          <Applications>DMS_TLC</Applications>
+          <IsDeprecated>false</IsDeprecated>
+        </Facet>
+        <Facet>
+          <Symbol>TAI</Symbol>
+          <Name>TAI</Name>
+          <Value>TAI</Value>
+          <Applications>DMS_TLC</Applications>
+          <IsDeprecated>false</IsDeprecated>
+        </Facet>
+      </Facets>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>TimeZoneTagType</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.02020209.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>IANA TZ database Controlled vocabulary string value identifying a time zone</Name>
+      <Definition>IANA TZ database Controlled vocabulary string value identifying a time zone</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>DefinedContext</ContextScope>
+      <TypeKind>Enumeration</TypeKind>
+      <BaseType>urn:smpte:ul:060e2b34.01040101.01100400.00000000</BaseType>
+      <Facets>
+        <Facet>
+          <Symbol>Unknown</Symbol>
+          <Name>Unknown</Name>
+          <Value>Unknown</Value>
+          <Applications>DMS_TLC</Applications>
+          <IsDeprecated>false</IsDeprecated>
+        </Facet>
+        <Facet>
+          <Symbol>None</Symbol>
+          <Name>None</Name>
+          <Value>None</Value>
+          <Applications>DMS_TLC</Applications>
+          <IsDeprecated>false</IsDeprecated>
+        </Facet>
+        <Facet>
+          <Symbol>UTC</Symbol>
+          <Name>UTC</Name>
+          <Value>UTC</Value>
+          <Applications>DMS_TLC</Applications>
+          <IsDeprecated>false</IsDeprecated>
+        </Facet>
+      </Facets>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>CalendarTagType</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.0202020a.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>ISO 8601 Controlled vocabulary string value identifying a calendar</Name>
+      <Definition>ISO 8601 Controlled vocabulary string value identifying a calendar</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>DefinedContext</ContextScope>
+      <TypeKind>Enumeration</TypeKind>
+      <BaseType>urn:smpte:ul:060e2b34.01040101.01100400.00000000</BaseType>
+      <Facets>
+        <Facet>
+          <Symbol>Unknown</Symbol>
+          <Name>Unknown</Name>
+          <Value>Unknown</Value>
+          <Applications>DMS_TLC</Applications>
+          <IsDeprecated>false</IsDeprecated>
+        </Facet>
+        <Facet>
+          <Symbol>None</Symbol>
+          <Name>None</Name>
+          <Value>None</Value>
+          <Applications>DMS_TLC</Applications>
+          <IsDeprecated>false</IsDeprecated>
+        </Facet>
+        <Facet>
+          <Symbol>Gregorian</Symbol>
+          <Name>Gregorian</Name>
+          <Value>Gregorian</Value>
+          <Applications>DMS_TLC</Applications>
+          <IsDeprecated>false</IsDeprecated>
+        </Facet>
+      </Facets>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>TimecodeDisplayFormatType</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.0202020b.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>Controlled vocabulary string value identifying the preferred text format of Timecode</Name>
+      <Definition>Controlled vocabulary string value identifying the preferred text format of Timecode</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>DefinedContext</ContextScope>
+      <TypeKind>Enumeration</TypeKind>
+      <BaseType>urn:smpte:ul:060e2b34.01040101.01100400.00000000</BaseType>
+      <Facets>
+        <Facet>
+          <Symbol>Unknown</Symbol>
+          <Name>Unknown</Name>
+          <Value>Unknown</Value>
+          <Applications>DMS_TLC</Applications>
+          <IsDeprecated>false</IsDeprecated>
+        </Facet>
+        <Facet>
+          <Symbol>ST258</Symbol>
+          <Name>ST258</Name>
+          <Value>ST258</Value>
+          <Applications>DMS_TLC</Applications>
+          <IsDeprecated>false</IsDeprecated>
+        </Facet>
+      </Facets>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
       <Symbol>RecordTypes</Symbol>
       <UL>urn:smpte:ul:060e2b34.01040101.03000000.00000000</UL>
       <Kind>NODE</Kind>
@@ -4049,6 +4210,78 @@
           <Symbol>Nanoseconds</Symbol>
           <Name>Nanoseconds</Name>
           <Type>urn:smpte:ul:060e2b34.01040101.01010300.00000000</Type>
+          <IsDeprecated>false</IsDeprecated>
+        </Facet>
+      </Facets>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>BasicTimecode_Count</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.03011100.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>Basic Timecode Record</Name>
+      <Definition>Basic Timecode Record</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>DefinedContext</ContextScope>
+      <TypeKind>Record</TypeKind>
+      <Facets>
+        <Facet>
+          <Symbol>Frames</Symbol>
+          <Name>Frames</Name>
+          <Type>urn:smpte:ul:060e2b34.01040101.01012001.00000000</Type>
+          <IsDeprecated>false</IsDeprecated>
+        </Facet>
+      </Facets>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>PTP_Count</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.03011200.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>PTP Record</Name>
+      <Definition>PTP Record</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>DefinedContext</ContextScope>
+      <TypeKind>Record</TypeKind>
+      <Facets>
+        <Facet>
+          <Symbol>Seconds</Symbol>
+          <Name>Seconds</Name>
+          <Type>urn:smpte:ul:060e2b34.01040101.01010a00.00000000</Type>
+          <IsDeprecated>false</IsDeprecated>
+        </Facet>
+        <Facet>
+          <Symbol>Nanoseconds</Symbol>
+          <Name>Nanoseconds</Name>
+          <Type>urn:smpte:ul:060e2b34.01040101.01010300.00000000</Type>
+          <IsDeprecated>false</IsDeprecated>
+        </Facet>
+      </Facets>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>TLC_time64_t</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.03011300.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>NTP Record</Name>
+      <Definition>NTP Record</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>DefinedContext</ContextScope>
+      <TypeKind>Record</TypeKind>
+      <Facets>
+        <Facet>
+          <Symbol>Seconds</Symbol>
+          <Name>Seconds</Name>
+          <Type>urn:smpte:ul:060e2b34.01040101.01010800.00000000</Type>
           <IsDeprecated>false</IsDeprecated>
         </Facet>
       </Facets>
@@ -5767,6 +6000,137 @@
     <Entry>
       <Register>Types</Register>
       <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>VC6EchelonPropertiesStrongReference</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.05023200.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>VC-6 Echelon Properties Strong Reference</Name>
+      <DefiningDocument>ST 2117-10</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>UnknownContext</ContextScope>
+      <TypeKind>StrongReference</TypeKind>
+      <BaseType>urn:smpte:ul:060e2b34.027f0101.0d010101.01018105</BaseType>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>ADMChannelMappingStrongReference</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.05023300.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>ADMChannelMappingStrongReference</Name>
+      <DefiningDocument>SMPTE ST 2131</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>UnknownContext</ContextScope>
+      <TypeKind>StrongReference</TypeKind>
+      <BaseType>urn:smpte:ul:060e2b34.027f0101.0d010101.0101810f</BaseType>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>DescriptiveFrameworkDefinitionStrongReference</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.05023400.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>DescriptiveFrameworkDefinitionStrongReference</Name>
+      <Definition>DescriptiveFrameworkDefinitionStrongReference</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>DefinedContext</ContextScope>
+      <TypeKind>StrongReference</TypeKind>
+      <BaseType>urn:smpte:ul:060e2b34.027f0101.0d010401.06010200</BaseType>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>ObjectConstraintDefinitionStrongReference</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.05023500.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>ObjectConstraintDefinitionStrongReference</Name>
+      <Definition>ObjectConstraintDefinitionStrongReference</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>DefinedContext</ContextScope>
+      <TypeKind>StrongReference</TypeKind>
+      <BaseType>urn:smpte:ul:060e2b34.027f0101.0d010401.06010300</BaseType>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>DescriptiveSchemeDefinitionStrongReference</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.05023600.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>DescriptiveSchemeDefinitionStrongReference</Name>
+      <Definition>DescriptiveSchemeDefinitionStrongReference</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>DefinedContext</ContextScope>
+      <TypeKind>StrongReference</TypeKind>
+      <BaseType>urn:smpte:ul:060e2b34.027f0101.0d010401.06010100</BaseType>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>TLCIncrementStrongReference</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.05023700.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>StrongReference to TLCIncrement</Name>
+      <Definition>StrongReference to TLCIncrement</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>DefinedContext</ContextScope>
+      <TypeKind>StrongReference</TypeKind>
+      <BaseType>urn:smpte:ul:060e2b34.027f0101.0d010401.06030d00</BaseType>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>TLCTimeScaleStrongReference</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.05023800.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>StrongReference to TLCTimeScale</Name>
+      <Definition>StrongReference to TLCTimeScale</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>DefinedContext</ContextScope>
+      <TypeKind>StrongReference</TypeKind>
+      <BaseType>urn:smpte:ul:060e2b34.027f0101.0d010401.06030e00</BaseType>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>TLCTimeZoneStrongReference</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.05023900.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>StrongReference to TLCTimeZone</Name>
+      <Definition>StrongReference to TLCTimeZone</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>DefinedContext</ContextScope>
+      <TypeKind>StrongReference</TypeKind>
+      <BaseType>urn:smpte:ul:060e2b34.027f0101.0d010401.06030f00</BaseType>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>TLCCalendarStrongReference</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.05023a00.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>StrongReference to TLCCalendar</Name>
+      <Definition>StrongReference to TLCCalendar</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>DefinedContext</ContextScope>
+      <TypeKind>StrongReference</TypeKind>
+      <BaseType>urn:smpte:ul:060e2b34.027f0101.0d010401.06031000</BaseType>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
       <Symbol>WeakReferenceSets</Symbol>
       <UL>urn:smpte:ul:060e2b34.01040101.05030000.00000000</UL>
       <Kind>NODE</Kind>
@@ -6198,6 +6562,57 @@
     <Entry>
       <Register>Types</Register>
       <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>DescriptiveFrameworkDefinitionStrongReferenceSet</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.05051400.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>Descriptive Framework Definition StrongReferenceSet</Name>
+      <Definition>Descriptive Framework Definition StrongReferenceSet</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>DefinedContext</ContextScope>
+      <TypeKind>Set</TypeKind>
+      <TypeSize>0</TypeSize>
+      <BaseType>urn:smpte:ul:060e2b34.01040101.05023400.00000000</BaseType>
+      <TypeQualifiers>isIdentified</TypeQualifiers>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>ObjectConstraintDefinitionStrongReferenceSet</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.05051500.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>Object Constraint Definition StrongReferenceSet</Name>
+      <Definition>Object Constraint Definition StrongReferenceSet</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>DefinedContext</ContextScope>
+      <TypeKind>Set</TypeKind>
+      <TypeSize>0</TypeSize>
+      <BaseType>urn:smpte:ul:060e2b34.01040101.05023500.00000000</BaseType>
+      <TypeQualifiers>isIdentified</TypeQualifiers>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>DescriptiveSchemeDefinitionStrongReferenceSet</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.05051600.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>Descriptive Scheme Definition StrongReferenceSet</Name>
+      <Definition>Descriptive Scheme Definition StrongReferenceSet</Definition>
+      <Applications>DMS_TLC</Applications>
+      <DefiningDocument>SMPTE ST 2134</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>DefinedContext</ContextScope>
+      <TypeKind>Set</TypeKind>
+      <TypeSize>0</TypeSize>
+      <BaseType>urn:smpte:ul:060e2b34.01040101.05023600.00000000</BaseType>
+      <TypeQualifiers>isIdentified</TypeQualifiers>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
       <Symbol>StrongReferenceVectors</Symbol>
       <UL>urn:smpte:ul:060e2b34.01040101.05060000.00000000</UL>
       <Kind>NODE</Kind>
@@ -6413,6 +6828,34 @@
       <ContextScope>UnknownContext</ContextScope>
       <TypeKind>VariableArray</TypeKind>
       <BaseType>urn:smpte:ul:060e2b34.01040101.05022b00.00000000</BaseType>
+      <TypeQualifiers>isOrdered</TypeQualifiers>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>VC6EchelonPropertiesStrongReferenceArray</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.05061000.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>VC-6 Echelon Properties Strong Reference in an ordered Array</Name>
+      <DefiningDocument>ST 2117-10</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>UnknownContext</ContextScope>
+      <TypeKind>VariableArray</TypeKind>
+      <BaseType>urn:smpte:ul:060e2b34.01040101.05023200.00000000</BaseType>
+      <TypeQualifiers>isOrdered</TypeQualifiers>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012</NamespaceName>
+      <Symbol>ADMChannelMappingStrongReferenceVector</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.05061100.00000000</UL>
+      <Kind>LEAF</Kind>
+      <Name>ADMChannelMappingStrongReferenceVector</Name>
+      <DefiningDocument>SMPTE ST 2131</DefiningDocument>
+      <IsDeprecated>false</IsDeprecated>
+      <ContextScope>UnknownContext</ContextScope>
+      <TypeKind>VariableArray</TypeKind>
+      <BaseType>urn:smpte:ul:060e2b34.01040101.05023300.00000000</BaseType>
       <TypeQualifiers>isOrdered</TypeQualifiers>
     </Entry>
     <Entry>
@@ -10658,6 +11101,16 @@
     </Entry>
     <Entry>
       <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012/13/16</NamespaceName>
+      <Symbol>HAND</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.0d100000.00000000</UL>
+      <Kind>NODE</Kind>
+      <Name>HAND</Name>
+      <Definition>Metadata registered by HAND - The Universal Talent Identifier, Inc. for public use</Definition>
+      <IsDeprecated>false</IsDeprecated>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
       <NamespaceName>http://www.smpte-ra.org/reg/2003/2012/14</NamespaceName>
       <Symbol>OrganizationallyRegisteredasPrivate</Symbol>
       <UL>urn:smpte:ul:060e2b34.01040101.0e000000.00000000</UL>
@@ -10984,6 +11437,36 @@
       <Kind>NODE</Kind>
       <Name>Fraunhofer</Name>
       <Definition>Metadata registered by Fraunhofer for private use</Definition>
+      <IsDeprecated>false</IsDeprecated>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012/14/34</NamespaceName>
+      <Symbol>RED</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.0e220000.00000000</UL>
+      <Kind>NODE</Kind>
+      <Name>RED</Name>
+      <Definition>Metadata registered by RED Digital Cinema, LLC. for private use</Definition>
+      <IsDeprecated>false</IsDeprecated>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012/14/35</NamespaceName>
+      <Symbol>CRIFST</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.0e230000.00000000</UL>
+      <Kind>NODE</Kind>
+      <Name>CRIFST</Name>
+      <Definition>Metadata registered by CRIFST for private use</Definition>
+      <IsDeprecated>false</IsDeprecated>
+    </Entry>
+    <Entry>
+      <Register>Types</Register>
+      <NamespaceName>http://www.smpte-ra.org/reg/2003/2012/14/36</NamespaceName>
+      <Symbol>FUJIFILM</Symbol>
+      <UL>urn:smpte:ul:060e2b34.01040101.0e240000.00000000</UL>
+      <Kind>NODE</Kind>
+      <Name>FUJIFILM</Name>
+      <Definition>Metadata registered by FUJIFILM for private use</Definition>
       <IsDeprecated>false</IsDeprecated>
     </Entry>
     <Entry>

@@ -44,7 +44,7 @@ public class UInt16Adapter {
     os.writeUnsignedShort(value);
   }
 
-  public static int copyOf(Integer value) {
+  public static Integer copyOf(Integer value) {
     return value;
   }
 }

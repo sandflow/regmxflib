@@ -59,7 +59,7 @@ public enum {{symbol}} {
     {{valuesTypeName}} value = {{valuesAdapterName}}.fromStream(is, ctx);
 
     for ({{symbol}} s : values()) {
-      if (s.value == value) {
+      if (s.value.equals(value)) {
         return s;
       }
     }
