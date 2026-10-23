@@ -30,6 +30,9 @@
 
 package com.sandflow.smpte.mxf;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -45,6 +48,12 @@ import org.junit.jupiter.api.TestInfo;
 
 import com.sandflow.smpte.mxf.StreamingWriter.GCClipCBEWriter;
 import com.sandflow.smpte.mxf.StreamingWriter.GSWriter;
+import com.sandflow.smpte.mxf.types.ADMAudioMetadataSubDescriptor;
+import com.sandflow.smpte.mxf.types.ADMChannelMapping;
+import com.sandflow.smpte.mxf.types.ADMChannelMappingStrongReferenceVector;
+import com.sandflow.smpte.mxf.types.ADMSoundfieldGroupLabelSubDescriptor;
+import com.sandflow.smpte.mxf.types.ADM_CHNASubDescriptor;
+import com.sandflow.smpte.mxf.types.AUIDSet;
 import com.sandflow.smpte.mxf.types.AudioChannelLabelSubDescriptor;
 import com.sandflow.smpte.mxf.types.IABEssenceDescriptor;
 import com.sandflow.smpte.mxf.types.IABSoundfieldLabelSubDescriptor;
@@ -57,11 +66,14 @@ import com.sandflow.smpte.mxf.types.RGBAComponent;
 import com.sandflow.smpte.mxf.types.RGBAComponentKind;
 import com.sandflow.smpte.mxf.types.RGBADescriptor;
 import com.sandflow.smpte.mxf.types.RGBALayout;
+import com.sandflow.smpte.mxf.types.RIFFChunkDefinitionSubDescriptor;
+import com.sandflow.smpte.mxf.types.RIFFChunkReferencesSubDescriptor;
 import com.sandflow.smpte.mxf.types.ScanningDirectionType;
 import com.sandflow.smpte.mxf.types.SoundfieldGroupLabelSubDescriptor;
 import com.sandflow.smpte.mxf.types.SubDescriptorStrongReferenceVector;
 import com.sandflow.smpte.mxf.types.TimedEventsAncillaryResourceSubDescriptor;
 import com.sandflow.smpte.mxf.types.TimedEventsTextDescriptor;
+import com.sandflow.smpte.mxf.types.UInt32Array;
 import com.sandflow.smpte.mxf.types.WAVEPCMDescriptor;
 import com.sandflow.smpte.util.UL;
 
@@ -881,6 +893,180 @@ class StreamingWriterTest {
 
     sw.finish();
     os.flush();
+    os.close();
+
+    /* compare file to reference */
+
+    TestUtils.compareToReference(of, outFN + ".json");
+  }
+
+  /*
+   * SMPTE ST 2067-204 ADM Audio Track File with a single audio sample frame,
+   * with the <axml> chunk and sample frame of the example file published
+   * with the specification (https://pub.smpte.org/doc/st2067-204/20260527-pub/)
+   */
+  @Test
+  void testADMAudioTrackFile(TestInfo testInfo) throws Exception {
+
+    final DeterministicUIDGenerator uidg = new DeterministicUIDGenerator();
+    final byte trackID = 1;
+    final long BODY_SID = 1;
+    final long INDEX_SID = 127;
+    final long AXML_SID = 10;
+
+    /* extract descriptor, <axml> chunk and the first sample frame from the source */
+
+    InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/st2067-204b-2026-05.mxf");
+    assertNotNull(is);
+
+    StreamingFileInfo info = new StreamingFileInfo(is, null);
+    GCEssenceTracks srcTracks = new GCEssenceTracks(info.getPreface());
+    final long srcBodySID = srcTracks.getTrackInfo(0).getContainer().EssenceStreamID;
+    final Fraction editRate = Fraction.of(48000);
+    final int channelCount = 8;
+    final int frameSize = channelCount * 3;
+
+    byte[] axml = null;
+    byte[] frame = null;
+    StreamingReader sr = new StreamingReader(is, null);
+    while (sr.nextElement()) {
+      if (sr.getSID() == AXML_SID) {
+        axml = sr.readNBytes((int) sr.getElementLength());
+      } else if (sr.getSID() == srcBodySID && frame == null) {
+        frame = sr.readNBytes(frameSize);
+      }
+    }
+    sr.close();
+
+    assertNotNull(axml);
+    assertNotNull(frame);
+    assertEquals(frameSize, frame.length);
+
+    /* sub-descriptors: ADM channel mapping, RIFF chunk, ADM metadata and soundfield groups */
+
+    /* 5.1 (channels 1-6) followed by stereo (channels 7-8) */
+
+    final String[] packFormatIDs = { "AP_00010003", "AP_00010003", "AP_00010003", "AP_00010003", "AP_00010003",
+        "AP_00010003", "AP_00010002", "AP_00010002" };
+    final String[] channelFormatIDs = { "AT_00010001_01", "AT_00010002_01", "AT_00010003_01", "AT_00010004_01",
+        "AT_00010005_01", "AT_00010006_01", "AT_00010001_01", "AT_00010002_01" };
+
+    ADM_CHNASubDescriptor chna = new ADM_CHNASubDescriptor();
+    chna.InstanceID = uidg.generate(chna);
+    chna.NumLocalChannels = channelCount;
+    chna.NumADMAudioTrackUIDs = channelCount;
+    chna.ADMChannelMappingsArray = new ADMChannelMappingStrongReferenceVector();
+    for (int i = 0; i < channelCount; i++) {
+      ADMChannelMapping m = new ADMChannelMapping();
+      m.InstanceID = uidg.generate(m);
+      m.ADMAudioTrackChannelFormatID = channelFormatIDs[i];
+      m.ADMAudioPackFormatID = packFormatIDs[i];
+      m.ADMAudioTrackUID = String.format("ATU_%08d", i + 1);
+      m.LocalChannelID = (long) (i + 1);
+      chna.ADMChannelMappingsArray.add(m);
+    }
+
+    RIFFChunkReferencesSubDescriptor refs = new RIFFChunkReferencesSubDescriptor();
+    refs.InstanceID = uidg.generate(refs);
+    refs.RIFFChunkStreamIDsArray = new UInt32Array();
+    refs.RIFFChunkStreamIDsArray.add(AXML_SID);
+
+    RIFFChunkDefinitionSubDescriptor axmlDef = new RIFFChunkDefinitionSubDescriptor();
+    axmlDef.InstanceID = uidg.generate(axmlDef);
+    axmlDef.RIFFChunkID = "axml";
+    axmlDef.RIFFChunkStreamID = AXML_SID;
+
+    ADMAudioMetadataSubDescriptor admMd = new ADMAudioMetadataSubDescriptor();
+    admMd.InstanceID = uidg.generate(admMd);
+    admMd.RIFFChunkStreamID_link1 = AXML_SID;
+    admMd.ADMProfileLevelULBatch = new AUIDSet();
+    admMd.ADMProfileLevelULBatch.add(Labels.ADM_ITU2076);
+
+    /* Operational Mode A: one label per audioProgramme */
+
+    final String[] programmeIDs = { "APR_1001", "APR_1002" };
+    final String[] programmeTitles = { "5.1 Version", "Stereo Version" };
+
+    ADMSoundfieldGroupLabelSubDescriptor[] sgs = new ADMSoundfieldGroupLabelSubDescriptor[programmeIDs.length];
+    for (int i = 0; i < sgs.length; i++) {
+      ADMSoundfieldGroupLabelSubDescriptor sg = new ADMSoundfieldGroupLabelSubDescriptor();
+      sg.InstanceID = uidg.generate(sg);
+      sg.MCALabelDictionaryID = Labels.ADMSoundfield;
+      sg.MCALinkID = sg.InstanceID;
+      sg.MCATagSymbol = "ADM";
+      sg.MCATagName = "ADM";
+      sg.RFC5646SpokenLanguage = "en";
+      sg.MCAContent = "PRM";
+      sg.MCAUseClass = "FCMP";
+      sg.MCATitle = programmeTitles[i];
+      sg.MCATitleVersion = "n/a";
+      sg.ADMAudioProgrammeID_ST2131 = programmeIDs[i];
+      sg.RIFFChunkStreamID_link2 = AXML_SID;
+      sgs[i] = sg;
+    }
+
+    WAVEPCMDescriptor d = new WAVEPCMDescriptor();
+    d.InstanceID = uidg.generate(d);
+    d.ContainerFormat = Labels.MXFGCClipWrappedBroadcastWaveAudioData;
+    d.SampleRate = editRate;
+    d.AudioSampleRate = editRate;
+    d.Locked = false;
+    d.ChannelCount = (long) channelCount;
+    d.QuantizationBits = 24L;
+    d.BlockAlign = frameSize;
+    d.AverageBytesPerSecond = 48000L * frameSize;
+    d.EssenceLength = 1L; /* only a single sample frame is written */
+    d.ChannelAssignment = Labels.AudioLabelingFrameworkADMContent;
+    d.SubDescriptors = new SubDescriptorStrongReferenceVector();
+    d.SubDescriptors.add(chna);
+    d.SubDescriptors.add(refs);
+    d.SubDescriptors.add(axmlDef);
+    d.SubDescriptors.add(admMd);
+    for (ADMSoundfieldGroupLabelSubDescriptor sg : sgs) {
+      d.SubDescriptors.add(sg);
+    }
+
+    OP1aHelper.TrackInfo ti = new OP1aHelper.TrackInfo(
+        trackID,
+        UL.fromURN("urn:smpte:ul:060e2b34.01020101.0d010301.16010200"),
+        d,
+        Labels.SoundEssenceTrack,
+        null);
+
+    OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
+        Collections.singletonList(ti),
+        null,
+        editRate,
+        BODY_SID,
+        INDEX_SID,
+        1L);
+
+    OP1aHelper header = new OP1aHelper(eci, TestUtils.makeIdentification(uidg), uidg);
+
+    /* start writing file */
+
+    final String outFN = testInfo.getTestMethod().get().getName() + ".mxf";
+    File of = TestUtils.getOutputFile(outFN);
+    OutputStream os = new FileOutputStream(of);
+
+    StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null, uidg);
+
+    GSWriter gs = sw.addGenericStream(AXML_SID);
+    GCClipCBEWriter ec = sw.addCBEClipWrappedGC(BODY_SID, INDEX_SID);
+
+    sw.start();
+
+    /* the <axml> chunk precedes the essence */
+
+    sw.startPartition(gs);
+    gs.nextElement(UL.fromURN("urn:smpte:ul:060e2b34.0101010c.0d010509.01000000"), axml.length);
+    gs.write(axml);
+
+    sw.startPartition(ec);
+    ec.nextClip(header.getElementKey(trackID), frameSize, 1);
+    ec.write(frame);
+
+    sw.finish();
     os.close();
 
     /* compare file to reference */

@@ -44,4 +44,18 @@ public class MXFParsingTest {
 
     TestUtils.compareToReference(mxfFile, this.getClass().getSimpleName() + "_" + testInfo.getTestMethod().get().getName() + ".mxf.json");
   }
+
+  @Test
+  void testST2067204(TestInfo testInfo) throws Exception {
+    File mxfFile = new File(ClassLoader.getSystemResource("mxf-files/st2067-204.mxf").toURI());
+
+    TestUtils.compareToReference(mxfFile, this.getClass().getSimpleName() + "_" + testInfo.getTestMethod().get().getName() + ".mxf.json");
+  }
+
+  @Test
+  void testST2067204ModeA(TestInfo testInfo) throws Exception {
+    File mxfFile = new File(ClassLoader.getSystemResource("mxf-files/st2067-204b-2026-05.mxf").toURI());
+
+    TestUtils.compareToReference(mxfFile, this.getClass().getSimpleName() + "_" + testInfo.getTestMethod().get().getName() + ".mxf.json");
+  }
 }
