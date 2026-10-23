@@ -32,6 +32,7 @@ FILES_TO_TEST=(
   "/workspace/java-library/target/test-output/testClipVBE.mxf|ffmpeg,mxf2raw"
   "/workspace/java-library/target/test-output/testPHDR.mxf"
   "/workspace/java-library/target/test-output/testTimedEvents.mxf|as-02,ffmpeg"
+  "/workspace/java-library/target/test-output/testADMAudioTrackFile.mxf|as-02,ffmpeg"
 )
 
 for item in "${FILES_TO_TEST[@]}"; do
