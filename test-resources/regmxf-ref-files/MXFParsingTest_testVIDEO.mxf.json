@@ -24,8 +24,8 @@
 "minor": 3},
 "IdentificationList": [{
 "+class": "com.sandflow.smpte.mxf.types.Identification",
-"ApplicationProductID": "urn:smpte:ul:057cd849.178a4b88.b4c7825a.f8761b34",
-"GenerationID": "urn:uuid:bb4d59df-90e6-9e18-be89-3b9c318d45d4",
+"ApplicationProductID": "urn:uuid:057cd849-178a-4b88-b4c7-825af8761b34",
+"GenerationID": "urn:uuid:be893b9c-318d-45d4-bb4d-59df90e69e18",
 "ApplicationName": "DaVinci Resolve",
 "ApplicationSupplierName": "Blackmagic Design",
 "ApplicationPlatform": "DaVinci Resolve",
