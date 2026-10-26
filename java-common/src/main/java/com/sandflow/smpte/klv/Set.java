@@ -199,11 +199,11 @@ public class Set implements Group {
 
         kis.readFully(localval);
 
-        if (reg.getAUID(localtag) == null) {
+        AUID auid = reg.getAUID(localtag);
+        if (auid == null) {
           throw new KLVException("Local tag not found: " + localtag + " in Local Set " + localset.getKey());
         }
-
-        set.addItem(new MemoryTriplet(reg.getAUID(localtag), localval));
+        set.addItem(new MemoryTriplet(auid, localval));
 
       }
 
