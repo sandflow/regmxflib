@@ -253,7 +253,16 @@ public class ClassGenerator {
             if (c == def) {
               TypeMaker t = getTypeInformation(typeDef);
               member.put("typeName", t.getTypeName());
-              if (PrimaryPackage_UL.equalsIgnoreVersion(propertyAUID)) {
+              if (GenerationID_UL.equalsIgnoreVersion(propertyAUID)
+                  || ApplicationProductID_UL.equalsIgnoreVersion(propertyAUID)
+                  || LinkedGenerationID_UL.equalsIgnoreVersion(propertyAUID)) {
+                /*
+                 * EXCEPTION: LinkedGenerationID, GenerationID and ApplicationProductID
+                 * are listed as AUID but encoded using UUID
+                 */
+                member.put("typeName", UUID.class.getName());
+                member.put("adapterName", UUIDAdapter.class.getName());
+              } else if (PrimaryPackage_UL.equalsIgnoreVersion(propertyAUID)) {
                 member.put("adapterName", PrimaryPackageAdapter.class.getName());
               } else {
                 member.put("adapterName", t.getAdapterName());

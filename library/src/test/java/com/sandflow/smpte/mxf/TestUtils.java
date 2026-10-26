@@ -42,7 +42,7 @@ import java.util.stream.Stream;
 
 import com.sandflow.smpte.mxf.types.Identification;
 import com.sandflow.smpte.tools.RegMXFDump;
-import com.sandflow.smpte.util.AUID;
+import com.sandflow.smpte.util.UUID;
 
 public class TestUtils {
 
@@ -69,13 +69,13 @@ public class TestUtils {
     }
   }
 
-  final static AUID APPLICATION_PRODUCT_ID = AUID.fromURN("urn:uuid:5c1a9040-d234-41f1-86f3-5a78991f5b9e");
+  final static UUID APPLICATION_PRODUCT_ID = UUID.fromURN("urn:uuid:5c1a9040-d234-41f1-86f3-5a78991f5b9e");
 
   public static Identification makeIdentification(UIDGenerator uidg) {
     Identification identification = new Identification();
 
     identification.InstanceID = uidg.generate(identification);
-    identification.GenerationID = new AUID(identification.InstanceID);
+    identification.GenerationID = identification.InstanceID;
     identification.ApplicationVersionString = "n/a";
     identification.ApplicationSupplierName = "regmxflib";
     identification.ApplicationName = "regmxflib unit tests";
