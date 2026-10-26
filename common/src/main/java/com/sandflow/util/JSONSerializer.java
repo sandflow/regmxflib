@@ -37,6 +37,7 @@ import java.lang.reflect.Modifier;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.HexFormat;
 import java.util.Set;
@@ -65,9 +66,10 @@ public class JSONSerializer {
       AUID.class,
       UMID.class,
       Fraction.class,
-      LocalDate.class,
-      LocalDateTime.class,
-      LocalTime.class);
+      LocalDate.class);
+
+  static final private DateTimeFormatter DATETIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+  static final private DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss.SSS'Z'");
 
   private static String escapeJSONString(String input) {
     StringBuilder sb = new StringBuilder();
@@ -122,6 +124,10 @@ public class JSONSerializer {
         serialize(item, w);
       }
       w.write("]");
+    } else if (obj instanceof LocalDateTime) {
+      w.write(String.format("\"%s\"", DATETIME_FORMAT.format((LocalDateTime) obj)));
+    } else if (obj instanceof LocalTime) {
+      w.write(String.format("\"%s\"", TIME_FORMAT.format((LocalTime) obj)));
     } else if (obj.getClass().isEnum() || obj instanceof String || PRIMITIVES.contains(obj.getClass())) {
       w.write(String.format("\"%s\"", escapeJSONString(obj.toString())));
     } else if (NUMBERS.contains(obj.getClass())) {
