@@ -24,7 +24,7 @@
 "minor": 3},
 "IdentificationList": [{
 "+class": "com.sandflow.smpte.mxf.types.Identification",
-"ApplicationProductID": "urn:uuid:a3c6047e-d0e6-f9a1-b860-4d312e154799",
+"ApplicationProductID": "urn:uuid:b8604d31-2e15-4799-a3c6-047ed0e6f9a1",
 "ToolkitVersion": {
 "+class": "com.sandflow.smpte.mxf.types.ProductVersionType",
 "Major": 1,
@@ -32,7 +32,7 @@
 "Tertiary": 0,
 "PatchLevel": 0,
 "BuildType": "VersionUnknown"},
-"GenerationID": "urn:uuid:844c7bcc-2c54-22b7-ff19-4a343f244087",
+"GenerationID": "urn:uuid:ff194a34-3f24-4087-844c-7bcc2c5422b7",
 "ApplicationName": "xxx",
 "ApplicationSupplierName": "xxx",
 "ApplicationPlatform": "xxxxxx (xxxxx)",
@@ -43,14 +43,14 @@
 "Tertiary": 0,
 "PatchLevel": 0,
 "BuildType": "VersionUnknown"},
-"FileModificationDate": "2024-07-13T11:50:59.000856",
+"FileModificationDate": "2024-07-13T11:50:59.856Z",
 "ApplicationVersionString": "1.2.0 (xxxxxxxx)",
 "InstanceID": "urn:uuid:a86bbe7c-57ff-4661-823a-d91a8b4c07bd"}],
 "PrimaryPackage": "urn:smpte:umid:060a2b34.01010105.01010f20.13000000.e1a79314.ecfc416a.917ce671.6461aea4",
 "EssenceContainers": ["urn:smpte:ul:060e2b34.04010101.0d010301.02060200"],
 "DescriptiveSchemes": [],
 "OperationalPattern": "urn:smpte:ul:060e2b34.04010101.0d010201.01010100",
-"FileLastModified": "2024-07-13T11:50:59.000856",
+"FileLastModified": "2024-07-13T11:50:59.856Z",
 "ContentStorageObject": {
 "+class": "com.sandflow.smpte.mxf.types.ContentStorage",
 "Packages": [{
@@ -77,8 +77,8 @@
 "TrackID": 2001,
 "InstanceID": "urn:uuid:5831d822-b28a-48a3-82e6-d03665a05c43"}],
 "PackageID": "urn:smpte:umid:060a2b34.01010105.01010f20.13000000.8a040e69.d5cd49d6.a8ea29bc.cf14bb20",
-"CreationTime": "2024-07-13T11:50:59.000856",
-"PackageLastModified": "2024-07-13T11:50:59.000856",
+"CreationTime": "2024-07-13T11:50:59.856Z",
+"PackageLastModified": "2024-07-13T11:50:59.856Z",
 "InstanceID": "urn:uuid:03b3782d-1e82-4532-ac4a-83ef2aee453b"},
 {
 "+class": "com.sandflow.smpte.mxf.types.SourcePackage",
@@ -220,8 +220,8 @@
 "TrackID": 2001,
 "InstanceID": "urn:uuid:6a8fdf39-e2bf-4d19-8267-270d70f93de9"}],
 "PackageID": "urn:smpte:umid:060a2b34.01010105.01010f20.13000000.e1a79314.ecfc416a.917ce671.6461aea4",
-"CreationTime": "2024-07-13T11:50:59.000856",
-"PackageLastModified": "2024-07-13T11:50:59.000856",
+"CreationTime": "2024-07-13T11:50:59.856Z",
+"PackageLastModified": "2024-07-13T11:50:59.856Z",
 "InstanceID": "urn:uuid:46baf142-62ac-415c-b265-af2b3053c1fa"}],
 "EssenceDataObjects": [{
 "+class": "com.sandflow.smpte.mxf.types.EssenceData",

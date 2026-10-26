@@ -24,11 +24,11 @@
 "minor": 3},
 "IdentificationList": [{
 "+class": "com.sandflow.smpte.mxf.types.Identification",
-"ApplicationProductID": "urn:uuid:84ae6849-7321-988b-f96d-9b746f6046b7",
-"GenerationID": "urn:uuid:9c35a029-5ec2-3ccc-f2d3-dea6c86542d0",
+"ApplicationProductID": "urn:uuid:f96d9b74-6f60-46b7-84ae-68497321988b",
+"GenerationID": "urn:uuid:f2d3dea6-c865-42d0-9c35-a0295ec23ccc",
 "ApplicationName": "MPEG-H Production Library",
 "ApplicationSupplierName": "Fraunhofer IIS",
-"FileModificationDate": "2024-01-05T13:22:18",
+"FileModificationDate": "2024-01-05T13:22:18.000Z",
 "ApplicationVersionString": "2.77.0r208",
 "InstanceID": "urn:uuid:613999aa-1668-4292-9be0-e48ca78bf276"}],
 "ObjectModelVersion": 1,
@@ -36,7 +36,7 @@
 "EssenceContainers": ["urn:smpte:ul:060e2b34.04010101.0d010301.02060200"],
 "DescriptiveSchemes": [],
 "OperationalPattern": "urn:smpte:ul:060e2b34.04010101.0d010201.01010100",
-"FileLastModified": "2024-01-05T13:22:18",
+"FileLastModified": "2024-01-05T13:22:18.000Z",
 "ContentStorageObject": {
 "+class": "com.sandflow.smpte.mxf.types.ContentStorage",
 "Packages": [{
@@ -184,8 +184,8 @@
 "TrackID": 2,
 "InstanceID": "urn:uuid:2b424554-1283-4fad-8d44-10044b8073d8"}],
 "PackageID": "urn:smpte:umid:060a2b34.01010105.01010f20.13000000.a95f2ddf.a8234a2d.80984ab3.2c19fb48",
-"CreationTime": "2024-01-05T13:22:18",
-"PackageLastModified": "2024-01-05T13:22:18",
+"CreationTime": "2024-01-05T13:22:18.000Z",
+"PackageLastModified": "2024-01-05T13:22:18.000Z",
 "PackageName": "File Package: SMPTE 2131 clip wrapping of wave audio with ADM",
 "InstanceID": "urn:uuid:7fe87275-bc62-4d06-bb12-1b83f220d4ee"},
 {
@@ -212,8 +212,8 @@
 "TrackID": 2,
 "InstanceID": "urn:uuid:1a585b0d-f6aa-42e0-b48f-e562a2304a9e"}],
 "PackageID": "urn:smpte:umid:060a2b34.01010105.01010f20.13000000.00f88766.5260446f.861df7f8.76ed6553",
-"CreationTime": "2024-01-05T13:22:18",
-"PackageLastModified": "2024-01-05T13:22:18",
+"CreationTime": "2024-01-05T13:22:18.000Z",
+"PackageLastModified": "2024-01-05T13:22:18.000Z",
 "PackageName": "Material Package",
 "InstanceID": "urn:uuid:bd4fd48a-cd43-4145-bc51-56ee5fccf614"}],
 "EssenceDataObjects": [{
