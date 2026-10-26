@@ -161,6 +161,9 @@ public class ClassGenerator {
     private final UL Char_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01100300.00000000");
     private final UL UTF8Character_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01100500.00000000");
     private final UL ProductReleaseType_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.02010101.00000000");
+    private final UL GenerationID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.05200701.01000000");
+    private final UL ApplicationProductID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.05200701.07000000");
+    private final UL LinkedGenerationID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.05200701.08000000");
     private final UL PrimaryPackage_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010104.06010104.01080000");
     private final AUID UINT16_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.01010200.00000000");
     private final AUID AUID_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.01030100.00000000");
@@ -253,7 +256,16 @@ public class ClassGenerator {
             if (c == def) {
               TypeMaker t = getTypeInformation(typeDef);
               member.put("typeName", t.getTypeName());
-              if (PrimaryPackage_UL.equalsIgnoreVersion(propertyAUID)) {
+              if (GenerationID_UL.equalsIgnoreVersion(propertyAUID)
+                  || ApplicationProductID_UL.equalsIgnoreVersion(propertyAUID)
+                  || LinkedGenerationID_UL.equalsIgnoreVersion(propertyAUID)) {
+                /*
+                 * EXCEPTION: LinkedGenerationID, GenerationID and ApplicationProductID
+                 * are listed as AUID but encoded using UUID
+                 */
+                member.put("typeName", UUID.class.getName());
+                member.put("adapterName", UUIDAdapter.class.getName());
+              } else if (PrimaryPackage_UL.equalsIgnoreVersion(propertyAUID)) {
                 member.put("adapterName", PrimaryPackageAdapter.class.getName());
               } else {
                 member.put("adapterName", t.getAdapterName());
