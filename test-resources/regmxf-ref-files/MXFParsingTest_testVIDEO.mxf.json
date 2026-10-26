@@ -24,12 +24,12 @@
 "minor": 3},
 "IdentificationList": [{
 "+class": "com.sandflow.smpte.mxf.types.Identification",
-"ApplicationProductID": "urn:smpte:ul:057cd849.178a4b88.b4c7825a.f8761b34",
-"GenerationID": "urn:uuid:bb4d59df-90e6-9e18-be89-3b9c318d45d4",
+"ApplicationProductID": "urn:uuid:057cd849-178a-4b88-b4c7-825af8761b34",
+"GenerationID": "urn:uuid:be893b9c-318d-45d4-bb4d-59df90e69e18",
 "ApplicationName": "DaVinci Resolve",
 "ApplicationSupplierName": "Blackmagic Design",
 "ApplicationPlatform": "DaVinci Resolve",
-"FileModificationDate": "2025-07-15T22:23:49.000804",
+"FileModificationDate": "2025-07-15T22:23:49.804Z",
 "ApplicationVersionString": "20.0.1",
 "InstanceID": "urn:uuid:e2550d5a-2cd4-4448-99b4-2b039e2c7ca4"}],
 "ObjectModelVersion": 1,
@@ -37,7 +37,7 @@
 "EssenceContainers": ["urn:smpte:ul:060e2b34.0401010d.0d010301.020c0600"],
 "DescriptiveSchemes": [],
 "OperationalPattern": "urn:smpte:ul:060e2b34.04010101.0d010201.01010100",
-"FileLastModified": "2025-07-15T22:23:49.000804",
+"FileLastModified": "2025-07-15T22:23:49.804Z",
 "ContentStorageObject": {
 "+class": "com.sandflow.smpte.mxf.types.ContentStorage",
 "Packages": [{
@@ -85,8 +85,8 @@
 "TrackID": 2,
 "InstanceID": "urn:uuid:9dee0712-8bc3-475f-8368-0b7182a6c9c5"}],
 "PackageID": "urn:smpte:umid:060a2b34.01010105.01010f20.13000000.f8df7caa.4fe54089.acf5a919.ee295559",
-"CreationTime": "2025-07-15T22:23:49.000652",
-"PackageLastModified": "2025-07-15T22:23:49.000652",
+"CreationTime": "2025-07-15T22:23:49.652Z",
+"PackageLastModified": "2025-07-15T22:23:49.652Z",
 "PackageName": "VIDEO_f031aa43-88c8-4de9-856f-904a33a78505",
 "InstanceID": "urn:uuid:87a90406-2327-4634-83a0-801b61459062"},
 {
@@ -316,8 +316,8 @@
 "TrackID": 3,
 "InstanceID": "urn:uuid:72436533-ecdf-4af2-a335-4108b370a2a8"}],
 "PackageID": "urn:smpte:umid:060a2b34.01010105.01010f20.13000000.f031aa43.88c84de9.856f904a.33a78505",
-"CreationTime": "2025-07-15T22:23:49.000652",
-"PackageLastModified": "2025-07-15T22:23:49.000652",
+"CreationTime": "2025-07-15T22:23:49.652Z",
+"PackageLastModified": "2025-07-15T22:23:49.652Z",
 "PackageName": "VIDEO_f031aa43-88c8-4de9-856f-904a33a78505",
 "InstanceID": "urn:uuid:9221f08f-d88c-4480-afec-78eca44a609f"}],
 "EssenceDataObjects": [{
