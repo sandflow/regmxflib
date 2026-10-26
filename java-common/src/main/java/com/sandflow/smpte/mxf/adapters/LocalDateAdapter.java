@@ -27,8 +27,8 @@
 package com.sandflow.smpte.mxf.adapters;
 
 import java.io.IOException;
+import java.time.DateTimeException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFDataInput;
@@ -43,16 +43,20 @@ public class LocalDateAdapter {
     int month = is.readUnsignedByte();
     int day = is.readUnsignedByte();
 
-    return LocalDate.of(year, month, day);
+    try {
+      return LocalDate.of(year, month, day);
+    } catch (DateTimeException e) {
+      throw new IOException("Invalid date", e);
+    }
   }
 
-  public static void toStream(LocalDateTime t, MXFDataOutput os, MXFOutputContext ctx) throws IOException {
+  public static void toStream(LocalDate t, MXFDataOutput os, MXFOutputContext ctx) throws IOException {
     os.writeUnsignedShort(t.getYear());
     os.writeUnsignedByte((byte) t.getMonth().getValue());
     os.writeUnsignedByte((byte) t.getDayOfMonth());
   }
 
-  public static LocalDateTime copyOf(LocalDateTime value) {
+  public static LocalDate copyOf(LocalDate value) {
     return value;
   }
 }

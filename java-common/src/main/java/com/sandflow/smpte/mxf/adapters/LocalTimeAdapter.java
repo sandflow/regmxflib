@@ -27,7 +27,7 @@
 package com.sandflow.smpte.mxf.adapters;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.DateTimeException;
 import java.time.LocalTime;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
@@ -37,6 +37,7 @@ import com.sandflow.smpte.mxf.MXFDataOutput;
 
 public class LocalTimeAdapter {
   public static final Integer ITEM_LENGTH = 4;
+  private static final int NANOS_PER_FRACTION = 4_000_000;
 
   public static LocalTime fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
 
@@ -49,17 +50,21 @@ public class LocalTimeAdapter {
     int second = is.readUnsignedByte();
     int fraction = is.readUnsignedByte();
 
-    return LocalTime.of(hour, minute, second, 4 * fraction * 1000);
+    try {
+      return LocalTime.of(hour, minute, second, fraction * NANOS_PER_FRACTION);
+    } catch (DateTimeException e) {
+      throw new IOException("Invalid time", e);
+    }
   }
 
-  public static void toStream(LocalDateTime t, MXFDataOutput os, MXFOutputContext ctx) throws IOException {
+  public static void toStream(LocalTime t, MXFDataOutput os, MXFOutputContext ctx) throws IOException {
     os.writeUnsignedByte((byte) t.getHour());
     os.writeUnsignedByte((byte) t.getMinute());
     os.writeUnsignedByte((byte) t.getSecond());
-    os.writeUnsignedByte((byte) (t.getNano() / 4000));
+    os.writeUnsignedByte((byte) (t.getNano() / NANOS_PER_FRACTION));
   }
 
-  public static LocalDateTime copyOf(LocalDateTime value) {
+  public static LocalTime copyOf(LocalTime value) {
     return value;
   }
 }
