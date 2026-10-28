@@ -114,6 +114,8 @@
         <genreffile samplename="iab"/>
         <genreffile samplename="video"/>
         <genreffile samplename="audio"/>
+        <genreffile samplename="st2067-204"/>
+        <genreffile samplename="st2067-204b-2026-05"/>
 
     </target>
 

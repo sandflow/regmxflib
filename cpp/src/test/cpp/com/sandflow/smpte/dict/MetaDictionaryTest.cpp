@@ -250,7 +250,9 @@ int main(int argc, char **argv) {
 		"timed_events",
 		"iab",
 		"video",
-		"audio"
+		"audio",
+		"st2067-204",
+		"st2067-204b-2026-05"
 	};
 
 	for (size_t i = 0; i < sizeof(test_names) / sizeof(char*); i++) {

@@ -48,7 +48,14 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.sandflow.smpte.mxf.types.ADMAudioMetadataSubDescriptor;
+import com.sandflow.smpte.mxf.types.ADMSoundfieldGroupLabelSubDescriptor;
+import com.sandflow.smpte.mxf.types.AudioChannelLabelSubDescriptor;
+import com.sandflow.smpte.mxf.types.FileDescriptor;
+import com.sandflow.smpte.mxf.types.GroupOfSoundfieldGroupsLabelSubDescriptor;
 import com.sandflow.smpte.mxf.types.RGBADescriptor;
+import com.sandflow.smpte.mxf.types.RIFFChunkDefinitionSubDescriptor;
+import com.sandflow.smpte.mxf.types.SoundfieldGroupLabelSubDescriptor;
 import com.sandflow.smpte.mxf.types.TimedEventsAncillaryResourceSubDescriptor;
 import com.sandflow.smpte.mxf.types.TimedEventsTextDescriptor;
 import com.sandflow.smpte.mxf.types.WAVEPCMDescriptor;
@@ -161,6 +168,92 @@ class StreamingReaderTest {
 
     assertFalse(sr.nextElement());
 
+    sr.close();
+  }
+
+  /*
+   * SMPTE ST 2067-204 ADM audio track file, from the Photon test suite
+   * (https://github.com/wruppelx/photon)
+   */
+  @Test
+  void testST2067204() throws Exception {
+    InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/st2067-204.mxf");
+    assertNotNull(is);
+
+    StreamingFileInfo info = new StreamingFileInfo(is, null);
+    GCEssenceTracks tracks = new GCEssenceTracks(info.getPreface());
+    assertEquals(1, tracks.getTrackCount());
+
+    /* ST 2067-204 Clauses 5.3 and 5.4 */
+    FileDescriptor d = tracks.getTrackInfo(0).getDescriptor();
+    assertEquals(Labels.AudioLabelingFrameworkADMContent, ((WAVEPCMDescriptor) d).ChannelAssignment);
+    assertNotNull(d.SubDescriptors);
+    assertTrue(d.SubDescriptors.stream().anyMatch(sd -> sd instanceof RIFFChunkDefinitionSubDescriptor));
+    assertTrue(d.SubDescriptors.stream().anyMatch(sd -> sd instanceof ADMAudioMetadataSubDescriptor));
+    assertTrue(d.SubDescriptors.stream().anyMatch(sd -> sd instanceof ADMSoundfieldGroupLabelSubDescriptor));
+    assertFalse(d.SubDescriptors.stream().anyMatch(sd -> sd instanceof AudioChannelLabelSubDescriptor
+        || sd instanceof GroupOfSoundfieldGroupsLabelSubDescriptor
+        || (sd instanceof SoundfieldGroupLabelSubDescriptor && !(sd instanceof ADMSoundfieldGroupLabelSubDescriptor))));
+    d.SubDescriptors.stream().filter(sd -> sd instanceof ADMSoundfieldGroupLabelSubDescriptor).forEach(sd -> {
+      ADMSoundfieldGroupLabelSubDescriptor sg = (ADMSoundfieldGroupLabelSubDescriptor) sd;
+      assertNotNull(sg.MCALabelDictionaryID);
+      assertNotNull(sg.MCATagSymbol);
+      assertEquals(null, sg.MCAChannelID);
+    });
+
+    StreamingReader sr = new StreamingReader(is, null);
+
+    int i = 0;
+    while (sr.nextElement()) {
+      assertTrue(sr.getElementLength() > 0);
+      i++;
+    }
+
+    assertTrue(i > 0);
+
+    sr.close();
+  }
+
+  /*
+   * SMPTE ST 2067-204 example ADM Audio Track File (Operational Mode A)
+   * https://pub.smpte.org/doc/st2067-204/20260527-pub/
+   */
+  @Test
+  void testST2067204ModeA() throws Exception {
+    InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/st2067-204b-2026-05.mxf");
+    assertNotNull(is);
+
+    StreamingFileInfo info = new StreamingFileInfo(is, null);
+    GCEssenceTracks tracks = new GCEssenceTracks(info.getPreface());
+    assertEquals(1, tracks.getTrackCount());
+
+    FileDescriptor d = tracks.getTrackInfo(0).getDescriptor();
+    assertEquals(Labels.AudioLabelingFrameworkADMContent, ((WAVEPCMDescriptor) d).ChannelAssignment);
+    assertTrue(d.SubDescriptors.stream().anyMatch(sd -> sd instanceof RIFFChunkDefinitionSubDescriptor));
+    assertTrue(d.SubDescriptors.stream().anyMatch(sd -> sd instanceof ADMAudioMetadataSubDescriptor));
+
+    /* stereo and 5.1 versions */
+    List<ADMSoundfieldGroupLabelSubDescriptor> groups = new ArrayList<>();
+    d.SubDescriptors.forEach(sd -> {
+      if (sd instanceof ADMSoundfieldGroupLabelSubDescriptor) {
+        groups.add((ADMSoundfieldGroupLabelSubDescriptor) sd);
+      }
+    });
+    assertEquals(2, groups.size());
+    for (ADMSoundfieldGroupLabelSubDescriptor sg : groups) {
+      assertNotNull(sg.ADMAudioProgrammeID_ST2131);
+      assertEquals(null, sg.ADMAudioContentID_ST2131);
+      assertEquals(null, sg.ADMAudioObjectID_ST2131);
+      assertEquals(null, sg.MCAChannelID);
+    }
+
+    StreamingReader sr = new StreamingReader(is, null);
+    int i = 0;
+    while (sr.nextElement()) {
+      assertTrue(sr.getElementLength() > 0);
+      i++;
+    }
+    assertTrue(i > 0);
     sr.close();
   }
 
