@@ -162,6 +162,9 @@ public class ClassGenerator {
     private static final UL UTF8Character_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.01100500.00000000");
     private static final UL ProductReleaseType_UL = UL.fromURN("urn:smpte:ul:060e2b34.01040101.02010101.00000000");
     private static final UL PrimaryPackage_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010104.06010104.01080000");
+    private static final UL GenerationID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.05200701.01000000");
+    private static final UL ApplicationProductID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.05200701.07000000");
+    private static final UL LinkedGenerationID_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010102.05200701.08000000");
     private static final AUID UINT16_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.01010200.00000000");
     private static final AUID AUID_AUID = AUID.fromURN("urn:smpte:ul:060e2b34.01040101.01030100.00000000");
     private static final UL METADEFINITIONS_UL = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.02000000");
