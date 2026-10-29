@@ -54,16 +54,8 @@ public class StreamingFileInfo {
       throws IOException, KLVException, MXFException {
     MXFDataInput mis = new MXFDataInput(is);
 
-    /* look for the primer pack */
-    LocalTagRegister localreg = null;
-    for (Triplet t; (t = mis.readTriplet()) != null; mis.resetCount()) {
-
-      /* skip fill items, if any */
-      if (!FillItem.getKey().equalsIgnoreVersion(t.getKey())) {
-        localreg = PrimerPack.createLocalTagRegister(t);
-        break;
-      }
-    }
+    /* look for the primer pack and start counting header metadata bytes */
+    LocalTagRegister localreg = MXFFiles.skipToPrimerPack(mis);
 
     if (localreg == null) {
       MXFException.handle(evthandler, new MXFEvent(
@@ -154,12 +146,7 @@ public class StreamingFileInfo {
     MXFDataInput mis = new MXFDataInput(is);
 
     /* look for the header partition pack */
-    PartitionPack pp = null;
-    for (Triplet t; (t = mis.readTriplet()) != null;) {
-      if ((pp = PartitionPack.fromTriplet(t)) != null) {
-        break;
-      }
-    }
+    PartitionPack pp = MXFFiles.skipToPartitionPack(mis);
 
     if (pp == null) {
       MXFException.handle(evthandler,
