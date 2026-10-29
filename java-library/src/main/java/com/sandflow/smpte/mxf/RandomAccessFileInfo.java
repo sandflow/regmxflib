@@ -30,6 +30,7 @@
 
 package com.sandflow.smpte.mxf;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -178,9 +179,10 @@ public class RandomAccessFileInfo {
     raip.position(raip.size() - ripSize);
 
     RandomIndexPack rip = null;
-    Triplet t = mis.readTriplet();
-    if (t != null) {
-      rip = RandomIndexPack.fromTriplet(t);
+    try {
+      rip = RandomIndexPack.fromTriplet(mis.readTriplet());
+    } catch (EOFException e) {
+      /* reported below */
     }
     if (rip == null) {
       /* no RIP where it should be */
@@ -203,9 +205,10 @@ public class RandomAccessFileInfo {
       /* seek to and read partition */
       raip.position(rip.getOffsets().get(i).getOffset());
       PartitionPack pp = null;
-      t = mis.readTriplet();
-      if (t != null) {
-        pp = PartitionPack.fromTriplet(t);
+      try {
+        pp = PartitionPack.fromTriplet(mis.readTriplet());
+      } catch (EOFException e) {
+        /* reported below */
       }
       if (pp == null) {
         /* no partition pack where expected */
@@ -301,7 +304,7 @@ public class RandomAccessFileInfo {
           Triplet it = mis.readTriplet();
 
           /* skip fill items that pad the index byte count to the KAG */
-          if (FillItem.getKey().equalsIgnoreVersion(it.getKey())) {
+          if (FillItem.isInstance(it.getKey())) {
             continue;
           }
 

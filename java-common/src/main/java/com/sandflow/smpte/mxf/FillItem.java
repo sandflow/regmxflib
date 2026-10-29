@@ -61,7 +61,7 @@ public class FillItem {
 
     FillItem fi = new FillItem();
 
-    if (!getKey().equalsIgnoreVersion(triplet.getKey())) {
+    if (!isInstance(triplet.getKey())) {
       return null;
     }
 

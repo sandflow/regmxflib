@@ -47,8 +47,8 @@ import com.sandflow.smpte.mxf.HeaderMetadataSet;
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFException;
+import com.sandflow.smpte.mxf.MXFFiles;
 import com.sandflow.smpte.mxf.PartitionPack;
-import com.sandflow.smpte.mxf.PrimerPack;
 import com.sandflow.smpte.mxf.RandomIndexPack;
 import com.sandflow.smpte.mxf.StaticLocalTags;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
@@ -155,16 +155,8 @@ public class RegMXFDump {
         /* read header metadata */
         if (pp.getHeaderByteCount() > 0) {
 
-          /* look for the primer pack */
-          LocalTagRegister localreg = null;
-          for (Triplet t; (t = mis.readTriplet()) != null; mis.resetCount()) {
-
-            /* skip fill items, if any */
-            if (!FillItem.getKey().equalsIgnoreVersion(t.getKey())) {
-              localreg = PrimerPack.createLocalTagRegister(t);
-              break;
-            }
-          }
+          /* look for the primer pack and start counting header metadata bytes */
+          LocalTagRegister localreg = MXFFiles.skipToPrimerPack(mis);
 
           /*
            * capture all local sets within the header metadata
@@ -219,7 +211,7 @@ public class RegMXFDump {
         while (mis.getReadCount() < pp.getIndexByteCount()) {
           Triplet t = mis.readTriplet();
 
-          if (FillItem.getKey().equalsIgnoreVersion(t.getKey())) {
+          if (FillItem.isInstance(t.getKey())) {
             continue;
           }
 
