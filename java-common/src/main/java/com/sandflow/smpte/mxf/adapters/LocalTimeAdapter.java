@@ -32,12 +32,15 @@ import java.time.LocalTime;
 
 import com.sandflow.smpte.mxf.MXFInputContext;
 import com.sandflow.smpte.mxf.MXFDataInput;
+import com.sandflow.smpte.mxf.MXFEvent;
+import com.sandflow.smpte.mxf.MXFException;
 import com.sandflow.smpte.mxf.MXFOutputContext;
 import com.sandflow.smpte.mxf.MXFDataOutput;
 
 public class LocalTimeAdapter {
   public static final Integer ITEM_LENGTH = 4;
   private static final int NANOS_PER_FRACTION = 4_000_000;
+  private static final int MAX_FRACTION = 249;
 
   public static LocalTime fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
 
@@ -48,13 +51,29 @@ public class LocalTimeAdapter {
     int hour = is.readUnsignedByte();
     int minute = is.readUnsignedByte();
     int second = is.readUnsignedByte();
-    int fraction = is.readUnsignedByte();
+    int fraction = capFraction(is.readUnsignedByte(), ctx);
 
     try {
       return LocalTime.of(hour, minute, second, fraction * NANOS_PER_FRACTION);
     } catch (DateTimeException e) {
       throw new IOException("Invalid time", e);
     }
+  }
+
+  static int capFraction(int fraction, MXFInputContext ctx) throws IOException {
+    if (fraction <= MAX_FRACTION) {
+      return fraction;
+    }
+
+    try {
+      ctx.handleEvent(new MXFEvent(
+          MXFEvent.EventCodes.INVALID_TIME_FRACTION,
+          "Time fraction " + fraction + " exceeds " + MAX_FRACTION));
+    } catch (MXFException e) {
+      throw new IOException(e);
+    }
+
+    return MAX_FRACTION;
   }
 
   public static void toStream(LocalTime t, MXFDataOutput os, MXFOutputContext ctx) throws IOException {

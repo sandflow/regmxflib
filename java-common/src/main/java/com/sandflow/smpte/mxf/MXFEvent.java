@@ -102,7 +102,11 @@ public class MXFEvent extends BasicEvent {
     /**
      * Inconsistent stream identifications
      */
-    INCONSISTENT_STREAM_ID(Event.Severity.ERROR);
+    INCONSISTENT_STREAM_ID(Event.Severity.ERROR),
+    /**
+     * Time fraction exceeds its maximum
+     */
+    INVALID_TIME_FRACTION(Event.Severity.ERROR);
 
 
     public final Event.Severity severity;

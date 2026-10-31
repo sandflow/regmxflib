@@ -163,6 +163,10 @@ public class FragmentBuilder {
          */
         INVALID_INTEGER_VALUE(Event.Severity.ERROR),
         /**
+         * Raised when the fraction of a time value exceeds its maximum.
+         */
+        INVALID_TIME_FRACTION(Event.Severity.ERROR),
+        /**
          * Raised when the type of a String definition is not supported.
          */
         UNSUPPORTED_STRING_TYPE(Event.Severity.ERROR),
@@ -236,6 +240,8 @@ public class FragmentBuilder {
 
     private static final String REGXML_NS = "http://sandflow.com/ns/SMPTEST2001-1/baseline";
     private final static String XMLNS_NS = "http://www.w3.org/2000/xmlns/";
+
+    private static final int MAX_TIME_FRACTION = 249;
 
     private static final String BYTEORDER_BE = "BigEndian";
     private static final String BYTEORDER_LE = "LittleEndian";
@@ -1377,6 +1383,32 @@ public class FragmentBuilder {
         return String.format("%04d-%02d-%02d", year, month, day);
     }
 
+    void checkTimeFraction(Element element, int fraction, RecordTypeDefinition definition) throws RuleException {
+
+        if (fraction > MAX_TIME_FRACTION) {
+
+            FragmentEvent evt = new FragmentEvent(
+                    EventCodes.INVALID_TIME_FRACTION,
+                    String.format(
+                            "Time fraction %d exceeds %d",
+                            fraction,
+                            MAX_TIME_FRACTION
+                    ),
+                    String.format(
+                            "Record %s at Element %s",
+                            definition.getSymbol(),
+                            element.getLocalName()
+                    )
+            );
+
+            handleEvent(evt);
+
+            addInformativeComment(element, evt.getReason());
+
+        }
+
+    }
+
     void applyRule5_8(Element element, MXFDataInput value, RecordTypeDefinition definition) throws RuleException, IOException {
 
         if (definition.getIdentification().equals(AUID_UL)) {
@@ -1417,7 +1449,9 @@ public class FragmentBuilder {
             int second = value.readUnsignedByte();
             int fraction = value.readUnsignedByte();
 
-            element.setTextContent(generateISO8601Time(hour, minute, second, 4 * fraction));
+            element.setTextContent(generateISO8601Time(hour, minute, second, 4 * Math.min(fraction, MAX_TIME_FRACTION)));
+
+            checkTimeFraction(element, fraction, definition);
 
         } else if (definition.getIdentification().equals(TimeStamp_UL)) {
 
@@ -1429,7 +1463,9 @@ public class FragmentBuilder {
             int second = value.readUnsignedByte();
             int fraction = value.readUnsignedByte();
 
-            element.setTextContent(generateISO8601Date(year, month, day) + "T" + generateISO8601Time(hour, minute, second, 4 * fraction));
+            element.setTextContent(generateISO8601Date(year, month, day) + "T" + generateISO8601Time(hour, minute, second, 4 * Math.min(fraction, MAX_TIME_FRACTION)));
+
+            checkTimeFraction(element, fraction, definition);
 
         } else if (definition.getIdentification().equals(VersionType_UL)) {
 

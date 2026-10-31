@@ -187,6 +187,19 @@ namespace rxml {
 				) {}
 		};
 
+		class InvalidTimeFractionError : public Event {
+		public:
+			InvalidTimeFractionError(int value, const std::string &where) :
+				Event(
+					"FragmentBuilder::InvalidTimeFractionError",
+					rxml::fmt(
+						"Time fraction {} exceeds {}",
+						rxml::to_string(value),
+						rxml::to_string(MAX_TIME_FRACTION)),
+			where
+				) {}
+		};
+
 		class IOError : public Event {
 		public:
 			IOError(const std::ios::failure &failure, const std::string &where) :
@@ -364,6 +377,8 @@ namespace rxml {
 		static const std::string BYTEORDER_BE;
 		static const std::string BYTEORDER_LE;
 
+		static const int MAX_TIME_FRACTION;
+
 
 		static const std::string REGXML_NS;
 		static const std::string XMLNS_NS;
@@ -388,6 +403,8 @@ namespace rxml {
 		void readCharacters(xercesc::DOMElement *element, MXFInputStream &value, const CharacterTypeDefinition *definition, bool removeTrailingZeroes);
 
 		static void addInformativeComment(xercesc::DOMElement * element, std::string comment);
+
+		void checkTimeFraction(xercesc::DOMElement *element, int fraction, const RecordTypeDefinition *definition);
 
 		void appendCommentWithAUIDName(AUID auid, xercesc::DOMElement * elem);
 
