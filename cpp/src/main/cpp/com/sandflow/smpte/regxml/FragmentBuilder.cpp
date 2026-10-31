@@ -52,6 +52,8 @@ namespace rxml {
 	const UL FragmentBuilder::GenerationID_UL = "urn:smpte:ul:060e2b34.01010102.05200701.01000000";
 	const UL FragmentBuilder::ApplicationProductID_UL = "urn:smpte:ul:060e2b34.01010102.05200701.07000000";
 
+	const int FragmentBuilder::MAX_TIME_FRACTION = 249;
+
 	const std::string FragmentBuilder::BYTEORDER_BE = "BigEndian";
 	const std::string FragmentBuilder::BYTEORDER_LE = "LittleEndian";
 
@@ -1147,6 +1149,26 @@ namespace rxml {
 		return sb.str();
 	}
 
+	void FragmentBuilder::checkTimeFraction(xercesc::DOMElement * element, int fraction, const RecordTypeDefinition * definition) {
+
+		if (fraction > MAX_TIME_FRACTION) {
+
+			InvalidTimeFractionError err(fraction,
+				rxml::fmt(
+					"Record {} at Element {}",
+					definition->symbol,
+					DOMHelper::toUTF8(element->getLocalName()).c_str()
+				)
+			);
+
+			evthandler->error(err);
+
+			addInformativeComment(element, err.getReason());
+
+		}
+
+	}
+
 	void FragmentBuilder::applyRule5_8(xercesc::DOMElement * element, MXFInputStream & value, const RecordTypeDefinition * definition) {
 
 		if (definition->identification.equals(AUID_UL)) {
@@ -1189,7 +1211,9 @@ namespace rxml {
 			int second = value.readUnsignedByte();
 			int fraction = value.readUnsignedByte();
 
-			element->setTextContent(DOMHelper::fromUTF8(generateISO8601Time(hour, minute, second, 4 * fraction)));
+			element->setTextContent(DOMHelper::fromUTF8(generateISO8601Time(hour, minute, second, 4 * std::min(fraction, MAX_TIME_FRACTION))));
+
+			checkTimeFraction(element, fraction, definition);
 
 		} else if (definition->identification.equals(TimeStamp_UL)) {
 
@@ -1204,9 +1228,11 @@ namespace rxml {
 			element->setTextContent(
 				DOMHelper::fromUTF8(
 					generateISO8601Date(year, month, day) + "T" +
-					generateISO8601Time(hour, minute, second, 4 * fraction)
+					generateISO8601Time(hour, minute, second, 4 * std::min(fraction, MAX_TIME_FRACTION))
 				)
 			);
+
+			checkTimeFraction(element, fraction, definition);
 
 		} else if (definition->identification.equals(VersionType_UL)) {
 

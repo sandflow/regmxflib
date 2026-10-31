@@ -46,7 +46,7 @@ public class LocalDateTimeAdapter {
     int hour = is.readUnsignedByte();
     int minute = is.readUnsignedByte();
     int second = is.readUnsignedByte();
-    int fraction = is.readUnsignedByte();
+    int fraction = LocalTimeAdapter.capFraction(is.readUnsignedByte(), ctx);
 
     /* fraction is in units of 1/250 s (4 ms) */
     try {
