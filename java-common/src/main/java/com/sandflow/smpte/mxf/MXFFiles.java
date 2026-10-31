@@ -30,6 +30,7 @@
 
 package com.sandflow.smpte.mxf;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -37,6 +38,7 @@ import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
 
 import com.sandflow.smpte.klv.KLVDataInput;
+import com.sandflow.smpte.klv.LocalTagRegister;
 import com.sandflow.smpte.klv.MemoryTriplet;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
@@ -181,6 +183,53 @@ public class MXFFiles {
   }
 
   /**
+   * Skips triplets until a Partition Pack is found, and reads it
+   *
+   * @param kis KLV input
+   * @return First Partition Pack read, or null if the end of the input is
+   *         reached before one is found
+   * @throws IOException
+   * @throws KLVException
+   */
+  public static PartitionPack skipToPartitionPack(KLVDataInput kis) throws IOException, KLVException {
+    try {
+      while (true) {
+        PartitionPack pp = PartitionPack.fromTriplet(kis.readTriplet());
+
+        if (pp != null) {
+          return pp;
+        }
+      }
+    } catch (EOFException e) {
+      return null;
+    }
+  }
+
+  /**
+   * Skips any Fill Items that follow a Partition Pack, and reads the Primer Pack.
+   *
+   * @param kis Input positioned after a Partition Pack
+   * @return Local Tag Register, or null if the first non-Fill Item is not a
+   *         Primer Pack or the end of the input is reached
+   * @throws IOException
+   * @throws KLVException
+   */
+  public static LocalTagRegister skipToPrimerPack(KLVDataInput kis) throws IOException, KLVException {
+    try {
+      while (true) {
+        kis.resetCount();
+        Triplet t = kis.readTriplet();
+
+        if (!FillItem.isInstance(t.getKey())) {
+          return PrimerPack.createLocalTagRegister(t);
+        }
+      }
+    } catch (EOFException e) {
+      return null;
+    }
+  }
+
+  /**
    * Seeks to the footer partition, assuming the current position of the
    * channel is within the run-in (SMPTE ST 377-1 Section 6.5), the footer
    * partition offset is listed in the Header Partition Pack or a Random Index
@@ -197,9 +246,11 @@ public class MXFFiles {
 
     KLVDataInput kis = new KLVDataInput(Channels.newInputStream(mxffile));
 
-    Triplet t = kis.readTriplet();
+    Triplet t;
 
-    if (t == null) {
+    try {
+      t = kis.readTriplet();
+    } catch (EOFException e) {
       return -1;
     }
 
@@ -232,9 +283,9 @@ public class MXFFiles {
 
     kis = new KLVDataInput(Channels.newInputStream(mxffile));
 
-    t = kis.readTriplet();
-
-    if (t == null) {
+    try {
+      t = kis.readTriplet();
+    } catch (EOFException e) {
       return -1;
     }
 

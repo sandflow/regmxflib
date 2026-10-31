@@ -36,11 +36,12 @@ import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.FillItem;
+import com.sandflow.smpte.mxf.HeaderMetadataSet;
 import com.sandflow.smpte.mxf.MXFDataInput;
 import com.sandflow.smpte.mxf.MXFEvent;
 import com.sandflow.smpte.mxf.MXFException;
+import com.sandflow.smpte.mxf.MXFFiles;
 import com.sandflow.smpte.mxf.PartitionPack;
-import com.sandflow.smpte.mxf.PrimerPack;
 import com.sandflow.smpte.regxml.dict.DefinitionResolver;
 import com.sandflow.smpte.regxml.dict.definitions.ClassDefinition;
 import com.sandflow.smpte.regxml.dict.definitions.Definition;
@@ -64,21 +65,6 @@ public class MXFFragmentBuilder {
   private static final UL INDEX_TABLE_SEGMENT_UL = UL.fromURN("urn:smpte:ul:060e2b34.02530101.0d010201.01100100");
 
   private static final UL PREFACE_KEY = UL.fromURN("urn:smpte:ul:060e2b34.027f0101.0d010101.01012f00");
-
-  private static final UL INSTANCE_UID_ITEM_UL = UL.fromURN("urn:smpte:ul:060e2b34.01010101.01011502.00000000");
-
-  /**
-   * Returns the Instance ID (InstanceUID property) of a Group, or null if the
-   * Group does not carry one.
-   */
-  private static UUID getInstanceID(Group group) {
-    for (Triplet t : group.getItems()) {
-      if (INSTANCE_UID_ITEM_UL.equalsIgnoreVersion(t.getKey())) {
-        return new UUID(t.getValue());
-      }
-    }
-    return null;
-  }
 
   /**
    * Returns a DOM Document Fragment containing a RegXML Fragment rooted at
@@ -115,14 +101,7 @@ public class MXFFragmentBuilder {
     /* look for the partition pack */
     MXFDataInput kis = new MXFDataInput(mxfpartition);
 
-    PartitionPack pp = null;
-
-    for (Triplet t; (t = kis.readTriplet()) != null;) {
-
-      if ((pp = PartitionPack.fromTriplet(t)) != null) {
-        break;
-      }
-    }
+    PartitionPack pp = MXFFiles.skipToPartitionPack(kis);
 
     if (pp == null) {
 
@@ -132,21 +111,8 @@ public class MXFFragmentBuilder {
 
     }
 
-    /* start counting header metadata bytes */
-    kis.resetCount();
-
-    /* look for the primer pack */
-    LocalTagRegister localreg = null;
-
-    for (Triplet t; (t = kis.readTriplet()) != null; kis.resetCount()) {
-
-      /* skip fill items, if any */
-      if (!FillItem.getKey().equalsIgnoreVersion(t.getKey())) {
-        localreg = PrimerPack.createLocalTagRegister(t);
-        break;
-      }
-
-    }
+    /* look for the primer pack and start counting header metadata bytes */
+    LocalTagRegister localreg = MXFFiles.skipToPrimerPack(kis);
 
     if (localreg == null) {
 
@@ -159,9 +125,9 @@ public class MXFFragmentBuilder {
     ArrayList<Group> gs = new ArrayList<>();
     HashMap<UUID, Group> setresolver = new HashMap<>();
 
-    for (Triplet t;
-        kis.getReadCount() < pp.getHeaderByteCount()
-            && (t = kis.readTriplet()) != null;) {
+    while (kis.getReadCount() < pp.getHeaderByteCount()) {
+
+      Triplet t = kis.readTriplet();
 
       if (INDEX_TABLE_SEGMENT_UL.equalsIgnoreVersion(t.getKey())) {
 
@@ -174,23 +140,23 @@ public class MXFFragmentBuilder {
 
         break;
 
-      } else if (FillItem.getKey().equalsIgnoreVersion(t.getKey())) {
+      } else if (FillItem.isInstance(t.getKey())) {
 
         /* skip fill items */
         continue;
       }
 
       try {
-        Group g = Set.fromLocalSet(t, localreg);
+        Set s = Set.fromLocalSet(t, localreg);
 
-        if (g != null) {
+        if (s != null) {
 
-          gs.add(g);
+          gs.add(s);
 
-          UUID instanceID = getInstanceID(g);
+          UUID instanceID = HeaderMetadataSet.getInstanceID(s);
 
           if (instanceID != null) {
-            setresolver.put(instanceID, g);
+            setresolver.put(instanceID, s);
           }
 
         } else {
