@@ -72,13 +72,13 @@ public class UUIDTest {
 
   @Test
   public void testFromURIName() {
-    /* https://datatracker.ietf.org/doc/html/rfc9562#name-example-of-a-uuidv5-value */
+    /* UUIDv5 using the URL namespace, see RFC 9562 Section 6.6 */
 
-    String name = "www.example.com";
+    String name = "http://www.example.com";
     UUID uuid = UUID.fromURIName(name);
     assertNotNull(uuid);
 
-    assertEquals("urn:uuid:2ed6657d-e927-568b-95e1-2665a8aea6a2", uuid.toString());
+    assertEquals("urn:uuid:2d32a3f1-fac2-52a6-ac52-fe9e87e628ea", uuid.toString());
 
     /* Check version and variant */
     byte[] bytes = uuid.getBytes();

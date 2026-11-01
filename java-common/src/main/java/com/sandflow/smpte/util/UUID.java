@@ -125,7 +125,7 @@ public class UUID {
   public static UUID fromURIName(String name) {
     MessageDigest digest;
 
-    final UUID nsid = UUID.fromURN("urn:uuid:6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+    final UUID nsid = UUID.fromURN("urn:uuid:6ba7b811-9dad-11d1-80b4-00c04fd430c8");
 
     try {
       digest = MessageDigest.getInstance("SHA-1");
