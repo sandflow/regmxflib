@@ -143,9 +143,12 @@ public class GenericStreamReader extends InputStream {
    */
   @Override
   public int read(byte[] b, int off, int len) throws IOException {
-    if (this.remainingElementBytes == 0)
+    if (len == 0)
+      return 0;
+    if (this.remainingElementBytes <= 0)
       return -1;
-    int r = source.read(b, off, len);
+    /* do not read past the end of the element */
+    int r = source.read(b, off, (int) Math.min(len, this.remainingElementBytes));
     this.remainingElementBytes = r == -1 ? 0 : this.remainingElementBytes - r;
     return r;
   }
@@ -159,9 +162,10 @@ public class GenericStreamReader extends InputStream {
    */
   @Override
   public long skip(long n) throws IOException {
-    if (this.remainingElementBytes == 0)
-      return -1;
-    long s = this.source.skip(n);
+    if (n <= 0 || this.remainingElementBytes <= 0)
+      return 0;
+    /* do not skip past the end of the element */
+    long s = Math.max(0, this.source.skip(Math.min(n, this.remainingElementBytes)));
     this.remainingElementBytes = this.remainingElementBytes - s;
     return s;
   }

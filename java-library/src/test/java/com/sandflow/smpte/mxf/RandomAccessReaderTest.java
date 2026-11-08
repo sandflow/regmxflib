@@ -210,4 +210,38 @@ class RandomAccessReaderTest {
     gsr.close();
   }
 
+  /*
+   * Bulk reads and skips must not go past the end of the element
+   */
+  @Test
+  void testReadPastElementEnd() throws Exception {
+    File f = new File(ClassLoader.getSystemResource("mxf-files/timed_events.mxf").toURI());
+    FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
+
+    RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
+
+    ClipReader cr = new ClipReader(fi, rais);
+    assertEquals(840, cr.readAllBytes().length);
+    assertEquals(0, cr.getRemainingElementBytes());
+    assertEquals(-1, cr.read());
+
+    cr.seek(0);
+    assertEquals(840, cr.skip(Long.MAX_VALUE));
+    assertEquals(0, cr.skip(1));
+    assertEquals(-1, cr.read(new byte[16]));
+    cr.close();
+
+    GenericStreamReader gsr = new GenericStreamReader(fi, rais);
+    gsr.seek(12);
+    assertEquals(81, gsr.readAllBytes().length);
+    assertEquals(0, gsr.getRemainingElementBytes());
+    assertEquals(-1, gsr.read());
+
+    gsr.seek(12);
+    assertEquals(81, gsr.skip(Long.MAX_VALUE));
+    assertEquals(0, gsr.skip(1));
+    assertEquals(-1, gsr.read(new byte[16]));
+    gsr.close();
+  }
+
 }

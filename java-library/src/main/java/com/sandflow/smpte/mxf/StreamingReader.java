@@ -158,9 +158,12 @@ public class StreamingReader extends InputStream {
     if (this.state != State.IN_PAYLOAD) {
       throw new RuntimeException();
     }
-    if (this.remainingElementBytes == 0)
+    if (len == 0)
+      return 0;
+    if (this.remainingElementBytes <= 0)
       return -1;
-    int r = this.mis.read(b, off, len);
+    /* do not read past the end of the element */
+    int r = this.mis.read(b, off, (int) Math.min(len, this.remainingElementBytes));
     this.remainingElementBytes = r == -1 ? 0 : this.remainingElementBytes - r;
     return r;
   }
@@ -170,9 +173,10 @@ public class StreamingReader extends InputStream {
     if (this.state != State.IN_PAYLOAD) {
       throw new RuntimeException();
     }
-    if (this.remainingElementBytes == 0)
-      return -1;
-    long s = this.mis.skip(n);
+    if (n <= 0 || this.remainingElementBytes <= 0)
+      return 0;
+    /* do not skip past the end of the element */
+    long s = Math.max(0, this.mis.skip(Math.min(n, this.remainingElementBytes)));
     this.remainingElementBytes = this.remainingElementBytes - s;
     return s;
   }
