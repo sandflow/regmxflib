@@ -146,6 +146,8 @@ public class RandomAccessFileInfo {
   }
 
   private final StreamingFileInfo basicInfo;
+
+  /* only a single EC is supported */
   private Long ecSID = null;
   private Long ecIndexSID = null;
   private ECIndex euToECPosition;
@@ -246,6 +248,28 @@ public class RandomAccessFileInfo {
         continue;
       }
 
+      /* are we in an essence container */
+      if (pp.getBodySID() != 0) {
+
+        if (this.ecSID == null) {
+
+          /* this is the first time we see an essence container, so assume this
+          is the one we are tracking */
+          this.ecSID = pp.getBodySID();
+
+        } else if (!this.ecSID.equals(pp.getBodySID())) {
+
+          /* we ran into a second essence container */
+          MXFException.handle(evthandler, new MXFEvent(
+              MXFEvent.EventCodes.TOO_MANY_ECS,
+              String.format("Partition at offset %d is for essence container BodySID=%d, "
+                  + "but our essence container is for BodySID=%d",
+                  pp.getThisPartition(), pp.getBodySID(), this.ecSID)));
+          continue;
+
+        }
+      }
+
       /* look for header metadata */
       if ((i == 0 || i == rip.getOffsets().size() - 1) &&
           (pp.getStatus() == PartitionPack.Status.CLOSED_COMPLETE
@@ -328,6 +352,13 @@ public class RandomAccessFileInfo {
                 "Index table segment not found in partition at file offset: " + pp.getThisPartition()));
           }
 
+          /*
+           * the index table can be in a partition that precedes its essence
+           */
+          if (this.ecSID == null) {
+            this.ecSID = its.EssenceStreamID;
+          }
+
           if (!its.EssenceStreamID.equals(this.ecSID) || !its.IndexStreamID.equals(this.ecIndexSID)) {
             MXFException.handle(evthandler, new MXFEvent(
                 MXFEvent.EventCodes.INCONSISTENT_STREAM_ID,
@@ -375,14 +406,9 @@ public class RandomAccessFileInfo {
         }
       }
 
-      /* save the essence container offset */
+      /* are we in our essence container */
       if (pp.getBodySID() != 0) {
-        if (this.ecSID == null) {
-          this.ecSID = pp.getBodySID();
-        } else if (!this.ecSID.equals(pp.getBodySID())) {
-          throw new RuntimeException();
-        }
-
+        /* save the essence container offset */
         this.ecToFilePositions.addPartition(pp.getBodyOffset(), raip.position());
       }
 

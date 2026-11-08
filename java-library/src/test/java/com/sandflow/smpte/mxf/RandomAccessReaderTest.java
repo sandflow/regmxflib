@@ -120,6 +120,40 @@ class RandomAccessReaderTest {
     fr.close();
   }
 
+  /*
+   * Clip-wrapped CBE audio where the index table segment is in an index-only
+   * partition that precedes the essence partition
+   */
+  @Test
+  void testClipCBEIndexBeforeEssence() throws Exception {
+    File f = new File(ClassLoader.getSystemResource("mxf-files/audio2.mxf").toURI());
+    FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
+
+    RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
+    GCEssenceTracks tracks = new GCEssenceTracks(fi.getPreface());
+    assertEquals(1, tracks.getTrackCount());
+
+    /* 2000 stereo 24-bit samples (EditUnitByteCount = 6), clip value at file offset 13036 */
+    final long CLIP_VALUE_OFFSET = 13036;
+    final int EU_SIZE = 6;
+    final long EU = 1000;
+
+    ClipReader cr = new ClipReader(fi, rais);
+    assertEquals(12000, cr.getElementLength());
+
+    cr.seek(EU);
+    assertEquals(12000 - EU * EU_SIZE, cr.getRemainingElementBytes());
+    byte[] actual = cr.readNBytes(EU_SIZE);
+    cr.close();
+
+    byte[] expected = new byte[EU_SIZE];
+    try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
+      raf.seek(CLIP_VALUE_OFFSET + EU * EU_SIZE);
+      raf.readFully(expected);
+    }
+    assertArrayEquals(expected, actual);
+  }
+
   @Test
   void testClipVBE() throws Exception {
     File f = new File(ClassLoader.getSystemResource("mxf-files/iab.mxf").toURI());
