@@ -32,6 +32,7 @@ package com.sandflow.smpte.mxf;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -1072,6 +1073,137 @@ class StreamingWriterTest {
     /* compare file to reference */
 
     TestUtils.compareToReference(of, outFN + ".json");
+  }
+
+  /*
+   * A zero-length clip is permitted, e.g. an empty Timed Events Resource that
+   * nevertheless spans the duration of the track
+   */
+  @Test
+  void testZeroLengthClip(TestInfo testInfo) throws Exception {
+    final DeterministicUIDGenerator uidg = new DeterministicUIDGenerator();
+    final Fraction editRate = Fraction.of(25);
+    final long duration = 250L;
+    final byte trackID = 1;
+    final long BODY_SID = 10;
+    final long INDEX_SID = 11;
+
+    /* create header metadata */
+
+    TimedEventsTextDescriptor d = new TimedEventsTextDescriptor();
+    d.InstanceID = uidg.generate(d);
+    d.ContainerFormat = Labels.MXFGCTimedEventsTextStream;
+    d.SampleRate = editRate;
+    d.TextMIMEType = "application/json";
+    d.TextCharacterEncoding = "UTF-8";
+    d.SubDescriptors = new SubDescriptorStrongReferenceVector();
+
+    OP1aHelper.TrackInfo ti = new OP1aHelper.TrackInfo(
+        trackID,
+        UL.fromURN("urn:smpte:ul:060e2b34.01020101.0d010301.17011001"),
+        d,
+        Labels.DataEssenceTrack,
+        null);
+
+    OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
+        Collections.singletonList(ti),
+        null,
+        editRate,
+        BODY_SID,
+        INDEX_SID,
+        duration);
+
+    OP1aHelper header = new OP1aHelper(eci, TestUtils.makeIdentification(uidg), uidg);
+
+    /* write the file */
+
+    File of = TestUtils.getOutputFile(testInfo.getTestMethod().get().getName() + ".mxf");
+    OutputStream os = new FileOutputStream(of);
+
+    StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null, uidg);
+    var gc = sw.addSingleElementGC(BODY_SID, INDEX_SID, duration);
+
+    sw.start();
+    sw.startPartition(gc);
+    gc.firstAndOnlyElement(header.getElementKey(trackID), 0);
+    sw.finish();
+    os.close();
+
+    assertTrue(sw.isDone());
+  }
+
+  /*
+   * A zero-length generic stream element is permitted, e.g. an empty ancillary
+   * resource
+   */
+  @Test
+  void testZeroLengthGSElement(TestInfo testInfo) throws Exception {
+    final DeterministicUIDGenerator uidg = new DeterministicUIDGenerator();
+    final Fraction editRate = Fraction.of(25);
+    final long duration = 250L;
+    final byte trackID = 1;
+    final long BODY_SID = 10;
+    final long INDEX_SID = 11;
+    final long GS_SID = 12;
+    final UL gsElementKey = UL.fromURN("urn:smpte:ul:060e2b34.0101010c.0d010509.01000000");
+    final byte[] timedEvents = "{\"editRate\": [25, 1], \"events\": []}".getBytes(StandardCharsets.UTF_8);
+
+    /* create header metadata */
+
+    TimedEventsTextDescriptor d = new TimedEventsTextDescriptor();
+    d.InstanceID = uidg.generate(d);
+    d.ContainerFormat = Labels.MXFGCTimedEventsTextStream;
+    d.SampleRate = editRate;
+    d.TextMIMEType = "application/json";
+    d.TextCharacterEncoding = "UTF-8";
+    d.SubDescriptors = new SubDescriptorStrongReferenceVector();
+
+    TimedEventsAncillaryResourceSubDescriptor sd = new TimedEventsAncillaryResourceSubDescriptor();
+    sd.InstanceID = uidg.generate(sd);
+    sd.TimedEventsAncillaryResourceID = "empty.png";
+    sd.TimedEventsAncillaryResourceMIMEType = "image/png";
+    sd.TimedEventsAncillaryResourceStreamID = GS_SID;
+    d.SubDescriptors.add(sd);
+
+    OP1aHelper.TrackInfo ti = new OP1aHelper.TrackInfo(
+        trackID,
+        UL.fromURN("urn:smpte:ul:060e2b34.01020101.0d010301.17011001"),
+        d,
+        Labels.DataEssenceTrack,
+        null);
+
+    OP1aHelper.EssenceContainerInfo eci = new OP1aHelper.EssenceContainerInfo(
+        Collections.singletonList(ti),
+        null,
+        editRate,
+        BODY_SID,
+        INDEX_SID,
+        duration);
+
+    OP1aHelper header = new OP1aHelper(eci, TestUtils.makeIdentification(uidg), uidg);
+
+    /* write the file */
+
+    File of = TestUtils.getOutputFile(testInfo.getTestMethod().get().getName() + ".mxf");
+    OutputStream os = new FileOutputStream(of);
+
+    StreamingWriter sw = new StreamingWriter(os, header.getPreface(), null, uidg);
+    var gc = sw.addSingleElementGC(BODY_SID, INDEX_SID, duration);
+    GSWriter gs = sw.addGenericStream(GS_SID);
+
+    sw.start();
+
+    sw.startPartition(gc);
+    gc.firstAndOnlyElement(header.getElementKey(trackID), timedEvents.length);
+    gc.write(timedEvents);
+
+    sw.startPartition(gs);
+    gs.nextElement(gsElementKey, 0);
+
+    sw.finish();
+    os.close();
+
+    assertTrue(sw.isDone());
   }
 
   private static byte[] parseHex(String hex) {

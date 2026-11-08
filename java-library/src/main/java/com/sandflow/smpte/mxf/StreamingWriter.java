@@ -127,7 +127,8 @@ public class StreamingWriter {
         throw new IllegalStateException("ContainerWriter is not in READY state");
       }
       this.bytesToWrite = bytesToWrite;
-      this.state = State.WRITING;
+      /* a zero-length element is complete as soon as its key and length are written */
+      this.state = bytesToWrite == 0 ? State.READY : State.WRITING;
     }
 
     abstract byte[] drainIndexSegments() throws IOException, MXFException;
