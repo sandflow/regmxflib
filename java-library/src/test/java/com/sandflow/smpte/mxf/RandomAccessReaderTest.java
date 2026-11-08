@@ -33,9 +33,9 @@ package com.sandflow.smpte.mxf;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.RandomAccessFile;
 
@@ -241,6 +241,29 @@ class RandomAccessReaderTest {
     assertEquals(81, gsr.getElementLength());
     /* the ancillary resource is a placeholder text file */
     assertArrayEquals("This is pretending".getBytes(), gsr.readNBytes(18));
+    gsr.close();
+  }
+
+  /*
+   * A Generic Stream must be selected using seek() before it can be accessed
+   */
+  @Test
+  void testGenericStreamReaderRequiresSeek() throws Exception {
+    File f = new File(ClassLoader.getSystemResource("mxf-files/timed_events.mxf").toURI());
+    FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
+
+    RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
+
+    GenericStreamReader gsr = new GenericStreamReader(fi, rais);
+    assertThrows(IllegalStateException.class, gsr::getElementKey);
+    assertThrows(IllegalStateException.class, gsr::getElementLength);
+    assertThrows(IllegalStateException.class, gsr::getRemainingElementBytes);
+    assertThrows(IllegalStateException.class, () -> gsr.read());
+    assertThrows(IllegalStateException.class, () -> gsr.read(new byte[16]));
+    assertThrows(IllegalStateException.class, () -> gsr.skip(1));
+
+    gsr.seek(12);
+    assertEquals(81, gsr.getElementLength());
     gsr.close();
   }
 

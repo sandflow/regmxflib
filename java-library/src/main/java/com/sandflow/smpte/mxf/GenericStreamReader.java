@@ -66,31 +66,43 @@ public class GenericStreamReader extends InputStream {
     this.source = source;
   }
 
+  private void isReady() {
+    if (this.elementKey == null) {
+      throw new IllegalStateException("seek() must be called before accessing the Generic Stream");
+    }
+  }
+
   /**
    * Gets the key of the Generic Stream element.
-   * 
+   *
    * @return The element key.
+   * @throws IllegalStateException No Generic Stream selected
    */
   public AUID getElementKey() {
+    isReady();
     return this.elementKey;
   }
 
   /**
    * Gets the total length of the Generic Stream element's value.
-   * 
+   *
    * @return The element length in bytes.
+   * @throws IllegalStateException No Generic Stream selected
    */
   public long getElementLength() {
+    isReady();
     return this.elementLength;
   }
 
   /**
    * Gets the number of bytes remaining in the Generic Stream element from
    * the current position.
-   * 
+   *
    * @return The number of remaining bytes.
+   * @throws IllegalStateException No Generic Stream selected
    */
   public long getRemainingElementBytes() {
+    isReady();
     return this.remainingElementBytes;
   }
 
@@ -118,10 +130,12 @@ public class GenericStreamReader extends InputStream {
    * Reads the next byte of data from the input stream.
    * 
    * @return The next byte of data, or -1 if the end of the stream is reached.
-   * @throws IOException If an I/O error occurs.
+   * @throws IOException           If an I/O error occurs.
+   * @throws IllegalStateException No Generic Stream selected
    */
   @Override
   public int read() throws IOException {
+    isReady();
     if (this.remainingElementBytes == 0)
       return -1;
     int r = source.read();
@@ -139,10 +153,12 @@ public class GenericStreamReader extends InputStream {
    * @param len The maximum number of bytes to read.
    * @return The total number of bytes read into the buffer, or -1 if there is
    *         no more data because the end of the stream has been reached.
-   * @throws IOException If an I/O error occurs.
+   * @throws IOException           If an I/O error occurs.
+   * @throws IllegalStateException No Generic Stream selected
    */
   @Override
   public int read(byte[] b, int off, int len) throws IOException {
+    isReady();
     if (len == 0)
       return 0;
     if (this.remainingElementBytes <= 0)
@@ -158,10 +174,12 @@ public class GenericStreamReader extends InputStream {
    * 
    * @param n The number of bytes to be skipped.
    * @return The actual number of bytes skipped.
-   * @throws IOException If an I/O error occurs.
+   * @throws IOException           If an I/O error occurs.
+   * @throws IllegalStateException No Generic Stream selected
    */
   @Override
   public long skip(long n) throws IOException {
+    isReady();
     if (n <= 0 || this.remainingElementBytes <= 0)
       return 0;
     /* do not skip past the end of the element */
