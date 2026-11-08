@@ -172,6 +172,37 @@ class StreamingReaderTest {
   }
 
   /*
+   * Bulk reads and skips must not go past the end of the element
+   */
+  @Test
+  void testReadPastElementEnd() throws Exception {
+    InputStream is = ClassLoader.getSystemResourceAsStream("mxf-files/timed_events.mxf");
+    assertNotNull(is);
+
+    new StreamingFileInfo(is, null);
+    StreamingReader sr = new StreamingReader(is, null);
+
+    /* Timed Events Resource */
+
+    assertTrue(sr.nextElement());
+    assertEquals(840, sr.readAllBytes().length);
+    assertEquals(-1, sr.read());
+    assertEquals(0, sr.skip(1));
+
+    /* Timed Events Ancillary Resource, in a generic stream */
+
+    assertTrue(sr.nextElement());
+    assertEquals(12L, sr.getSID());
+    assertEquals(81, sr.readAllBytes().length);
+    assertEquals(-1, sr.read(new byte[16]));
+    assertEquals(0, sr.skip(Long.MAX_VALUE));
+
+    assertFalse(sr.nextElement());
+
+    sr.close();
+  }
+
+  /*
    * SMPTE ST 2067-204 ADM audio track file, from the Photon test suite
    * (https://github.com/wruppelx/photon)
    */

@@ -45,6 +45,8 @@ public class ClipReader extends InputStream {
   final AUID elementKey;
   final long elementLength;
   final long essenceOffset;
+  /* size of the key and length of the clip */
+  final long klLength;
   final RandomAccessFileInfo info;
   final RandomAccessInputSource source;
 
@@ -67,6 +69,7 @@ public class ClipReader extends InputStream {
     MXFDataInput mis = new MXFDataInput(this.source);
     this.elementKey = mis.readAUID();
     this.elementLength = mis.readBERLength();
+    this.klLength = this.source.position() - clipStartPosition;
 
     /*
      * ECXEPTION: Some versions of ASDCPLib index from the start of the K of the
@@ -78,7 +81,7 @@ public class ClipReader extends InputStream {
         && this.info.euToECPosition(0) != 0) {
       this.essenceOffset = 0;
     } else {
-      this.essenceOffset = this.source.position() - clipStartPosition;
+      this.essenceOffset = this.klLength;
     }
 
     this.seek(0);
@@ -131,7 +134,8 @@ public class ClipReader extends InputStream {
     long ecPosition = this.info.euToECPosition(euPosition);
     long filePosition = this.info.ecToFilePositions(ecPosition) + this.essenceOffset;
     this.source.position(filePosition);
-    this.remainingElementBytes = this.elementLength - ecPosition;
+    /* ecPosition + essenceOffset is relative to the start of the K of the clip */
+    this.remainingElementBytes = this.elementLength - (ecPosition + this.essenceOffset - this.klLength);
   }
 
   /**
@@ -163,9 +167,12 @@ public class ClipReader extends InputStream {
    */
   @Override
   public int read(byte[] b, int off, int len) throws IOException {
-    if (this.remainingElementBytes == 0)
+    if (len == 0)
+      return 0;
+    if (this.remainingElementBytes <= 0)
       return -1;
-    int r = source.read(b, off, len);
+    /* do not read past the end of the element */
+    int r = source.read(b, off, (int) Math.min(len, this.remainingElementBytes));
     this.remainingElementBytes = r == -1 ? 0 : this.remainingElementBytes - r;
     return r;
   }
@@ -179,9 +186,10 @@ public class ClipReader extends InputStream {
    */
   @Override
   public long skip(long n) throws IOException {
-    if (this.remainingElementBytes == 0)
-      return -1;
-    long s = this.source.skip(n);
+    if (n <= 0 || this.remainingElementBytes <= 0)
+      return 0;
+    /* do not skip past the end of the element */
+    long s = Math.max(0, this.source.skip(Math.min(n, this.remainingElementBytes)));
     this.remainingElementBytes = this.remainingElementBytes - s;
     return s;
   }
