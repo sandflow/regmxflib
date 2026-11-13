@@ -51,6 +51,17 @@ foreach( UNIT_TEST_PATH ${UNIT_TESTS} )
 	add_test(NAME ${UNIT_TEST_NAME} COMMAND ${UNIT_TEST_NAME} WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 endforeach( UNIT_TEST_PATH ${UNIT_TESTS} )
 
+# RegXMLDump must run to completion without error on each test MXF file
+
+file( GLOB REGXMLDUMP_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../test-resources/mxf-files/*.mxf" )
+
+foreach( MXF_PATH ${REGXMLDUMP_TEST_FILES} )
+	get_filename_component(MXF_NAME ${MXF_PATH} NAME)
+	add_test(NAME RegXMLDump_${MXF_NAME}
+		COMMAND RegXMLDump -d resources/regxml-dicts -i resources/mxf-files/${MXF_NAME}
+		WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+endforeach( MXF_PATH ${REGXMLDUMP_TEST_FILES} )
+
 #install
 
 install(DIRECTORY src/main/cpp/com DESTINATION include FILES_MATCHING PATTERN "*.h")
