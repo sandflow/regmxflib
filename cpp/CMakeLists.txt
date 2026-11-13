@@ -22,6 +22,13 @@ foreach(source IN LISTS SRC_FILES)
 endforeach()
 
 
+#tools
+
+add_executable(RegXMLDump src/tools/RegXMLDump.cpp)
+set_target_properties(RegXMLDump PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+target_link_libraries(RegXMLDump ${PROJECT_NAME} ${XercesC_LIBRARY})
+
+
 #unit tests
 
 enable_testing()
