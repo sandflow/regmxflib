@@ -1096,6 +1096,7 @@ class StreamingWriterTest {
     d.SampleRate = editRate;
     d.TextMIMEType = "application/json";
     d.TextCharacterEncoding = "UTF-8";
+    d.EventSchemeURIs = "http://www.smpte-ra.org/ns/2067-206/2023/simple-scheme";
     d.SubDescriptors = new SubDescriptorStrongReferenceVector();
 
     OP1aHelper.TrackInfo ti = new OP1aHelper.TrackInfo(
