@@ -59,10 +59,13 @@ namespace rxml {
 		return false;
 	}
 
-	bool _findPrimerPack(std::istream &is, PrimerPack& pp) {
+	bool _findPrimerPack(CountingStreamBuf &csb, PrimerPack& pp) {
+		std::istream is(&csb);
 		MemoryTriplet t;
 
 		do {
+
+			csb.resetCount();
 
 			t.fromStream(is);
 
@@ -185,18 +188,13 @@ namespace rxml {
 		}
 
 
-		/* start counting header metadata bytes */
-
-		csb.resetCount();
-
-		/* look for the primer pack */
-
+		/* look for the primer pack, and start counting header metadata bytes */
 
 		PrimerPack primer;
 
 		try {
 
-			if (!_findPrimerPack(cis, primer)) {
+			if (!_findPrimerPack(csb, primer)) {
 
 				ev->fatal(MissingPrimerPackError());
 
