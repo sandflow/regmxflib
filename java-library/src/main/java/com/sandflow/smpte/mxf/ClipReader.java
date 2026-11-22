@@ -116,9 +116,10 @@ public class ClipReader extends InputStream {
   }
 
   /**
-   * Gets the total number of Edit Units in the essence container.
+   * Gets the number of Edit Units in the essence container.
    * 
-   * @return The count of Edit Units.
+   * @return The count of Edit Units, or 0 if unknown.
+   * @see RandomAccessFileInfo#getEUCount()
    */
   public long getEUCount() {
     return this.info.getEUCount();
@@ -129,8 +130,15 @@ public class ClipReader extends InputStream {
    * 
    * @param euPosition The zero-based index of the Edit Unit to seek to.
    * @throws IOException If an I/O error occurs.
+   * @throws IllegalArgumentException If the Edit Unit is outside of the essence
+   *                                  container (see {@link #getEUCount()}).
    */
   public void seek(long euPosition) throws IOException {
+    long euCount = this.info.getEUCount();
+    if (euPosition < 0 || (euCount > 0 && euPosition >= euCount)) {
+      throw new IllegalArgumentException(String.format(
+          "Edit Unit %d is outside of the essence container, which contains %d Edit Units", euPosition, euCount));
+    }
     long ecPosition = this.info.euToECPosition(euPosition);
     long filePosition = this.info.ecToFilePositions(ecPosition) + this.essenceOffset;
     this.source.position(filePosition);

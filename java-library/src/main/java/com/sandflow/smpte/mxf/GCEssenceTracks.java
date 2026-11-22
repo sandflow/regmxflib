@@ -41,6 +41,8 @@ import com.sandflow.smpte.mxf.types.FileDescriptor;
 import com.sandflow.smpte.mxf.types.MultipleDescriptor;
 import com.sandflow.smpte.mxf.types.Package;
 import com.sandflow.smpte.mxf.types.Preface;
+import com.sandflow.smpte.mxf.types.Sequence;
+import com.sandflow.smpte.mxf.types.SourceClip;
 import com.sandflow.smpte.mxf.types.SourcePackage;
 import com.sandflow.smpte.mxf.types.Track;
 import com.sandflow.smpte.util.AUID;
@@ -87,6 +89,79 @@ public class GCEssenceTracks {
   private final List<TrackInfo> tracks = new ArrayList<>();
 
   /**
+   * Returns the File Package that describes an Essence Container.
+   *
+   * @param preface Preface of the header metadata
+   * @param ed      Essence Data set of the Essence Container
+   * @return The File Package, or null if it cannot be found
+   */
+  static SourcePackage findFilePackage(Preface preface, EssenceData ed) {
+    if (preface == null || preface.ContentStorageObject == null || preface.ContentStorageObject.Packages == null
+        || ed == null || ed.LinkedPackageID == null) {
+      return null;
+    }
+
+    for (Package p : preface.ContentStorageObject.Packages) {
+      if (p instanceof SourcePackage && ed.LinkedPackageID.equals(p.PackageID)) {
+        return (SourcePackage) p;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Returns the File Descriptors of a File Package, including those contained in
+   * a Multiple Descriptor.
+   *
+   * @param fp File Package
+   * @return The File Descriptors, which is empty if there are none
+   */
+  static List<FileDescriptor> getFileDescriptors(SourcePackage fp) {
+    if (fp.EssenceDescription instanceof MultipleDescriptor) {
+      List<FileDescriptor> fds = ((MultipleDescriptor) fp.EssenceDescription).FileDescriptors;
+      return fds == null ? Collections.emptyList() : fds;
+    }
+
+    if (fp.EssenceDescription instanceof FileDescriptor) {
+      return Collections.singletonList((FileDescriptor) fp.EssenceDescription);
+    }
+
+    return Collections.emptyList();
+  }
+
+  /**
+   * Computes the total duration of the Source Clips of a track segment.
+   *
+   * @param segment Track segment, i.e. a Source Clip or a Sequence
+   * @return The total duration of the Source Clips, or null if unknown
+   */
+  static Long computeSourceClipDuration(Object segment) {
+    if (segment instanceof SourceClip) {
+      return ((SourceClip) segment).ComponentLength;
+    }
+
+    if (!(segment instanceof Sequence) || ((Sequence) segment).ComponentObjects == null) {
+      return null;
+    }
+
+    long duration = 0;
+    boolean found = false;
+    for (var c : ((Sequence) segment).ComponentObjects) {
+      if (!(c instanceof SourceClip)) {
+        continue;
+      }
+      if (c.ComponentLength == null || c.ComponentLength < 0) {
+        return null;
+      }
+      duration += c.ComponentLength;
+      found = true;
+    }
+
+    return found ? duration : null;
+  }
+
+  /**
    * Creates a GCEssenceTracks instance by parsing the header metadata.
    * 
    * @param preface The Preface set of the MXF file.
@@ -96,26 +171,14 @@ public class GCEssenceTracks {
     for (EssenceData ed : preface.ContentStorageObject.EssenceDataObjects) {
 
       /* retrieve the File Package */
-      SourcePackage fp = null;
-      for (Package p : preface.ContentStorageObject.Packages) {
-        if (p.PackageID.equals(ed.LinkedPackageID)) {
-          fp = (SourcePackage) p;
-          break;
-        }
-      }
+      SourcePackage fp = findFilePackage(preface, ed);
 
       if (fp == null) {
         throw new IllegalArgumentException(String.format("Cannot find Package ID %s corresponding to Container SID %s",
             ed.LinkedPackageID, ed.EssenceStreamID));
       }
 
-      /* do we have a multi-descriptor */
-      List<FileDescriptor> fds;
-      if (fp.EssenceDescription instanceof MultipleDescriptor) {
-        fds = ((MultipleDescriptor) fp.EssenceDescription).FileDescriptors;
-      } else {
-        fds = Collections.singletonList((FileDescriptor) fp.EssenceDescription);
-      }
+      List<FileDescriptor> fds = getFileDescriptors(fp);
 
       if (fds.isEmpty()) {
         throw new IllegalArgumentException(
