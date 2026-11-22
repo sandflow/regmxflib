@@ -51,7 +51,14 @@ jobs:
           -v $GITHUB_WORKSPACE:/workspace \
           -w /tmp \
           regmxflib-ci-env:latest \
-          bash /workspace/java-library/src/test/sh/compat.sh
+          bash /workspace/java-library/src/test/sh/compat.sh \
+            /workspace/java-library/target/test-output \
+            /workspace/java-library/target/compat-input
+
+    - name: Read third-party files with regmxflib
+      run: >-
+        mvn test -pl java-library -am -P read-smoke-test -DskipTests
+        -DreadSmokeTest.dir=${{ github.workspace }}/java-library/target/compat-input
 
   cpp_build:
     name: Test C++

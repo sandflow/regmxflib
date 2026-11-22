@@ -117,7 +117,7 @@ public class StreamingFileInfo {
 
       @Override
       public void handleEvent(Event evt) throws MXFException {
-        evthandler.handle(evt);
+        MXFException.handle(evthandler, evt);
       }
     };
 

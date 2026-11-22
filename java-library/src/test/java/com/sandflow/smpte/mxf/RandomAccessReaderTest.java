@@ -46,6 +46,7 @@ import com.sandflow.smpte.mxf.types.IABEssenceDescriptor;
 import com.sandflow.smpte.mxf.types.RGBADescriptor;
 import com.sandflow.smpte.mxf.types.TimedEventsAncillaryResourceSubDescriptor;
 import com.sandflow.smpte.mxf.types.TimedEventsTextDescriptor;
+import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.FileRandomAccessInputSource;
 import com.sandflow.smpte.util.UL;
 
@@ -152,6 +153,96 @@ class RandomAccessReaderTest {
       raf.readFully(expected);
     }
     assertArrayEquals(expected, actual);
+  }
+
+  /*
+   * Frame-wrapped DV whose CBE index table segment has IndexDuration = 0 and
+   * whose File Descriptor has no ContainerDuration, so the number of edit units
+   * comes from the Source Clip. Each edit unit consists of a system item, the
+   * picture element and fill items.
+   *
+   * Generated using ffmpeg 4.4:
+   *
+   * ffmpeg -f lavfi -i "testsrc=size=720x576:rate=25:duration=0.2" -pix_fmt yuv420p
+   *   -c:v dvvideo -f mxf cbe-frame-unspecified-duration.mxf
+   */
+  @Test
+  void testFrameCBEUnspecifiedDuration() throws Exception {
+    File f = new File(ClassLoader.getSystemResource("mxf-files/cbe-frame-unspecified-duration.mxf").toURI());
+    FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
+
+    RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
+    assertEquals(5, fi.getEUCount());
+
+    final AUID systemMetadataPackKey = AUID.fromURN("urn:smpte:ul:060e2b34.02050101.0d010301.04010100");
+
+    FrameReader fr = new FrameReader(fi, rais);
+    assertEquals(5, fr.getSize());
+    for (int i = 0; i < fr.getSize(); i++) {
+      fr.seek(i);
+      /* each edit unit starts with the system item */
+      assertTrue(fr.nextElement());
+      assertEquals(systemMetadataPackKey, fr.getElementKey());
+    }
+    assertThrows(IllegalArgumentException.class, () -> fr.seek(5));
+    assertThrows(IllegalArgumentException.class, () -> fr.seek(-1));
+    fr.close();
+  }
+
+  /*
+   * Clip-wrapped 24-bit mono PCM OP-Atom file, whose CBE
+   * index table segment has IndexDuration = 0.
+   *
+   * Generated using ffmpeg 4.4, which pads the 0.1 s source to 3 frames at 25 fps,
+   * i.e. 5760 samples:
+   *
+   * ffmpeg -f lavfi -i "sine=sample_rate=48000:duration=0.1" -c:a pcm_s24le
+   *   -mxf_audio_edit_rate 25 -f mxf_opatom cbe-clip-unspecified-duration.mxf
+   */
+  @Test
+  void testClipCBEUnspecifiedDuration() throws Exception {
+    File f = new File(ClassLoader.getSystemResource("mxf-files/cbe-clip-unspecified-duration.mxf").toURI());
+    FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
+
+    RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
+    assertEquals(5760, fi.getEUCount());
+
+    ClipReader cr = new ClipReader(fi, rais);
+    assertEquals(5760, cr.getEUCount());
+    assertEquals(5760 * 3, cr.getElementLength());
+    cr.seek(5759);
+    assertEquals(3, cr.getRemainingElementBytes());
+    assertEquals(3, cr.readNBytes(3).length);
+    assertThrows(IllegalArgumentException.class, () -> cr.seek(5760));
+    cr.close();
+  }
+
+  /*
+   * Clip-wrapped 24-bit mono PCM consisting of a single sample, whose CBE index
+   * table segment has IndexDuration = 0. The clip value is exactly one edit
+   * unit long and is followed by a fill item.
+   *
+   * Generated using ffmpeg 4.4:
+   *
+   * ffmpeg -f lavfi -i "sine=sample_rate=48000:duration=1" -af atrim=end_sample=1
+   *   -c:a pcm_s24le -strict unofficial -mxf_audio_edit_rate 48000 -f mxf_opatom
+   *   cbe-clip-single-eu-unspecified-duration.mxf
+   */
+  @Test
+  void testClipCBESingleEditUnitUnspecifiedDuration() throws Exception {
+    File f = new File(ClassLoader.getSystemResource("mxf-files/cbe-clip-single-eu-unspecified-duration.mxf").toURI());
+    FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
+
+    RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
+    assertEquals(1, fi.getEUCount());
+
+    ClipReader cr = new ClipReader(fi, rais);
+    assertEquals(1, cr.getEUCount());
+    assertEquals(3, cr.getElementLength());
+    cr.seek(0);
+    assertEquals(3, cr.readNBytes(3).length);
+    assertThrows(IllegalArgumentException.class, () -> cr.seek(1));
+    cr.close();
   }
 
   @Test
