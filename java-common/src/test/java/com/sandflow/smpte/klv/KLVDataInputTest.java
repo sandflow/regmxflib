@@ -119,6 +119,36 @@ class KLVDataInputTest {
     /* Error: EOF */
     KLVDataInput kisEOF = new KLVDataInput(new ByteArrayInputStream(new byte[0]));
     assertThrows(EOFException.class, kisEOF::readBERLength);
+
+    /* Error: length of length uses the high bits of the first byte (0x90 = 16 bytes) */
+    byte[] tooLongHighBits = { (byte) 0x90 };
+    KLVDataInput kisHighBits = new KLVDataInput(new ByteArrayInputStream(tooLongHighBits));
+    KLVException highBitsException = assertThrows(KLVException.class, kisHighBits::readBERLength);
+    assertEquals(KLVException.MAX_BER_SIZE_EXCEEED, highBitsException.getMessage());
+  }
+
+  @Test
+  void testReadPastEOF() throws Exception {
+    /* single byte */
+    assertThrows(EOFException.class, new KLVDataInput(new ByteArrayInputStream(new byte[0]))::readUnsignedByte);
+    assertThrows(EOFException.class, new KLVDataInput(new ByteArrayInputStream(new byte[0]))::readByte);
+
+    /* truncated multi-byte values, in both byte orders */
+    for (ByteOrder bo : ByteOrder.values()) {
+      assertThrows(EOFException.class, new KLVDataInput(new ByteArrayInputStream(new byte[1]), bo)::readShort);
+      assertThrows(EOFException.class,
+          new KLVDataInput(new ByteArrayInputStream(new byte[1]), bo)::readUnsignedShort);
+      assertThrows(EOFException.class, new KLVDataInput(new ByteArrayInputStream(new byte[3]), bo)::readInt);
+      assertThrows(EOFException.class,
+          new KLVDataInput(new ByteArrayInputStream(new byte[3]), bo)::readUnsignedInt);
+      assertThrows(EOFException.class, new KLVDataInput(new ByteArrayInputStream(new byte[7]), bo)::readLong);
+    }
+
+    /* the read count only includes bytes actually read */
+    KLVDataInput kis = new KLVDataInput(new ByteArrayInputStream(new byte[1]));
+    kis.readUnsignedByte();
+    assertEquals(-1, kis.read());
+    assertEquals(1, kis.getReadCount());
   }
 
   @Test

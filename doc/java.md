@@ -37,7 +37,13 @@ The following snippet illustrates the creation of an `RGBADescriptor` using the 
 
 Both the Java and C++ implementations are tested using the same [test resources](./test-resources).
 
-In addition to unit tests, the library also defines basic compatibility tests at [compat.sh](./java-library/src/test/sh/compat.sh) against popular MXF libraries (FFMPEG, ASDCP and BMX). A [Dockerfile](./Dockerfile) that sets up the test environment is provided.
+In addition to unit tests, the library also defines basic compatibility tests against popular MXF libraries (FFMPEG, ASDCP and BMX), in both directions.
+
+```sh
+mvn test
+docker run --rm -v $PWD:/workspace -w /tmp regmxflib-ci-env:latest bash /workspace/java-library/src/test/sh/compat.sh /workspace/java-library/target/test-output /workspace/java-library/target/compat-input
+mvn test -pl java-library -am -P read-smoke-test -DskipTests -DreadSmokeTest.dir=$PWD/java-library/target/compat-input
+```
 
 
 ### Architecture

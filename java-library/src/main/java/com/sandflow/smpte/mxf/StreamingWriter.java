@@ -1315,7 +1315,7 @@ public class StreamingWriter {
 
       @Override
       public void handleEvent(Event evt) throws MXFException {
-        StreamingWriter.this.evthandler.handle(evt);
+        MXFException.handle(StreamingWriter.this.evthandler, evt);
       }
 
     };

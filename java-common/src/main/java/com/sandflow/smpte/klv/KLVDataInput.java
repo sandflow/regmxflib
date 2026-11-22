@@ -85,7 +85,8 @@ public class KLVDataInput {
 
   public int read() throws IOException {
     int r = this.is.read();
-    this.read++;
+    if (r != -1)
+      this.read++;
     return r;
   }
 
@@ -163,7 +164,7 @@ public class KLVDataInput {
       throw new KLVException("First byte of length field equals 0x80 (non-deterministic length)");
     }
 
-    int bersz = (b & 0x0f);
+    int bersz = (b & 0x7f);
 
     if (bersz > 8) {
       throw new KLVException(MAX_BER_SIZE_EXCEEED);
@@ -254,11 +255,15 @@ public class KLVDataInput {
   }
 
   public final byte readByte() throws IOException {
-    return (byte) this.read();
+    return (byte) this.readUnsignedByte();
   }
 
   public final int readUnsignedByte() throws IOException {
-    return this.read();
+    int r = this.read();
+    if (r < 0) {
+      throw new EOFException();
+    }
+    return r;
   }
 
   public final short readShort() throws IOException {

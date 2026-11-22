@@ -171,7 +171,7 @@ public class MXFDataInput extends KLVDataInput {
     }
     for (int i = 0; i < itemcount; i++) {
       byte[] value = new byte[(int) itemlength];
-      read(value);
+      readFully(value);
       batch.add(converter.apply(value));
     }
     return batch;

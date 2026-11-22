@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -42,13 +43,20 @@ import com.sandflow.smpte.klv.Set;
 import com.sandflow.smpte.klv.Triplet;
 import com.sandflow.smpte.klv.exceptions.KLVException;
 import com.sandflow.smpte.mxf.PartitionPack.Status;
+import com.sandflow.smpte.mxf.types.EssenceData;
+import com.sandflow.smpte.mxf.types.FileDescriptor;
 import com.sandflow.smpte.mxf.types.IndexTableSegment;
 import com.sandflow.smpte.mxf.types.Preface;
+import com.sandflow.smpte.mxf.types.SourcePackage;
+import com.sandflow.smpte.mxf.types.TimelineTrack;
+import com.sandflow.smpte.mxf.types.Track;
 import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.RandomAccessInputSource;
 import com.sandflow.smpte.util.UUID;
 import com.sandflow.util.events.Event;
 import com.sandflow.util.events.EventHandler;
+
+import org.apache.commons.numbers.fraction.Fraction;
 
 /**
  * Parses an MXF file to gather the necessary information for random access to an MXF file.
@@ -92,7 +100,7 @@ public class RandomAccessFileInfo {
         throw new IllegalArgumentException("EditUnitByteCount (cbeSize) must be > 0 for CBE indexing");
       }
 
-      /* IndexDuration of 0 is permitted by ST 377-1 §11.1.9 (unspecified / entire essence container) */
+      /* IndexDuration of 0 is permitted by ST 377-1, 11.1.9 (unspecified / entire essence container) */
       if (length < 0) {
         throw new IllegalArgumentException("IndexDuration (length) must not be negative");
       }
@@ -102,7 +110,7 @@ public class RandomAccessFileInfo {
 
     @Override
     public long getECPosition(long editUnit) {
-      /* length == 0 means the duration is unspecified (ST 377-1 §11.1.9), so only bound-check when known */
+      /* length == 0 means the duration is unspecified (ST 377-1, 11.1.9), so only bound-check when known */
       if (this.length > 0 && editUnit >= this.length) {
         throw new IllegalArgumentException();
       }
@@ -146,9 +154,13 @@ public class RandomAccessFileInfo {
   }
 
   private final StreamingFileInfo basicInfo;
+
+  /* only a single EC is supported */
   private Long ecSID = null;
   private Long ecIndexSID = null;
   private ECIndex euToECPosition;
+  private Fraction indexEditRate;
+  private long euCount;
   private final FilePositionMapper ecToFilePositions = new FilePositionMapper();
   private final EventHandler evthandler;
 
@@ -246,6 +258,28 @@ public class RandomAccessFileInfo {
         continue;
       }
 
+      /* are we in an essence container */
+      if (pp.getBodySID() != 0) {
+
+        if (this.ecSID == null) {
+
+          /* this is the first time we see an essence container, so assume this
+          is the one we are tracking */
+          this.ecSID = pp.getBodySID();
+
+        } else if (!this.ecSID.equals(pp.getBodySID())) {
+
+          /* we ran into a second essence container */
+          MXFException.handle(evthandler, new MXFEvent(
+              MXFEvent.EventCodes.TOO_MANY_ECS,
+              String.format("Partition at offset %d is for essence container BodySID=%d, "
+                  + "but our essence container is for BodySID=%d",
+                  pp.getThisPartition(), pp.getBodySID(), this.ecSID)));
+          continue;
+
+        }
+      }
+
       /* look for header metadata */
       if ((i == 0 || i == rip.getOffsets().size() - 1) &&
           (pp.getStatus() == PartitionPack.Status.CLOSED_COMPLETE
@@ -318,7 +352,7 @@ public class RandomAccessFileInfo {
 
                 @Override
                 public void handleEvent(Event evt) throws MXFException {
-                  evthandler.handle(evt);
+                  MXFException.handle(evthandler, evt);
                 }
               });
 
@@ -328,11 +362,22 @@ public class RandomAccessFileInfo {
                 "Index table segment not found in partition at file offset: " + pp.getThisPartition()));
           }
 
+          /*
+           * the index table can be in a partition that precedes its essence
+           */
+          if (this.ecSID == null) {
+            this.ecSID = its.EssenceStreamID;
+          }
+
           if (!its.EssenceStreamID.equals(this.ecSID) || !its.IndexStreamID.equals(this.ecIndexSID)) {
             MXFException.handle(evthandler, new MXFEvent(
                 MXFEvent.EventCodes.INCONSISTENT_STREAM_ID,
                 String.format("Index table segment at partition %d is for BodySID=%d and IndexSID=%d, but we are tracking BodySID=%d and IndexSID=%d",
                 pp.getThisPartition(), its.EssenceStreamID, its.IndexStreamID, this.ecSID, this.ecIndexSID)));
+          }
+
+          if (this.indexEditRate == null) {
+            this.indexEditRate = its.IndexEditRate;
           }
 
           if (its.EditUnitByteCount != null && its.EditUnitByteCount > 0) {
@@ -348,7 +393,9 @@ public class RandomAccessFileInfo {
                   "A constant-byte-per-element essence container cannot contain more than one index table segment"));
             }
 
-            this.euToECPosition = new CBEClipIndex(its.EditUnitByteCount, its.IndexDuration);
+            /* IndexDuration = 0 means that the duration is unspecified (ST 377-1, 11.1.9) */
+            this.euToECPosition = new CBEClipIndex(its.EditUnitByteCount,
+                its.IndexDuration == null ? 0 : its.IndexDuration);
           } else {
             /* we have a VBE index table */
             VBEIndex vbeIndex = null;
@@ -375,14 +422,9 @@ public class RandomAccessFileInfo {
         }
       }
 
-      /* save the essence container offset */
+      /* are we in our essence container */
       if (pp.getBodySID() != 0) {
-        if (this.ecSID == null) {
-          this.ecSID = pp.getBodySID();
-        } else if (!this.ecSID.equals(pp.getBodySID())) {
-          throw new RuntimeException();
-        }
-
+        /* save the essence container offset */
         this.ecToFilePositions.addPartition(pp.getBodyOffset(), raip.position());
       }
 
@@ -393,6 +435,14 @@ public class RandomAccessFileInfo {
     raip.position(headerMetadataPartition.getThisPartition());
     this.basicInfo = new StreamingFileInfo(raip, evthandler);
 
+    if (this.euToECPosition != null) {
+      this.euCount = this.euToECPosition.length();
+
+      /* the index table does not specify its duration (ST 377-1, 11.1.9) */
+      if (this.euCount == 0) {
+        this.euCount = this.inferEUCount();
+      }
+    }
   }
 
   /**
@@ -459,15 +509,97 @@ public class RandomAccessFileInfo {
   }
 
   /**
-   * Gets the total number of Edit Units in the main Essence Container.
+   * Returns the number of Edit Units in the main Essence Container.
    * 
-   * @return The count of Edit Units.
+   * @return The count of Edit Units, or 0 if unknown.
    */
   public long getEUCount() {
     if (this.euToECPosition == null) {
       throw new IllegalStateException("No index available for the essence container");
     }
-    return this.euToECPosition.length();
+    return this.euCount;
+  }
+
+  /*
+   * Infers the number of Edit Units in the Essence Container from the smallest
+   * of (a) the ContainerDuration of the File Descriptors and (b) the duration
+   * of the Source Clips of the File Package tracks. Values that are missing or
+   * not positive are ignored. Returns 0 if unknown.
+   */
+  private long inferEUCount() throws MXFException {
+    /*
+     * find the File Package that describes the main Essence Container, i.e. the
+     * package linked to the Essence Data set whose EssenceStreamID is the BodySID
+     * of the Essence Container
+     */
+    SourcePackage fp = null;
+    Preface preface = this.getPreface();
+    if (this.ecSID != null && preface != null && preface.ContentStorageObject != null
+        && preface.ContentStorageObject.EssenceDataObjects != null) {
+      for (EssenceData ed : preface.ContentStorageObject.EssenceDataObjects) {
+        if (ed != null && this.ecSID.equals(ed.EssenceStreamID)) {
+          fp = GCEssenceTracks.findFilePackage(preface, ed);
+          break;
+        }
+      }
+    }
+
+    if (fp == null) {
+      return 0;
+    }
+
+    /* durations of the Essence Container, in Edit Units */
+    List<Long> durations = new ArrayList<>();
+
+    for (FileDescriptor fd : GCEssenceTracks.getFileDescriptors(fp)) {
+      if (fd == null) {
+        continue;
+      }
+
+      /* ContainerDuration is expressed at the Sample Rate of the File Descriptor */
+      if (fd.EssenceLength != null && fd.EssenceLength > 0
+          && fd.SampleRate != null && fd.SampleRate.getNumerator() != 0
+          && this.indexEditRate != null && this.indexEditRate.getNumerator() != 0) {
+        /* ContainerDuration * IndexEditRate / SampleRate, rounded down */
+        try {
+          Fraction ratio = this.indexEditRate.divide(fd.SampleRate);
+          durations.add(Math.multiplyExact(fd.EssenceLength, (long) ratio.getNumerator()) / ratio.getDenominator());
+        } catch (ArithmeticException e) {
+          /* ignore implausibly large values */
+        }
+      }
+
+      if (fp.PackageTracks == null) {
+        continue;
+      }
+
+      for (Track t : fp.PackageTracks) {
+        if (t == null || t.TrackID == null || !t.TrackID.equals(fd.LinkedTrackID)) {
+          continue;
+        }
+
+        /*
+         * the Edit Rate of the Essence Tracks is the Index Edit Rate (ST 377-1), so
+         * the Source Clip duration does not need to be converted
+         */
+        if (t instanceof TimelineTrack && ((TimelineTrack) t).EditRate != null && this.indexEditRate != null
+            && !((TimelineTrack) t).EditRate.equals(this.indexEditRate)) {
+          MXFException.handle(this.evthandler, new MXFEvent(
+              MXFEvent.EventCodes.INCONSISTENT_HEADER,
+              String.format("Edit Rate %s of File Package track %d differs from Index Edit Rate %s, "
+                  + "so its duration is ignored",
+                  ((TimelineTrack) t).EditRate, t.TrackID, this.indexEditRate)));
+          continue;
+        }
+
+        Long duration = GCEssenceTracks.computeSourceClipDuration(t.TrackSegment);
+        if (duration != null && duration > 0) {
+          durations.add(duration);
+        }
+      }
+    }
+
+    return durations.stream().mapToLong(Long::longValue).min().orElse(0);
   }
 
 }

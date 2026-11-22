@@ -28,8 +28,13 @@ package com.sandflow.smpte.mxf;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.ByteArrayInputStream;
+import java.io.EOFException;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -118,5 +123,52 @@ class MXFDataInputTest {
     Iterator<Integer> it = items.iterator();
     assertEquals(1, it.next());
     assertEquals(2, it.next());
+  }
+
+  /*
+   * Batch items must be read in full even if the underlying stream returns
+   * fewer bytes than requested
+   */
+  @Test
+  void testReadBatchShortReads() throws Exception {
+
+    byte[] data = {
+        0, 0, 0, 2,
+        0, 0, 0, 4,
+        0, 0, 0, 1,
+        0, 0, 0, 2
+    };
+
+    /* returns at most one byte per read(byte[], int, int) */
+    InputStream oneByteAtATime = new FilterInputStream(new ByteArrayInputStream(data)) {
+      @Override
+      public int read(byte[] b, int off, int len) throws IOException {
+        return super.read(b, off, Math.min(len, 1));
+      }
+    };
+
+    MXFDataInput mis = new MXFDataInput(oneByteAtATime);
+    Collection<Integer> items = mis.readBatch(b -> {
+      return ((b[0] & 0xFF) << 24) | ((b[1] & 0xFF) << 16) | ((b[2] & 0xFF) << 8) | (b[3] & 0xFF);
+    });
+
+    assertEquals(2, items.size());
+    Iterator<Integer> it = items.iterator();
+    assertEquals(1, it.next());
+    assertEquals(2, it.next());
+  }
+
+  @Test
+  void testReadBatchTruncated() throws Exception {
+
+    byte[] data = {
+        0, 0, 0, 2,
+        0, 0, 0, 4,
+        0, 0, 0, 1,
+        0, 0
+    };
+
+    MXFDataInput mis = new MXFDataInput(new ByteArrayInputStream(data));
+    assertThrows(EOFException.class, () -> mis.readBatch(b -> b));
   }
 }

@@ -46,9 +46,9 @@ public class IndexEntryArray extends ArrayList<IndexEntry> {
 
   public static IndexEntryArray fromStream(MXFDataInput is, MXFInputContext ctx, short nsl, short npe)
       throws IOException {
-    int itemcount = (int) (is.readInt() & 0xfffffffL);
+    int itemcount = (int) (is.readInt() & 0xffffffffL);
     @SuppressWarnings("unused")
-    int itemlength = (int) (is.readInt() & 0xfffffffL);
+    int itemlength = (int) (is.readInt() & 0xffffffffL);
 
     var items = new IndexEntryArray();
 

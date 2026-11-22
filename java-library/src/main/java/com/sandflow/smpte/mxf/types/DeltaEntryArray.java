@@ -44,9 +44,9 @@ public class DeltaEntryArray extends ArrayList<DeltaEntry> {
   }
 
   public static DeltaEntryArray fromStream(MXFDataInput is, MXFInputContext ctx) throws IOException {
-    int itemcount = (int) (is.readInt() & 0xfffffffL);
+    int itemcount = (int) (is.readInt() & 0xffffffffL);
     @SuppressWarnings("unused")
-    int itemlength = (int) (is.readInt() & 0xfffffffL);
+    int itemlength = (int) (is.readInt() & 0xffffffffL);
 
     var items = new DeltaEntryArray();
 

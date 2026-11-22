@@ -1509,8 +1509,8 @@ public class FragmentBuilder {
 
             DataInputStream dis = new DataInputStream(value.stream());
 
-            long itemcount = dis.readInt() & 0xfffffffL;
-            long itemlength = dis.readInt() & 0xfffffffL;
+            long itemcount = dis.readInt() & 0xffffffffL;
+            long itemlength = dis.readInt() & 0xffffffffL;
 
             applyCoreRule5_4(element, value, typedef, (int) itemcount);
 
@@ -1746,8 +1746,8 @@ public class FragmentBuilder {
 
                 } else {
 
-                    long itemcount = dis.readInt() & 0xfffffffL;
-                    long itemlength = dis.readInt() & 0xfffffffL;
+                    long itemcount = dis.readInt() & 0xffffffffL;
+                    long itemlength = dis.readInt() & 0xffffffffL;
 
                     applyCoreRule5_4(element, value, typedef, (int) itemcount);
                 }

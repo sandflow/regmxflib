@@ -33,9 +33,9 @@ package com.sandflow.smpte.mxf;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.RandomAccessFile;
 
@@ -46,6 +46,7 @@ import com.sandflow.smpte.mxf.types.IABEssenceDescriptor;
 import com.sandflow.smpte.mxf.types.RGBADescriptor;
 import com.sandflow.smpte.mxf.types.TimedEventsAncillaryResourceSubDescriptor;
 import com.sandflow.smpte.mxf.types.TimedEventsTextDescriptor;
+import com.sandflow.smpte.util.AUID;
 import com.sandflow.smpte.util.FileRandomAccessInputSource;
 import com.sandflow.smpte.util.UL;
 
@@ -118,6 +119,130 @@ class RandomAccessReaderTest {
     byte[] buffer = new byte[144000];
     fr.read(buffer);
     fr.close();
+  }
+
+  /*
+   * Clip-wrapped CBE audio where the index table segment is in an index-only
+   * partition that precedes the essence partition
+   */
+  @Test
+  void testClipCBEIndexBeforeEssence() throws Exception {
+    File f = new File(ClassLoader.getSystemResource("mxf-files/audio2.mxf").toURI());
+    FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
+
+    RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
+    GCEssenceTracks tracks = new GCEssenceTracks(fi.getPreface());
+    assertEquals(1, tracks.getTrackCount());
+
+    /* 2000 stereo 24-bit samples (EditUnitByteCount = 6), clip value at file offset 13036 */
+    final long CLIP_VALUE_OFFSET = 13036;
+    final int EU_SIZE = 6;
+    final long EU = 1000;
+
+    ClipReader cr = new ClipReader(fi, rais);
+    assertEquals(12000, cr.getElementLength());
+
+    cr.seek(EU);
+    assertEquals(12000 - EU * EU_SIZE, cr.getRemainingElementBytes());
+    byte[] actual = cr.readNBytes(EU_SIZE);
+    cr.close();
+
+    byte[] expected = new byte[EU_SIZE];
+    try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
+      raf.seek(CLIP_VALUE_OFFSET + EU * EU_SIZE);
+      raf.readFully(expected);
+    }
+    assertArrayEquals(expected, actual);
+  }
+
+  /*
+   * Frame-wrapped DV whose CBE index table segment has IndexDuration = 0 and
+   * whose File Descriptor has no ContainerDuration, so the number of edit units
+   * comes from the Source Clip. Each edit unit consists of a system item, the
+   * picture element and fill items.
+   *
+   * Generated using ffmpeg 4.4:
+   *
+   * ffmpeg -f lavfi -i "testsrc=size=720x576:rate=25:duration=0.2" -pix_fmt yuv420p
+   *   -c:v dvvideo -f mxf cbe-frame-unspecified-duration.mxf
+   */
+  @Test
+  void testFrameCBEUnspecifiedDuration() throws Exception {
+    File f = new File(ClassLoader.getSystemResource("mxf-files/cbe-frame-unspecified-duration.mxf").toURI());
+    FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
+
+    RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
+    assertEquals(5, fi.getEUCount());
+
+    final AUID systemMetadataPackKey = AUID.fromURN("urn:smpte:ul:060e2b34.02050101.0d010301.04010100");
+
+    FrameReader fr = new FrameReader(fi, rais);
+    assertEquals(5, fr.getSize());
+    for (int i = 0; i < fr.getSize(); i++) {
+      fr.seek(i);
+      /* each edit unit starts with the system item */
+      assertTrue(fr.nextElement());
+      assertEquals(systemMetadataPackKey, fr.getElementKey());
+    }
+    assertThrows(IllegalArgumentException.class, () -> fr.seek(5));
+    assertThrows(IllegalArgumentException.class, () -> fr.seek(-1));
+    fr.close();
+  }
+
+  /*
+   * Clip-wrapped 24-bit mono PCM OP-Atom file, whose CBE
+   * index table segment has IndexDuration = 0.
+   *
+   * Generated using ffmpeg 4.4, which pads the 0.1 s source to 3 frames at 25 fps,
+   * i.e. 5760 samples:
+   *
+   * ffmpeg -f lavfi -i "sine=sample_rate=48000:duration=0.1" -c:a pcm_s24le
+   *   -mxf_audio_edit_rate 25 -f mxf_opatom cbe-clip-unspecified-duration.mxf
+   */
+  @Test
+  void testClipCBEUnspecifiedDuration() throws Exception {
+    File f = new File(ClassLoader.getSystemResource("mxf-files/cbe-clip-unspecified-duration.mxf").toURI());
+    FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
+
+    RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
+    assertEquals(5760, fi.getEUCount());
+
+    ClipReader cr = new ClipReader(fi, rais);
+    assertEquals(5760, cr.getEUCount());
+    assertEquals(5760 * 3, cr.getElementLength());
+    cr.seek(5759);
+    assertEquals(3, cr.getRemainingElementBytes());
+    assertEquals(3, cr.readNBytes(3).length);
+    assertThrows(IllegalArgumentException.class, () -> cr.seek(5760));
+    cr.close();
+  }
+
+  /*
+   * Clip-wrapped 24-bit mono PCM consisting of a single sample, whose CBE index
+   * table segment has IndexDuration = 0. The clip value is exactly one edit
+   * unit long and is followed by a fill item.
+   *
+   * Generated using ffmpeg 4.4:
+   *
+   * ffmpeg -f lavfi -i "sine=sample_rate=48000:duration=1" -af atrim=end_sample=1
+   *   -c:a pcm_s24le -strict unofficial -mxf_audio_edit_rate 48000 -f mxf_opatom
+   *   cbe-clip-single-eu-unspecified-duration.mxf
+   */
+  @Test
+  void testClipCBESingleEditUnitUnspecifiedDuration() throws Exception {
+    File f = new File(ClassLoader.getSystemResource("mxf-files/cbe-clip-single-eu-unspecified-duration.mxf").toURI());
+    FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
+
+    RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
+    assertEquals(1, fi.getEUCount());
+
+    ClipReader cr = new ClipReader(fi, rais);
+    assertEquals(1, cr.getEUCount());
+    assertEquals(3, cr.getElementLength());
+    cr.seek(0);
+    assertEquals(3, cr.readNBytes(3).length);
+    assertThrows(IllegalArgumentException.class, () -> cr.seek(1));
+    cr.close();
   }
 
   @Test
@@ -207,6 +332,63 @@ class RandomAccessReaderTest {
     assertEquals(81, gsr.getElementLength());
     /* the ancillary resource is a placeholder text file */
     assertArrayEquals("This is pretending".getBytes(), gsr.readNBytes(18));
+    gsr.close();
+  }
+
+  /*
+   * A Generic Stream must be selected using seek() before it can be accessed
+   */
+  @Test
+  void testGenericStreamReaderRequiresSeek() throws Exception {
+    File f = new File(ClassLoader.getSystemResource("mxf-files/timed_events.mxf").toURI());
+    FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
+
+    RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
+
+    GenericStreamReader gsr = new GenericStreamReader(fi, rais);
+    assertThrows(IllegalStateException.class, gsr::getElementKey);
+    assertThrows(IllegalStateException.class, gsr::getElementLength);
+    assertThrows(IllegalStateException.class, gsr::getRemainingElementBytes);
+    assertThrows(IllegalStateException.class, () -> gsr.read());
+    assertThrows(IllegalStateException.class, () -> gsr.read(new byte[16]));
+    assertThrows(IllegalStateException.class, () -> gsr.skip(1));
+
+    gsr.seek(12);
+    assertEquals(81, gsr.getElementLength());
+    gsr.close();
+  }
+
+  /*
+   * Bulk reads and skips must not go past the end of the element
+   */
+  @Test
+  void testReadPastElementEnd() throws Exception {
+    File f = new File(ClassLoader.getSystemResource("mxf-files/timed_events.mxf").toURI());
+    FileRandomAccessInputSource rais = new FileRandomAccessInputSource(new RandomAccessFile(f, "r"));
+
+    RandomAccessFileInfo fi = new RandomAccessFileInfo(rais, null);
+
+    ClipReader cr = new ClipReader(fi, rais);
+    assertEquals(840, cr.readAllBytes().length);
+    assertEquals(0, cr.getRemainingElementBytes());
+    assertEquals(-1, cr.read());
+
+    cr.seek(0);
+    assertEquals(840, cr.skip(Long.MAX_VALUE));
+    assertEquals(0, cr.skip(1));
+    assertEquals(-1, cr.read(new byte[16]));
+    cr.close();
+
+    GenericStreamReader gsr = new GenericStreamReader(fi, rais);
+    gsr.seek(12);
+    assertEquals(81, gsr.readAllBytes().length);
+    assertEquals(0, gsr.getRemainingElementBytes());
+    assertEquals(-1, gsr.read());
+
+    gsr.seek(12);
+    assertEquals(81, gsr.skip(Long.MAX_VALUE));
+    assertEquals(0, gsr.skip(1));
+    assertEquals(-1, gsr.read(new byte[16]));
     gsr.close();
   }
 
