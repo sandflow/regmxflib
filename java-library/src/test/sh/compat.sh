@@ -57,6 +57,7 @@ FILES_TO_TEST=(
   "${REGMXFLIB_DIR}/testClipVBE.mxf|ffmpeg,mxf2raw"
   "${REGMXFLIB_DIR}/testPHDR.mxf"
   "${REGMXFLIB_DIR}/testTimedEvents.mxf|as-02,ffmpeg"
+  "${REGMXFLIB_DIR}/testZeroLengthClip.mxf|as-02,ffmpeg"
   "${REGMXFLIB_DIR}/testADMAudioTrackFile.mxf|as-02,ffmpeg"
 )
 
