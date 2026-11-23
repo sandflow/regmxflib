@@ -377,6 +377,9 @@ public class FragmentBuilder {
      */
     public DocumentFragment fromTriplet(Group group, Document document) throws KLVException, RuleException {
 
+        /*clear the namespace prefixes in case this is called multiple times */
+        nsprefixes.clear();
+
         DocumentFragment df = document.createDocumentFragment();
 
         applyRule3(df, group);
